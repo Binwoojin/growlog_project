@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: growlog_project
+
+
+    # ===========================
+    # MySQL (AWS RDS)
+    # ===========================
+
+
+  datasource:
+    url: jdbc:mysql://growlog-db.cx46sswa4e8c.ap-northeast-2.rds.amazonaws.com:3306/growlog?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+    username: growlog_admin
+    password: Dkwjsla34
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+  # ===========================
+  # JPA
+  # ===========================
+
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql=true
+    database-platform: org.hibernate.dialect.MySQLDialect
+
+    # ===========================
+    # JSP View Resolver
+    # ===========================
+
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: fammegirls0123@gmail.com
+    password: vzhijpqjbmlkcaqa
+
+    default-encoding: UTF-8
+
+    properties:
+      mail:
+        smtp:
+          auth: true
+
+          starttls:
+            enable: true
+            required: true
+
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+
+
+
