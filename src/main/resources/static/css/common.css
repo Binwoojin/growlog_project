@@ -6,6 +6,12 @@
     box-sizing: border-box;
 }
 
+/* 스크롤바 공간 확보 */
+html {
+    overflow-y: scroll;
+}
+
+
 body {
     font-family: Pretendard, "Noto Sans KR", sans-serif;
     background: #FAF8F3;

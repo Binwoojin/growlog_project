@@ -37,6 +37,11 @@ spring:
     view:
       prefix: /WEB-INF/views/
       suffix: .jsp
+
+      # ===========================
+      # Email 인증 진행을 위한 설정
+      # ===========================
+
   mail:
     host: smtp.gmail.com
     port: 587

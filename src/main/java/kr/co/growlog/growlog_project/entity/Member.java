@@ -5,6 +5,8 @@ import lombok.*;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,7 +18,7 @@ public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT를 사용하기 때문
     @Column(name = "MEMBER_NO")
-    private Long memberNO;
+    private Long memberNo;
 
     @Column(name = "EMAIL", nullable = false, unique = true, length = 100)
     private String email;
@@ -38,5 +40,8 @@ public class Member {
 
     @Column(name = "UPDATED_AT", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "member")
+    private List<Goal> goals;
 
 }

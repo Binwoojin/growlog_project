@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
+@org.springframework.transaction.annotation.Transactional(readOnly = true)
 public class MemberService {
 
     private final MemberRepository memberRepository;
@@ -67,5 +68,10 @@ public class MemberService {
         }
 
         return member;
+    }
+
+
+    public Member findById(Long memberNo) {
+        return memberRepository.findById(memberNo).orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
     }
 }

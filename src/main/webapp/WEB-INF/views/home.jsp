@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -23,46 +24,47 @@
         <span>GrowLog</span>
     </a>
 
-    <nav class="main_nav">
-        <nav class="main_nav" id="mainNav">
-            <a
-                    href="${pageContext.request.contextPath}/home"
-                    data-nav-link
-            >
-                홈
-            </a>
+    <nav class="main_nav" id="mainNav">
 
-            <a
-                    href="${pageContext.request.contextPath}/record/list"
-                    data-nav-link
-            >
-                성장 기록
-            </a>
+        <a
+                href="${pageContext.request.contextPath}/home"
+                data-nav-link
+        >
+            홈
+        </a>
 
-            <a
-                    href="${pageContext.request.contextPath}/goal/list"
-                    data-nav-link
-            >
-                목표
-            </a>
+        <a
+                href="${pageContext.request.contextPath}/record/list"
+                data-nav-link
+        >
+            성장 기록
+        </a>
 
-            <a
-                    href="${pageContext.request.contextPath}/timeline"
-                    data-nav-link
-            >
-                타임라인
-            </a>
-        </nav>
+        <a
+                href="${pageContext.request.contextPath}/goal/list"
+                data-nav-link
+        >
+            목표
+        </a>
+
+        <a
+                href="${pageContext.request.contextPath}/timeline"
+                data-nav-link
+        >
+            타임라인
+        </a>
+
     </nav>
 
     <div class="profile_area">
         <button
                 type="button"
                 class="profile_button"
+                data-dropdown-button="profileMenu"
                 aria-expanded="false"
                 aria-controls="profileMenu"
         >
-            그로비
+            ${sessionScope.loginMember.nickname}
         </button>
 
         <div class="profile_menu" id="profileMenu">
@@ -90,7 +92,7 @@
             <span class="welcome_badge">TODAY'S GROWTH</span>
 
             <h1>
-                안녕하세요, 그로비님!<br>
+                안녕하세요, ${sessionScope.loginMember.nickname}님!<br>
                 오늘도 한 걸음 성장해 볼까요?
             </h1>
 
@@ -127,7 +129,7 @@
     <section class="summary_grid">
         <article class="summary_card">
             <span>진행 중인 목표</span>
-            <strong>2</strong>
+            <strong>${goalCount}</strong>
             <p>이번 주 목표를 이어가고 있어요.</p>
         </article>
 
@@ -147,42 +149,76 @@
     <section class="content_grid">
 
         <article class="content_panel">
+
             <div class="panel_header">
                 <div>
                     <span class="panel_label">GOAL</span>
                     <h2>진행 중인 목표</h2>
                 </div>
 
-                <a href="#">전체 보기</a>
+                <a href="${pageContext.request.contextPath}/goal/list">
+                    전체 보기
+                </a>
             </div>
 
-            <div class="goal_item">
-                <div class="goal_info">
-                    <span class="goal_category">프로젝트</span>
-                    <h3>GrowLog 웹 애플리케이션 완성</h3>
-                    <p>AWS RDS와 Spring Boot를 활용한 프로젝트</p>
-                </div>
+            <c:choose>
 
-                <strong>40%</strong>
+                <c:when test="${empty recentGoals}">
 
-                <div class="progress_bar">
-                    <span style="width: 40%;"></span>
-                </div>
-            </div>
+                    <div class="goal_empty_message">
+                        <p>아직 등록된 목표가 없습니다.</p>
 
-            <div class="goal_item">
-                <div class="goal_info">
-                    <span class="goal_category">공부</span>
-                    <h3>Spring Boot 구조 이해하기</h3>
-                    <p>Controller, Service, Repository 학습</p>
-                </div>
+                        <a href="${pageContext.request.contextPath}/goal/write">
+                            목표 등록하기
+                        </a>
+                    </div>
 
-                <strong>20%</strong>
+                </c:when>
 
-                <div class="progress_bar">
-                    <span style="width: 20%;"></span>
-                </div>
-            </div>
+                <c:otherwise>
+
+                    <c:forEach var="goalItem"
+                               items="${recentGoals}">
+
+                        <div class="goal_item">
+
+                            <div class="goal_info">
+
+                        <span class="goal_category">
+                                ${goalItem.goalStatus}
+                        </span>
+
+                                <h3>
+                                        ${goalItem.goalTitle}
+                                </h3>
+
+                                <c:if test="${not empty goalItem.goalContent}">
+                                    <p>
+                                            ${goalItem.goalContent}
+                                    </p>
+                                </c:if>
+
+                            </div>
+
+                            <strong>
+                                    ${goalItem.goalProgress}%
+                            </strong>
+
+                            <div class="progress_bar">
+                        <span
+                                style="width: ${goalItem.goalProgress}%;"
+                                aria-label="목표 진행률 ${goalItem.goalProgress}%"
+                        ></span>
+                            </div>
+
+                        </div>
+
+                    </c:forEach>
+
+                </c:otherwise>
+
+            </c:choose>
+
         </article>
 
         <article class="content_panel">
