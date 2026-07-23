@@ -1,0 +1,1612 @@
+/* ========================================
+   Growth Record List Page
+======================================== */
+
+.record_list_page {
+    width: 100%;
+    max-width: 1200px;
+
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+
+    box-sizing: border-box;
+}
+
+
+/* ========================================
+   Hero
+======================================== */
+
+.record_list_hero {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    min-height: 340px;
+    padding: 48px 60px;
+
+    margin-bottom: 50px;
+
+    border: 1px solid #cfe3cd;
+    border-radius: 28px;
+
+    background:
+            linear-gradient(
+                    100deg,
+                    #f4faf2 0%,
+                    #eef8ec 48%,
+                    #dff1dc 100%
+            );
+
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* 오른쪽 위 큰 원형 장식 */
+
+.record_list_hero::before {
+    content: "";
+
+    position: absolute;
+    top: 42px;
+    right: 68px;
+
+    width: 120px;
+    height: 120px;
+
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.42);
+
+    pointer-events: none;
+}
+
+
+/* 오른쪽 아래 작은 원형 장식 */
+
+.record_list_hero::after {
+    content: "";
+
+    position: absolute;
+    right: 230px;
+    bottom: 44px;
+
+    width: 58px;
+    height: 58px;
+
+    border-radius: 50%;
+    background: rgba(166, 207, 159, 0.28);
+
+    pointer-events: none;
+}
+
+/* ========================================
+   Hero 내부 요소
+======================================== */
+
+.record_list_hero_text,
+.record_list_hero_right {
+    position: relative;
+    z-index: 1;
+}
+
+.record_list_hero_text {
+    flex: 1;
+    min-width: 0;
+    max-width: 590px;
+}
+
+.record_list_hero_label,
+.record_list_label {
+    display: inline-block;
+
+    margin-bottom: 16px;
+
+    color: #4f8c58;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.record_list_hero_title {
+    margin: 0;
+
+    color: #163c2d;
+    font-size: clamp(36px, 3.2vw, 48px);
+    line-height: 1.3;
+    letter-spacing: -0.04em;
+
+    word-break: keep-all;
+}
+
+.record_list_hero_description {
+    margin: 24px 0 0;
+
+    color: #617166;
+    font-size: 17px;
+    line-height: 1.8;
+
+    word-break: keep-all;
+}
+
+
+/* ========================================
+   오른쪽 캐릭터 영역
+======================================== */
+
+.record_list_hero_right {
+    flex: 0 0 380px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 18px;
+}
+
+.record_list_hero_image {
+    display: block;
+
+    width: 360px;
+    max-width: 100%;
+    height: auto;
+
+    object-fit: contain;
+}
+
+
+/* ========================================
+   작성 버튼
+======================================== */
+
+.record_write_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 48px;
+    padding: 0 26px;
+
+    border-radius: 13px;
+
+    background: #62aa70;
+    box-shadow: 0 10px 22px rgba(73, 139, 86, 0.18);
+
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    transition:
+            background-color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+.record_write_button:hover {
+    background: #51945f;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 26px rgba(73, 139, 86, 0.24);
+}
+
+
+.record_empty_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 52px;
+    padding: 0 24px;
+
+    border-radius: 14px;
+    background: #4f8058;
+    box-shadow: 0 12px 26px rgba(79, 128, 88, 0.2);
+
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+
+    transition: transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.record_empty_button:hover {
+    transform: translateY(-2px);
+    background: #426e4a;
+    box-shadow: 0 16px 30px rgba(79, 128, 88, 0.26);
+}
+
+
+/* ========================================
+   List Content
+======================================== */
+
+.record_list_content {
+    width: min(1200px, calc(100% - 56px));
+    margin: 0 auto;
+    padding-bottom: 100px;
+}
+
+.record_list_heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+
+    margin-bottom: 28px;
+    padding-bottom: 22px;
+
+    border-bottom: 1px solid #dfe8de;
+}
+
+.record_list_heading h2 {
+    margin: 0;
+
+    color: #263328;
+    font-size: 30px;
+    letter-spacing: -0.035em;
+}
+
+.record_count {
+    margin: 0;
+
+    color: #7b857c;
+    font-size: 14px;
+}
+
+.record_count strong {
+    color: #4f8058;
+}
+
+
+/* ========================================
+   Record Cards
+======================================== */
+
+.record_card_grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.record_card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    min-height: 290px;
+    padding: 28px;
+
+    border: 1px solid #e0e8df;
+    border-radius: 22px;
+    background: #ffffff;
+    box-shadow: 0 12px 34px rgba(50, 75, 53, 0.06);
+
+    transition: transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.record_card:hover {
+    transform: translateY(-4px);
+    border-color: #bfd2bd;
+    box-shadow: 0 18px 40px rgba(50, 75, 53, 0.1);
+}
+
+.record_card_top,
+.record_card_bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.record_type_badge,
+.record_difficulty {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 30px;
+    padding: 0 12px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.record_type_badge.goal_record {
+    background: #e8f3e7;
+    color: #47734f;
+}
+
+.record_type_badge.free_record {
+    background: #fff3dc;
+    color: #967134;
+}
+
+.record_date {
+    color: #919a92;
+    font-size: 13px;
+}
+
+.record_card_body {
+    margin: 28px 0 32px;
+}
+
+.record_title {
+    overflow: hidden;
+
+    margin: 0;
+
+    color: #273429;
+    font-size: 23px;
+    line-height: 1.4;
+    letter-spacing: -0.03em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.record_preview {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+
+    min-height: 81px;
+    margin: 16px 0 0;
+
+    color: #727c73;
+    font-size: 15px;
+    line-height: 1.8;
+    white-space: pre-line;
+}
+
+.record_difficulty {
+    background: #f1f5f0;
+    color: #667269;
+}
+
+.record_detail_link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    color: #4f8058;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.record_detail_link:hover {
+    text-decoration: underline;
+}
+
+
+/* ========================================
+   Empty State
+======================================== */
+
+.record_empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 430px;
+    padding: 64px 24px;
+
+    border: 1px dashed #cbdac9;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.72);
+
+    text-align: center;
+}
+
+.record_empty_icon {
+    display: grid;
+    place-items: center;
+
+    width: 82px;
+    height: 82px;
+    margin-bottom: 24px;
+
+    border-radius: 50%;
+    background: #eaf3e8;
+
+    font-size: 38px;
+}
+
+.record_empty h2 {
+    margin: 0;
+
+    color: #2e3a30;
+    font-size: 26px;
+    letter-spacing: -0.03em;
+}
+
+.record_empty p {
+    margin: 16px 0 28px;
+
+    color: #7b857c;
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+/* ========================================
+   Growth Record Write Page
+======================================== */
+
+.record_write_page {
+    width: 100%;
+    max-width: 1200px;
+
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+
+    box-sizing: border-box;
+}
+
+
+/* ========================================
+   Record Write Hero
+======================================== */
+
+.record_write_hero {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    min-height: 340px;
+    padding: 48px 60px;
+    margin-bottom: 56px;
+
+    border: 1px solid #cfe3cd;
+    border-radius: 28px;
+
+    background:
+            linear-gradient(
+                    100deg,
+                    #f4faf2 0%,
+                    #eef8ec 48%,
+                    #dff1dc 100%
+            );
+
+    overflow: hidden;
+}
+
+.record_write_hero_text {
+    position: relative;
+    z-index: 2;
+
+    flex: 1;
+    max-width: 590px;
+}
+
+.record_write_hero_label {
+    display: inline-block;
+
+    margin-bottom: 16px;
+
+    color: #4f8c58;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.record_write_hero_title {
+    margin: 0;
+
+    color: #163c2d;
+    font-size: clamp(36px, 3.2vw, 48px);
+    line-height: 1.3;
+    letter-spacing: -0.04em;
+
+    word-break: keep-all;
+}
+
+.record_write_hero_description {
+    margin: 24px 0 0;
+
+    color: #617166;
+    font-size: 17px;
+    line-height: 1.8;
+
+    word-break: keep-all;
+}
+
+.record_write_hero_message {
+    display: inline-flex;
+    align-items: center;
+
+    margin: 22px 0 0;
+    padding: 10px 14px;
+
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.65);
+
+    color: #4f8058;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+/* ========================================
+   Record Write Hero Visual
+======================================== */
+
+.record_write_hero_visual {
+    position: relative;
+    z-index: 1;
+
+    flex: 0 0 390px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 240px;
+}
+
+.record_write_grobi {
+    position: relative;
+    z-index: 2;
+
+    display: block;
+
+    width: 340px;
+    max-width: 100%;
+    height: auto;
+
+    object-fit: contain;
+}
+
+.record_write_hero_circle {
+    position: absolute;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+.record_write_hero_circle.circle_one {
+    top: 8px;
+    right: 18px;
+
+    width: 125px;
+    height: 125px;
+
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.record_write_hero_circle.circle_two {
+    left: 34px;
+    bottom: 16px;
+
+    width: 64px;
+    height: 64px;
+
+    background: rgba(166, 207, 159, 0.3);
+}
+
+
+/* ========================================
+   Record Write Content Layout
+======================================== */
+
+.record_write_content {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    align-items: start;
+
+    gap: 34px;
+}
+
+
+/* ========================================
+   Record Write Guide
+======================================== */
+
+.record_write_guide {
+    position: sticky;
+    top: 110px;
+
+    padding: 30px 26px;
+
+    border: 1px solid #dce8db;
+    border-radius: 24px;
+
+    background: #f7faf5;
+}
+
+.record_write_guide_heading {
+    margin-bottom: 30px;
+}
+
+.record_write_guide_label {
+    display: inline-block;
+
+    margin-bottom: 12px;
+
+    color: #5c9463;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.record_write_guide_heading h2 {
+    margin: 0;
+
+    color: #263328;
+    font-size: 25px;
+    line-height: 1.45;
+    letter-spacing: -0.035em;
+}
+
+.record_write_guide_heading p {
+    margin: 16px 0 0;
+
+    color: #778178;
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.record_write_guide_item {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 16px;
+
+    padding: 20px 0;
+
+    border-top: 1px solid #e1e9e0;
+}
+
+.record_write_guide_number {
+    flex: 0 0 auto;
+
+    color: #75a27a;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.record_write_guide_item strong {
+    display: block;
+
+    color: #354338;
+    font-size: 15px;
+}
+
+.record_write_guide_item p {
+    margin: 7px 0 0;
+
+    color: #7a857c;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+
+/* ========================================
+   Record Write Form Panel
+======================================== */
+
+.record_write_form_panel {
+    padding: 38px 42px;
+
+    border: 1px solid #dfe7de;
+    border-radius: 26px;
+
+    background: #ffffff;
+    box-shadow: 0 16px 42px rgba(49, 75, 53, 0.07);
+}
+
+.record_write_form_heading {
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+
+    border-bottom: 1px solid #e3e9e2;
+}
+
+.record_write_form_label {
+    display: inline-block;
+
+    margin-bottom: 12px;
+
+    color: #5b9362;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.record_write_form_heading h2 {
+    margin: 0;
+
+    color: #263328;
+    font-size: 30px;
+    letter-spacing: -0.04em;
+}
+
+.record_write_form_heading p {
+    margin: 12px 0 0;
+
+    color: #768079;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+/* ========================================
+   Record Form
+======================================== */
+
+.record_write_form {
+    display: flex;
+    flex-direction: column;
+
+    gap: 30px;
+}
+
+.record_form_group {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+}
+
+.record_form_label {
+    display: block;
+
+    margin-bottom: 11px;
+
+    color: #354238;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.record_form_input,
+.record_form_select,
+.record_form_textarea {
+    width: 100%;
+
+    border: 1px solid #d9e2d8;
+    border-radius: 14px;
+
+    background: #fbfcfa;
+    color: #2f3b32;
+
+    font-family: inherit;
+    font-size: 15px;
+
+    box-sizing: border-box;
+
+    outline: none;
+
+    transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+.record_form_input,
+.record_form_select {
+    height: 52px;
+    padding: 0 16px;
+}
+
+.record_form_textarea {
+    min-height: 150px;
+    padding: 16px;
+
+    line-height: 1.7;
+    resize: vertical;
+}
+
+.record_content_textarea {
+    min-height: 210px;
+}
+
+.record_form_input::placeholder,
+.record_form_textarea::placeholder {
+    color: #a0aaa1;
+}
+
+.record_form_input:focus,
+.record_form_select:focus,
+.record_form_textarea:focus {
+    border-color: #79a980;
+    background: #ffffff;
+
+    box-shadow: 0 0 0 4px rgba(103, 158, 111, 0.12);
+}
+
+.record_form_help {
+    margin: 9px 0 0;
+
+    color: #8a948b;
+    font-size: 13px;
+}
+
+
+/* ========================================
+   Record Type Options
+======================================== */
+
+.record_type_options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.record_type_option {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    min-height: 96px;
+    padding: 18px;
+
+    border: 1px solid #dfe7de;
+    border-radius: 16px;
+
+    background: #fbfcfa;
+
+    cursor: pointer;
+
+    transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+.record_type_option:hover {
+    transform: translateY(-2px);
+
+    border-color: #b8ceb7;
+    box-shadow: 0 10px 24px rgba(56, 91, 60, 0.08);
+}
+
+.record_type_option.active {
+    border-color: #74a67c;
+    background: #eef7ed;
+
+    box-shadow: 0 0 0 3px rgba(102, 157, 109, 0.1);
+}
+
+.record_type_option input {
+    position: absolute;
+
+    opacity: 0;
+    pointer-events: none;
+}
+
+.record_type_icon {
+    flex: 0 0 auto;
+
+    display: grid;
+    place-items: center;
+
+    width: 44px;
+    height: 44px;
+
+    border-radius: 13px;
+    background: #ffffff;
+
+    font-size: 22px;
+}
+
+.record_type_text {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+.record_type_text strong {
+    color: #344138;
+    font-size: 15px;
+}
+
+.record_type_text small {
+    color: #7e8980;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ========================================
+   Condition Options
+======================================== */
+
+.record_condition_options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+.record_condition_option {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 110px;
+    padding: 16px;
+
+    border: 1px solid #dfe7de;
+    border-radius: 16px;
+
+    background: #fbfcfa;
+
+    cursor: pointer;
+
+    transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+.record_condition_option:hover {
+    transform: translateY(-2px);
+
+    border-color: #bdd0bb;
+    box-shadow: 0 10px 22px rgba(51, 80, 54, 0.07);
+}
+
+.record_condition_option:has(input:checked) {
+    border-color: #74a67c;
+    background: #eef7ed;
+
+    box-shadow: 0 0 0 3px rgba(102, 157, 109, 0.1);
+}
+
+.record_condition_option input {
+    position: absolute;
+
+    opacity: 0;
+    pointer-events: none;
+}
+
+.record_condition_emoji {
+    margin-bottom: 8px;
+
+    font-size: 28px;
+}
+
+.record_condition_text {
+    color: #455249;
+    font-size: 14px;
+}
+
+
+/* ========================================
+   Record Form Actions
+======================================== */
+
+.record_form_actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    margin-top: 8px;
+    padding-top: 28px;
+
+    border-top: 1px solid #e3e9e2;
+}
+
+.record_form_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 112px;
+    min-height: 50px;
+    padding: 0 22px;
+
+    border: 0;
+    border-radius: 14px;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+            background-color 0.2s ease,
+            color 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+.record_form_button.cancel {
+    border: 1px solid #d7e0d6;
+    background: #ffffff;
+    color: #657068;
+}
+
+.record_form_button.cancel:hover {
+    border-color: #b9cab8;
+    background: #f6f9f5;
+}
+
+.record_form_button.submit {
+    background: #5a925f;
+    color: #ffffff;
+
+    box-shadow: 0 10px 22px rgba(70, 130, 78, 0.2);
+}
+
+.record_form_button.submit:hover {
+    transform: translateY(-2px);
+
+    background: #4c8052;
+    box-shadow: 0 14px 26px rgba(70, 130, 78, 0.26);
+}
+
+/* ========================================
+   Record Form Loading State
+======================================== */
+
+/* 성장 기록 저장 중 버튼 */
+.record_form_button.submit:disabled,
+.record_form_button.submit.is_loading {
+    background: #91ae95;
+    box-shadow: none;
+
+    cursor: not-allowed;
+    transform: none;
+
+    opacity: 0.8;
+}
+
+/* 저장 중 버튼은 hover 효과를 적용하지 않음 */
+.record_form_button.submit:disabled:hover,
+.record_form_button.submit.is_loading:hover {
+    background: #91ae95;
+    box-shadow: none;
+
+    transform: none;
+}
+
+
+/* ========================================
+   Record Card JavaScript Interaction
+======================================== */
+
+/* JavaScript로 카드 전체 클릭이 가능할 때 마우스 포인터 표시 */
+.record_card[data-record-url] {
+    cursor: pointer;
+}
+
+/* 키보드로 카드에 접근했을 때 포커스 표시 */
+.record_card[data-record-url]:focus-visible {
+    border-color: #74a67c;
+
+    box-shadow:
+            0 0 0 4px rgba(102, 157, 109, 0.14),
+            0 18px 40px rgba(50, 75, 53, 0.1);
+
+    outline: none;
+}
+
+/* ========================================
+   Record Card Hidden State
+======================================== */
+
+/*
+ * 필터에 해당하지 않는 기록 카드 숨김
+ *
+ * .record_card의 display: flex가
+ * HTML hidden 속성을 덮어쓰지 않도록 명시한다.
+ */
+.record_card[hidden] {
+    display: none;
+}
+
+/* ========================================
+   Record Filter
+======================================== */
+
+/* 성장 기록 유형 필터 버튼 그룹 */
+.record_filter_group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-bottom: 26px;
+}
+
+/* 필터 버튼 기본 스타일 */
+.record_filter_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 42px;
+    padding: 0 18px;
+
+    border: 1px solid #d7e2d6;
+    border-radius: 999px;
+
+    background: #ffffff;
+    color: #6c786e;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+/* 필터 버튼 마우스 오버 */
+.record_filter_button:hover {
+    transform: translateY(-1px);
+
+    border-color: #adc8af;
+    background: #f5f9f4;
+    color: #4f8058;
+}
+
+/* 선택된 필터 버튼 */
+.record_filter_button.active {
+    border-color: #5f9868;
+    background: #5f9868;
+    color: #ffffff;
+
+    box-shadow:
+            0 8px 18px rgba(73, 130, 82, 0.18);
+}
+
+/* 선택된 필터 버튼 hover */
+.record_filter_button.active:hover {
+    background: #51875a;
+    border-color: #51875a;
+    color: #ffffff;
+}
+
+
+/* ========================================
+   Record Filter Empty
+======================================== */
+
+/* 선택한 필터에 기록이 없을 때 표시 */
+.record_filter_empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 240px;
+    margin-top: 20px;
+    padding: 40px 24px;
+
+    border: 1px dashed #cbdac9;
+    border-radius: 22px;
+
+    background: rgba(255, 255, 255, 0.7);
+
+    text-align: center;
+}
+
+/* hidden 속성이 있을 때 확실하게 숨김 */
+.record_filter_empty[hidden] {
+    display: none;
+}
+
+/* 필터 결과 없음 아이콘 */
+.record_filter_empty_icon {
+    display: grid;
+    place-items: center;
+
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+
+    border-radius: 50%;
+
+    background: #edf5eb;
+
+    font-size: 30px;
+}
+
+/* 필터 결과 없음 문구 */
+.record_filter_empty p {
+    margin: 0;
+
+    color: #68746b;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* ========================================
+   Growth Record Detail Page
+======================================== */
+
+/* 성장 기록 상세 페이지 전체 영역 */
+.record_detail_page {
+    width: 100%;
+    max-width: 1000px;
+
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+
+    box-sizing: border-box;
+}
+
+
+/* ========================================
+   Detail Navigation
+======================================== */
+
+/* 상세 페이지 상단 이동 영역 */
+.record_detail_navigation {
+    display: flex;
+    align-items: center;
+
+    margin-bottom: 22px;
+}
+
+/* 성장 기록 목록으로 돌아가기 링크 */
+.record_detail_back {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 8px;
+
+    color: #657269;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    transition:
+            color 0.2s ease,
+            transform 0.2s ease;
+}
+
+/* 목록 링크 마우스 오버 */
+.record_detail_back:hover {
+    color: #4f8058;
+    transform: translateX(-3px);
+}
+
+
+/* ========================================
+   Detail Card
+======================================== */
+
+/* 성장 기록 상세 내용 카드 */
+.record_detail_card {
+    overflow: hidden;
+
+    border: 1px solid #dce7db;
+    border-radius: 28px;
+
+    background: #ffffff;
+
+    box-shadow:
+            0 18px 48px rgba(50, 75, 53, 0.08);
+}
+
+
+/* ========================================
+   Detail Header
+======================================== */
+
+/* 상세 카드 상단 제목 영역 */
+.record_detail_header {
+    position: relative;
+
+    padding: 48px 52px;
+
+    border-bottom: 1px solid #dfe9de;
+
+    background:
+            linear-gradient(
+                    110deg,
+                    #f5faf3 0%,
+                    #edf7eb 55%,
+                    #e1f1de 100%
+            );
+}
+
+/* 상세 정보 배지와 날짜 영역 */
+.record_detail_meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 18px;
+
+    margin-bottom: 24px;
+}
+
+/* 상세 기록 작성일 */
+.record_detail_date {
+    color: #7d897f;
+    font-size: 14px;
+}
+
+/* 상세 기록 제목 */
+.record_detail_title {
+    margin: 0;
+
+    color: #1f382c;
+    font-size: clamp(34px, 4vw, 48px);
+    line-height: 1.3;
+    letter-spacing: -0.045em;
+
+    word-break: keep-all;
+}
+
+
+/* ========================================
+   Detail Condition
+======================================== */
+
+/* 기분 또는 난이도 표시 영역 */
+.record_detail_condition {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-top: 28px;
+    padding: 12px 16px;
+
+    border: 1px solid rgba(104, 153, 108, 0.2);
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.72);
+}
+
+/* 기분 또는 난이도 구분 문구 */
+.record_detail_condition_label {
+    color: #758078;
+    font-size: 13px;
+}
+
+/* 실제 기분 또는 난이도 값 */
+.record_detail_condition_value {
+    color: #4f8058;
+    font-size: 14px;
+}
+
+
+/* ========================================
+   Detail Sections
+======================================== */
+
+/* 성장 기록의 각 상세 내용 영역 */
+.record_detail_section {
+    margin: 0 52px;
+    padding: 42px 0;
+
+    border-bottom: 1px solid #e4ebe3;
+}
+
+/* 마지막 회고 영역은 하단 선 제거 */
+.record_detail_section:last-of-type {
+    border-bottom: 0;
+}
+
+/* 상세 영역 영문 라벨 */
+.record_detail_section_label {
+    display: inline-block;
+
+    margin-bottom: 10px;
+
+    color: #65946b;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+/* 상세 영역 제목 */
+.record_detail_section_title {
+    margin: 0 0 22px;
+
+    color: #2c3b30;
+    font-size: 24px;
+    letter-spacing: -0.035em;
+}
+
+/* 사용자가 작성한 실제 기록 내용 */
+.record_detail_text {
+    color: #5d6960;
+    font-size: 16px;
+    line-height: 1.95;
+
+    /*
+     * 사용자가 textarea에서 작성한
+     * 줄바꿈과 공백을 화면에 유지한다.
+     */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* 최종 회고 영역 강조 */
+.retrospective_section {
+    margin: 32px 52px;
+    padding: 32px;
+
+    border: 1px solid #dce9da;
+    border-radius: 20px;
+
+    background: #f7faf5;
+}
+
+
+/* ========================================
+   Detail Actions
+======================================== */
+
+/* 상세 페이지 하단 버튼 영역 */
+.record_detail_actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    padding: 28px 52px;
+
+    border-top: 1px solid #e3ebe2;
+    background: #fbfcfa;
+}
+
+/* 상세 페이지 공통 버튼 */
+.record_detail_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 110px;
+    min-height: 48px;
+    padding: 0 22px;
+
+    border-radius: 14px;
+
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+/* 목록으로 버튼 */
+.record_detail_button.list {
+    border: 1px solid #d5dfd4;
+
+    background: #ffffff;
+    color: #657168;
+}
+
+/* 목록으로 버튼 마우스 오버 */
+.record_detail_button.list:hover {
+    border-color: #b8cdb7;
+    background: #f3f8f2;
+    color: #4f8058;
+}
+
+/* 추후 사용할 수정 버튼 */
+.record_detail_button.edit {
+    border: 1px solid #5b9363;
+
+    background: #5b9363;
+    color: #ffffff;
+
+    box-shadow:
+            0 10px 22px rgba(71, 131, 79, 0.18);
+}
+
+/* 수정 버튼 마우스 오버 */
+.record_detail_button.edit:hover {
+    transform: translateY(-2px);
+
+    background: #4d8055;
+    border-color: #4d8055;
+
+    box-shadow:
+            0 14px 26px rgba(71, 131, 79, 0.24);
+}
+
+/* ========================================
+   Record Detail Delete Button
+======================================== */
+
+/* 삭제 Form의 기본 여백 제거 */
+.record_delete_form {
+    margin: 0;
+}
+
+/* 성장 기록 삭제 버튼 */
+.record_detail_button.delete {
+    border: 1px solid #dc8b86;
+
+    background: #ffffff;
+    color: #bd5d58;
+
+    cursor: pointer;
+}
+
+/* 성장 기록 삭제 버튼 Hover */
+.record_detail_button.delete:hover {
+    transform: translateY(-2px);
+
+    border-color: #c96b66;
+    background: #fff5f4;
+    color: #a94d48;
+
+    box-shadow:
+            0 10px 22px rgba(184, 84, 77, 0.12);
+}
+
+/* 삭제 요청 처리 중 버튼 */
+.record_detail_button.delete:disabled,
+.record_detail_button.delete.is_loading {
+    border-color: #d7c6c4;
+
+    background: #f2eeee;
+    color: #a18d8b;
+
+    box-shadow: none;
+
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ========================================
+   Record Detail Action Groups
+======================================== */
+
+/* 상세 페이지 왼쪽·오른쪽 버튼 영역 */
+.record_detail_actions_left,
+.record_detail_actions_right {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+/* 오른쪽 버튼 영역을 오른쪽 끝으로 이동 */
+.record_detail_actions_right {
+    margin-left: auto;
+}

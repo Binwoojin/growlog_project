@@ -14,76 +14,7 @@
 </head>
 <body class="home_page">
 
-<header class="main_header">
-    <a href="${pageContext.request.contextPath}/home"
-       class="header_logo">
-        <img
-                src="${pageContext.request.contextPath}/images/logo.png"
-                alt="GrowLog"
-        >
-        <span>GrowLog</span>
-    </a>
-
-    <nav class="main_nav" id="mainNav">
-
-        <a
-                href="${pageContext.request.contextPath}/home"
-                data-nav-link
-        >
-            홈
-        </a>
-
-        <a
-                href="${pageContext.request.contextPath}/record/list"
-                data-nav-link
-        >
-            성장 기록
-        </a>
-
-        <a
-                href="${pageContext.request.contextPath}/goal/list"
-                data-nav-link
-        >
-            목표
-        </a>
-
-        <a
-                href="${pageContext.request.contextPath}/timeline"
-                data-nav-link
-        >
-            타임라인
-        </a>
-
-    </nav>
-
-    <div class="profile_area">
-        <button
-                type="button"
-                class="profile_button"
-                data-dropdown-button="profileMenu"
-                aria-expanded="false"
-                aria-controls="profileMenu"
-        >
-            ${sessionScope.loginMember.nickname}
-        </button>
-
-        <div class="profile_menu" id="profileMenu">
-            <a href="#">마이페이지</a>
-            <form
-                    action="${pageContext.request.contextPath}/logout"
-                    method="post"
-                    class="logout_form"
-            >
-                <button
-                        type="submit"
-                        class="logout_button"
-                >
-                    로그아웃
-                </button>
-            </form>
-        </div>
-    </div>
-</header>
+<jsp:include page="/WEB-INF/views/common/header.jsp" />
 
 <main class="home_container">
 
@@ -135,14 +66,38 @@
 
         <article class="summary_card">
             <span>이번 달 기록</span>
-            <strong>7</strong>
+            <strong>${thisMonthRecordCount}</strong>
             <p>꾸준히 기록하고 있어요.</p>
         </article>
 
-        <article class="summary_card">
+        <article class="summary_card attendance_card">
+
             <span>연속 기록</span>
-            <strong>3일</strong>
-            <p>오늘도 기록하면 4일째예요.</p>
+
+            <strong>
+                ${attendanceSummary.currentStreak}일
+            </strong>
+
+            <c:choose>
+
+                <%-- 오늘 출석 완료 --%>
+                <c:when test="${attendanceSummary.attendedToday}">
+                    <p>
+                        오늘까지 ${attendanceSummary.currentStreak}일째
+                        기록 달성 유지 중이에요!
+                    </p>
+                </c:when>
+
+                <%-- 아직 오늘 출석하지 않은 경우 --%>
+                <c:otherwise>
+                    <p>
+                        오늘도 기록하면
+                            ${attendanceSummary.currentStreak + 1}일째예요.
+                    </p>
+                </c:otherwise>
+
+            </c:choose>
+
         </article>
     </section>
 
@@ -222,41 +177,69 @@
         </article>
 
         <article class="content_panel">
+
+            <%-- 최근 성장기록 영역 제목 및 전체 목록 이동 링크 --%>
             <div class="panel_header">
                 <div>
                     <span class="panel_label">RECORD</span>
                     <h2>최근 성장 기록</h2>
                 </div>
 
-                <a href="#">전체 보기</a>
+                <a href="${pageContext.request.contextPath}/record/list">
+                    전체 보기
+                </a>
             </div>
 
-            <div class="record_item">
-                <time datetime="2026-07-14">07.14</time>
+            <%-- 최근 성장기록이 존재하는 경우 --%>
+            <c:choose>
 
-                <div>
-                    <h3>AWS RDS 연결 성공</h3>
-                    <p>
-                        DBeaver와 AWS RDS를 연결하고 MEMBER와
-                        GOAL 테이블을 테스트했다.
-                    </p>
-                </div>
-            </div>
+                <c:when test="${not empty recentRecords}">
 
-            <div class="record_item">
-                <time datetime="2026-07-14">07.14</time>
+                    <%-- 최신 성장기록을 최대 3개까지 반복 출력 --%>
+                    <c:forEach items="${recentRecords}" var="recordItem">
 
-                <div>
-                    <h3>MEMBER와 GOAL 관계 이해</h3>
-                    <p>
-                        PK와 FK를 이용해 1:N 관계를 직접 구성했다.
-                    </p>
-                </div>
-            </div>
+                        <a href="${pageContext.request.contextPath}/record/${recordItem.recordNum}"
+                           class="record_item">
+
+                                <%-- 성장기록 작성일 --%>
+                            <time datetime="${recordItem.createdAt}">
+                                    ${recordItem.formattedCreatedDate}
+                            </time>
+
+                                <%-- 성장기록 제목 및 내용 --%>
+                            <div>
+                                <h3>
+                                    <c:out value="${recordItem.title}" />
+                                </h3>
+
+                                <p>
+                                    <c:out value="${recordItem.content}" />
+                                </p>
+                            </div>
+
+                        </a>
+
+                    </c:forEach>
+
+                </c:when>
+
+                <%-- 아직 작성한 성장기록이 없는 경우 --%>
+                <c:otherwise>
+
+                    <div class="record_empty">
+                        <p>아직 작성한 성장기록이 없어요.</p>
+
+                        <a href="${pageContext.request.contextPath}/record/write">
+                            첫 성장기록 작성하기
+                        </a>
+                    </div>
+
+                </c:otherwise>
+
+            </c:choose>
+
         </article>
-
     </section>
-
 </main>
 
 <script
