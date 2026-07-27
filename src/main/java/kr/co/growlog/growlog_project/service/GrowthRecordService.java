@@ -12,6 +12,7 @@ import kr.co.growlog.growlog_project.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +26,8 @@ public class GrowthRecordService {
     private final GrowthRecordRepository growthRecordRepository;
     private final MemberRepository memberRepository;
     private final GoalRepository goalRepository;
+
+    private static final int MAX_IMAGE_COUNT = 5; // 성장기록 하나에 첨부할 수 있는 최대 이미지 개수
 
     // 성장 기록 등록
 
@@ -51,9 +54,12 @@ public class GrowthRecordService {
         // 입력값 검증 (하단에 추가)
         validateRequest(request);
 
+        // 첨부 이미지가
+        validateImageFiles(request.getImageFile());
+
         // 성장 기록 Entity 생성
         GrowthRecord growthRecord = GrowthRecord.builder()
-                .member(member).goal(goal).title(request.getTitle())
+                .member(member).goal(goal).title(request.getTitle().trim())
                 .content(request.getContent().trim())
                 .todayLearning(normalizeText(request.getTodayLearning()))
                 .difficulty(normalizeText(request.getDifficulty()))
@@ -80,6 +86,17 @@ public class GrowthRecordService {
     // @return 조회한 성장 기록
     public GrowthRecord findRecordById(Long recordNum, Long memberNo) {
         return growthRecordRepository.findByRecordNumAndMemberMemberNo(recordNum, memberNo).orElseThrow(() -> new IllegalArgumentException("성장 기록을 찾을 수 없습니다."));
+    }
+
+    // 회원이 작성한 전체 성장 기록 개수를 조회
+
+    // Repository의 countByMemberMemberNo()를 호출해서
+    // 해당 회원 번호와 연결된 성장 기록 수를 반환
+
+    // @param memberNo 조회할 회원 번호
+    // @return 회원이 작성한 성자이 기록 개수
+    public long countRecordByMember(Long memberNo) {
+        return growthRecordRepository.countByMemberMemberNo(memberNo);
     }
 
     // 로그인한 회원이 이번 달에 작성한 성장 기록 개수를 조회
@@ -179,6 +196,33 @@ public class GrowthRecordService {
         }
     }
 
+    /**
+     * 성장기록에 첨부된 이미지 개수를 검증한다
+     *
+     * 브라우저에서 파일 선택을 취소하거나 빈 파일 항목이 전달될 수 있으므로
+     * null 또는 빈 파일은 제외하고 실제 파일만 계산한다.
+     *
+     * @param imageFiles 사용자가 선택한 이미지 파일 목록
+     */
+    private void validateImageFiles(List<MultipartFile> imageFiles) {
+
+        // 이미지가 전달되지 않은 경우에는 검증할 필요가 없다.
+        if (imageFiles == null || imageFiles.isEmpty()) {
+            return;
+        }
+
+        /**
+         * MultipartFile 목록에 포함된 값 중에서
+         * null이 아니고 실제 파일 내용이 존재하는 항목만 계산한다.
+         */
+        long actualImageCount = imageFiles.stream().filter(imageFile -> imageFile != null && !imageFile.isEmpty()).count();
+
+        // 실제 이미지가 최대 허용 개수를 초과하면 등록을 중단
+        if (actualImageCount > MAX_IMAGE_COUNT) {
+            throw new IllegalArgumentException("이미지는 최대" + MAX_IMAGE_COUNT + "장까지 등록할 수 있습니다.");
+        }
+    }
+
     // 선택 입력값 정리
 
     // 선택 입력값이 비어 있으면 NULL로 변환
@@ -191,4 +235,6 @@ public class GrowthRecordService {
 
         return value.trim();
     }
+
+
 }

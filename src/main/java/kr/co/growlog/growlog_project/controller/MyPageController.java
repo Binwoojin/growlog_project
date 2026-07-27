@@ -10,14 +10,26 @@ package kr.co.growlog.growlog_project.controller;
 // 해당 Controller에 순서대로 추가 예정
 
 import jakarta.servlet.http.HttpSession;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import kr.co.growlog.growlog_project.dto.AttendanceSummary;
+import kr.co.growlog.growlog_project.dto.NicknameUpdateRequest;
+import kr.co.growlog.growlog_project.dto.PasswordUpdateRequest;
+import kr.co.growlog.growlog_project.dto.SettingVerificationRequest;
 import kr.co.growlog.growlog_project.entity.Member;
 import kr.co.growlog.growlog_project.service.AttendanceService;
+import kr.co.growlog.growlog_project.service.GoalService;
+import kr.co.growlog.growlog_project.service.GrowthRecordService;
+import kr.co.growlog.growlog_project.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.eclipse.tags.shaded.org.apache.xpath.operations.Bool;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @RequiredArgsConstructor
 @Controller
@@ -28,6 +40,26 @@ public class MyPageController {
     // 사용자의 출석 정보를 계산하는 Service
     private final AttendanceService attendanceService;
 
+    private final MemberService memberService;
+    private final GoalService goalService;
+    private final GrowthRecordService growthRecordService;
+
+    // 계정 설정 접근 인증 완료 여부를 저장할 세션키
+    private static final String SETTING_VERIFIED_KEY = "ACCOUNT_SETTING_VERIFIED";
+
+    // 계정 설정 인증 완료 시간을 저장할 세션 키
+    private static final String SETTING_VERIFIED_AT_KEY = "ACCOUNT_SETTING_VERIFIED_AT";
+
+    // 계정 설정 접근 인증 유효시간 : 10분
+    private static final long SETTING_VERIFICATION_MINUTES = 10L;
+
+    /**
+     * /mypage 요청을 내 정보 화면으로 연결한다.
+     */
+    @GetMapping
+    public String myPageRoot() {
+        return "redirect:/mypage/profile";
+    }
 
 
     // 마이페이지 기본 주소 요청을 프로필 페이지로 이동시킴
@@ -36,43 +68,33 @@ public class MyPageController {
     // 마이페이지의 기본 메뉴인 프로필 페이지로 이동하도록 처리
     // @return 프로필 페이지 주소로 리다이렉트
 
-    @GetMapping
-    public String myPage() {
-        return "redirect:/mypage/profile";
-    }
-
-    // 마이 페이지의 기본 프로필 화면을 표시
-    // 세션에 저장된 로그인 회원을 확인한 뒤
-    // 로그인한 회원 정보만 JSP로 전달
-
-    // 현재는 조회 화면만 구현하고
-    // 개인정보 수정 기능은 별도의 페이지로 분리할 예정
-
-    // @param session 현재 사용자의 로그인 세션
-    // @param model JSP에 데이터를 전달하기 위한 객체
-    // @return 프로필 화면 또는 로그인 페이지
     @GetMapping("/profile")
-    public String profilePage(HttpSession session,
-                              Model model) {
-
-        // 로그인 성공 시 세션에 저장했던 회원 정보를 가져온다
-        // GrowLog에서 사용 중인 세션 키가 "loginMember"이므로
-        // 로그인, 홈, 목표, 기록 페이지와 동일한 키를 사용
+    public String myPage(HttpSession session,
+                         Model model) {
         Member loginMember = getLoginMember(session);
 
-        // 세션에 로그인 회원이 없다면
-        // 비로그인 사용자가 마이페이지 주소로 직접 접근한 경우이므로
-        // 로그인 페이지로 이동시킴
         if (loginMember == null) {
             return "redirect:/login";
         }
 
-        // profile.jsp에서 닉네임, 이메일 등의 회원 정보를
-        // 출력할 수 있도록 로그인 회원 객체를 Model에 저장
-        model.addAttribute("loginMember", loginMember);
+        // 회원 번호를 기준으로 최신 회원 정보를 다시 조회
+        Member member = memberService.findById(loginMember.getMemberNo());
+
+        // 회원이 등록한 전체 목표 개수를 조회
+        long goalCount = goalService.countGoalsByMember(member.getMemberNo());
+
+        // 회원이 작성한 전체 성장 기록 개수를 조회
+        long recordCount = growthRecordService.countRecordByMember(member.getMemberNo());
+
+        model.addAttribute("member", member);
+        model.addAttribute("goalCount", goalCount);
+        model.addAttribute("recordCount", recordCount);
+        model.addAttribute("currentStreak", 0);
 
         return "mypage/profile";
     }
+
+
 
     // 마이페이지 하위 메뉴인 출석 현황 화면을 표시
 
@@ -114,6 +136,179 @@ public class MyPageController {
 
         return "mypage/attendance";
     }
+
+    // 계정 설정 페이지를 표시
+    // 현재 로그인한 회원의 최신 정보를 조회하여
+    // 닉네임과 이메일을 계정 설정 화면에 전달
+
+    // @param session 현재 사용자의 로그인 세션
+    // @param model JSP에 회원 정보를 전달하기 위한 객체
+    // @return 계정 설정 화면 또는 로그인 페이지
+    @GetMapping("/settings")
+    public String settingPage(HttpSession session,
+                              Model model) {
+        Member loginMember = getLoginMember(session);
+
+        if(loginMember == null) {
+            return "redirect:/login";
+        }
+
+        // 비밀번호 재확인을 하지 않았거나 인증 유효시간이 지났다면 다시 확인 화면으로 이동
+        if (!isSettingsVerified(session)) {
+            return "redirect:/mypage/settings/verify";
+        }
+
+        // 세션에 저장된 정보는 로그인 시점의 정보일 수 있으므로
+        // 회원 번호를 이용해 DB에서 최신 정보를 다시 조회
+        Member member = memberService.findById(loginMember.getMemberNo());
+
+        model.addAttribute("member", member);
+        model.addAttribute("loginMember", member);
+
+        return "mypage/settings";
+    }
+
+    // 계정 설정에 접근하기 전 비밀번호 재확인 화면을 표시
+    @GetMapping("/settings/verify")
+    public String settingVerificationPage(HttpSession session) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+
+        if (loginMember == null) {
+            return "redirect:/login";
+        }
+
+        // 이미 최근 10분 안에 인증을 완료했다면 비밀번호 확인 페이지를 다시 거치지 않고 계정 설정 페이지로 이동
+        if (isSettingsVerified(session)) {
+            return "redirect:/mypage/settings";
+        }
+
+        return "mypage/settings-verify";
+    }
+
+
+    // 계정 설정 접근을 위한 현재 비밀번호 확인 요청을 처리
+    @PostMapping("/settings/verify")
+    public String verifySettingsPassword(@ModelAttribute SettingVerificationRequest request,
+                                         HttpSession session,
+                                         RedirectAttributes redirectAttributes) {
+        Member loginMember = getLoginMember(session);
+
+        if (loginMember == null) {
+            return "redirect:/login";
+        }
+
+        boolean matched = memberService.matchesPassword(loginMember.getMemberNo(), request.getPassword());
+
+        if (!matched) {
+            redirectAttributes.addFlashAttribute("errorMessage", "비밀번호가 일치하지 않습니다.");
+
+            return "redirect:/mypage/settings/verify";
+        }
+
+
+        // 비밀번호 확인에 성공하면 계정 설정 접근 인증 상태와 인증 시간을 세션에 저장
+        session.setAttribute(SETTING_VERIFIED_KEY, true);
+        session.setAttribute(SETTING_VERIFIED_AT_KEY, LocalDateTime.now());
+
+        return "redirect:/mypage/settings";
+    }
+
+    // 계정 설정 접근 인증이 아직 유효한지 확인
+    // 인증 여부가 true이고
+    // 인증 완료 후 10분이 지나지 않은 경우에만 true를 반환
+
+    private boolean isSettingsVerified(HttpSession session) {
+        Boolean verified = (Boolean) session.getAttribute(SETTING_VERIFIED_KEY);
+
+        LocalDateTime verifiedAt = (LocalDateTime) session.getAttribute(SETTING_VERIFIED_AT_KEY);
+
+        if (!Boolean.TRUE.equals(verified) || verifiedAt == null) {
+            return false;
+        }
+
+        long elapsedMinutes = Duration.between(verifiedAt,LocalDateTime.now()).toMinutes();
+
+        // 인증 시간이 만료되면 세션에 남은 인증 정보도 함께 제거한다
+        if (elapsedMinutes >= SETTING_VERIFICATION_MINUTES) {
+            clearSettingsVerification(session);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    // 계정 설정 화면에서 닉네임 변경 요청을 처리
+    @PostMapping("/settings/nickname")
+    public String updateNickname(@ModelAttribute NicknameUpdateRequest request,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        Member loginMember = getLoginMember(session);
+
+        if (loginMember == null) {
+            return "redirect:/login";
+        }
+
+        if (!isSettingsVerified(session)) {
+            return "redirect:/mypage/settings/verify";
+        }
+
+        try {
+            Member updateMember = memberService.updateNickname(loginMember.getMemberNo(), request);
+
+            // 헤더에서 세션 회원의 닉네임을 사용하고 있으므로 변경된 객체로 로그인 세션을 갱신
+            session.setAttribute("loginMember", updateMember);
+            redirectAttributes.addFlashAttribute("successMessage", "닉네임이 변경되었습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("nicknameError", e.getMessage());
+        }
+        return "redirect:/mypage/settings";
+    }
+
+    // 계정 설정 화면에서 비밀번호 변경 요청을 처리
+
+    public String updatePassword(@ModelAttribute PasswordUpdateRequest request,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        Member loginMember = getLoginMember(session);
+
+        if (loginMember == null) {
+            return "redirect:/login";
+        }
+
+        if (!isSettingsVerified(session)) {
+            return "redirect:/mypage/settings/verify";
+        }
+
+        try {
+            Member updatedMember = memberService.updatePassword(loginMember.getMemberNo(), request);
+            session.setAttribute("loginMember", updatedMember);
+
+            // 비밀번호 변경 후에는 계정 설정 접근 인증을 제거한다
+            // 다시 설정 페이지에 접근할 떄 새 비밀번호로 인증하게 된다.
+            clearSettingsVerification(session);
+
+            redirectAttributes.addFlashAttribute("successMessage", "비밀번호가 변경되었습니다. 새 비밀번호로 다시 확인해주세요.");
+
+            return "redirect:/mypage/settings/verify";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
+
+            return "redirect:/mypage/settings";
+        }
+    }
+
+
+
+
+
+
+    // 계정 설정 접근 인증 정보를 세션에서 제거
+    private void clearSettingsVerification(HttpSession session) {
+        session.removeAttribute(SETTING_VERIFIED_KEY);
+        session.removeAttribute(SETTING_VERIFIED_AT_KEY);
+    }
+
 
     // 세션에서 로그인 회원 객체를 가져오는 공통 메서드
 

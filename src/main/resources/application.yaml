@@ -63,6 +63,27 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 25MB
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+
+    region:
+      static: ap-northeast-2
+
+app:
+  s3:
+    bucket: growlog-media-2026
+
+server:
+  port: 8080
+  address: 0.0.0.0
 
 
 

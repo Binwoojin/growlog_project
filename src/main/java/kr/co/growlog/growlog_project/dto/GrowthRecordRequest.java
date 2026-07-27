@@ -5,6 +5,9 @@ package kr.co.growlog.growlog_project.dto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,5 +21,8 @@ public class GrowthRecordRequest {
     private String difficulty; // 체감 난이도
     private String solution; // 문제 해결 과정
     private String retrospective; // 최종 회고
+
+    private List<MultipartFile> imageFile; // 업로드한 이미지 파일, 이미지를 여러 장 허용해야 하기 때문에 리스트로 구현
+    private String youtubeUrl; // 사용자가 입력한 Youtube 영상 주소
 
 }

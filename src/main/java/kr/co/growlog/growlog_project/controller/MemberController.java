@@ -3,6 +3,7 @@ package kr.co.growlog.growlog_project.controller;
 import jakarta.servlet.http.HttpSession;
 import kr.co.growlog.growlog_project.dto.DuplicateCheckResponse;
 import kr.co.growlog.growlog_project.dto.JoinRequest;
+import kr.co.growlog.growlog_project.entity.Member;
 import kr.co.growlog.growlog_project.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -49,5 +50,45 @@ public class MemberController {
         }
 
         return new DuplicateCheckResponse(false, "사용 가능한 닉네임입니다.");
+    }
+
+    /**
+     * 계정 설정에서 사용하는 닉네임 중복 확인
+     *
+     * 현재 로그인한 회원은 중복 검사에서 제외한다.
+     */
+    @ResponseBody
+    @GetMapping("/api/members/check-nickname-update")
+    public DuplicateCheckResponse checkNicknameForUpdate(
+            @RequestParam("nickname") String nickname,
+            HttpSession session) {
+
+        Member loginMember =
+                (Member) session.getAttribute("loginMember");
+
+        if (loginMember == null) {
+            return new DuplicateCheckResponse(
+                    true,
+                    "로그인이 필요합니다."
+            );
+        }
+
+        boolean duplicated =
+                memberService.isNicknameDuplicatedExceptSelf(
+                        nickname,
+                        loginMember.getMemberNo()
+                );
+
+        if (duplicated) {
+            return new DuplicateCheckResponse(
+                    true,
+                    "이미 사용 중인 닉네임입니다."
+            );
+        }
+
+        return new DuplicateCheckResponse(
+                false,
+                "사용 가능한 닉네임입니다."
+        );
     }
 }

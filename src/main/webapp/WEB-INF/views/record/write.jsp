@@ -395,6 +395,126 @@
 
                 </div>
 
+                <!-- ========================================
+     미디어 첨부
+======================================== -->
+
+                <section class="record_form_group record_media_group">
+
+                    <!-- 미디어 영역 제목 -->
+                    <div class="record_media_heading">
+
+                        <div>
+                            <h3 class="record_form_label">
+                                사진 및 영상
+                            </h3>
+
+                            <p class="record_form_help">
+                                오늘의 기록과 함께 남기고 싶은 사진이나 YouTube 영상을 추가해 보세요.
+                            </p>
+                        </div>
+
+                        <span class="record_optional_badge">
+            선택
+        </span>
+
+                    </div>
+
+
+                    <!-- ========================================
+                         이미지 첨부
+                    ======================================== -->
+
+                    <div class="record_media_item">
+
+                        <label
+                                for="imageFiles"
+                                class="record_media_item_label"
+                        >
+            <span class="record_media_icon">
+                📷
+            </span>
+
+                            <span>
+                <strong>
+                    사진 추가
+                </strong>
+
+                <small>
+                    성장 과정이나 기억하고 싶은 순간을 사진으로 남겨보세요.
+                </small>
+            </span>
+                        </label>
+
+                        <input
+                                type="file"
+                                id="imageFiles"
+                                name="imageFiles"
+                                class="record_media_file_input"
+                                accept="image/jpeg, image/png, image/webp"
+                                multiple
+                        >
+
+                        <p class="record_form_help">
+                            JPG, PNG, WEBP 형식의 이미지를 여러 장 선택할 수 있어요.
+                        </p>
+
+
+                        <!--
+                            JavaScript에서 선택한 이미지의 미리보기를 출력할 영역이다.
+                            이미지가 선택되지 않은 상태에서는 비어 있게 된다.
+                        -->
+                        <div
+                                class="record_image_preview_list"
+                                id="imagePreviewList"
+                        ></div>
+
+                    </div>
+
+
+                    <!-- ========================================
+                         YouTube 영상 첨부
+                    ======================================== -->
+
+                    <div class="record_media_item">
+
+                        <label
+                                for="youtubeUrl"
+                                class="record_media_item_label"
+                        >
+            <span class="record_media_icon">
+                ▶️
+            </span>
+
+                            <span>
+                <strong>
+                    YouTube 영상 추가
+                </strong>
+
+                <small>
+                    기록과 관련된 강의, 음악, 참고 영상을 연결할 수 있어요.
+                </small>
+            </span>
+                        </label>
+
+                        <input
+                                type="url"
+                                id="youtubeUrl"
+                                name="youtubeUrl"
+                                class="record_form_input"
+                                maxlength="500"
+                                placeholder="https://www.youtube.com/watch?v=..."
+                        >
+
+                        <p class="record_form_help">
+                            일반 영상, 단축 주소, Shorts 주소를 입력할 수 있어요.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
 
                 <!-- ========================================
                      오늘 배운 점

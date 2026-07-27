@@ -41,11 +41,17 @@ public interface GrowthRecordRepository extends JpaRepository<GrowthRecord, Long
     @EntityGraph(attributePaths = "goal")
     Optional<GrowthRecord> findByRecordNumAndMemberMemberNo(Long recordNum, Long memberNo);
 
-    // 회원이 작성한 전체 성장 기록 개수 조회
+    // 회원이 작성한 성장 기록 개수 조회
     long countByMemberMemberNo(Long memberNo);
 
     // 특정 회원이 지정된 기간에 작성한 성장 기록 개수를 조회
     long countByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(Long memberNo, LocalDateTime startDateTime, LocalDateTime endDateTime);
+
+    // 특정 회원이 지정된 기간에 작성한 성장 기록을 조회
+    // 출석은 성장 기록의 작성 날짜를 기준으로 계산하므로
+    // 월간 달력이나 연속 출석 계산에 사용
+    List<GrowthRecord> findByMemberMemberNoAndCreatedAtBetweenOrderByCreatedAtAsc(Long memberNo, LocalDateTime startDateTime, LocalDateTime endDateTime);
+
 
     // 특정 회원이 지정된 기간에 목표를 등록했는지 확인
     // 오늘 목표 등록 여부를 확인할 때 사용

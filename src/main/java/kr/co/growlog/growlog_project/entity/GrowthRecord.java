@@ -7,6 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 // 성장 기록 Entity
 
@@ -94,5 +96,17 @@ public class GrowthRecord {
         return createdAt.format(DateTimeFormatter.ofPattern("MM.dd"));
     }
 
+    /**
+     * 현재 성장기록에 첨부된 미디어 목록
+     *
+     * 한 개의 성장기록에는 여러 개의 이미지와
+     * Youtube 영상이 등록될 수 있다.
+     *
+     * mappedBy의 growthRecord는 Media Entity에 선언된
+     * 필드 이름과 정확하게 일치해야 한다.
+     */
+    @OneToMany(mappedBy = "growthRecord", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    private List<Media> mediaList = new ArrayList<>();
 
 }
