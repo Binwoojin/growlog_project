@@ -24,6 +24,7 @@
     <script defer
             src="${pageContext.request.contextPath}/js/attendance.js">
     </script>
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>

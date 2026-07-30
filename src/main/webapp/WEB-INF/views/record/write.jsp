@@ -31,9 +31,10 @@
     <!-- 성장 기록 작성 CSS -->
     <link
             rel="stylesheet"
-            href="${contextPath}/css/record.css"
+            href="${contextPath}/css/record.css?v=20260728-2"
     >
 
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>
@@ -222,6 +223,7 @@
             <form
                     action="${contextPath}/record/write"
                     method="post"
+                    enctype="multipart/form-data"
                     class="record_write_form"
                     id="recordWriteForm"
             >
@@ -431,9 +433,16 @@
                                 for="imageFiles"
                                 class="record_media_item_label"
                         >
-            <span class="record_media_icon">
-                📷
-            </span>
+                            <%-- 운영체제별 이모지 차이 없이 표시되는 사진 첨부 아이콘입니다. --%>
+                            <span class="record_media_icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 7.5h3l1.4-2h7.2l1.4 2h3v11H4v-11Z"
+                                          stroke="currentColor" stroke-width="1.8"
+                                          stroke-linejoin="round"/>
+                                    <circle cx="12" cy="13" r="3.5"
+                                            stroke="currentColor" stroke-width="1.8"/>
+                                </svg>
+                            </span>
 
                             <span>
                 <strong>
@@ -482,9 +491,15 @@
                                 for="youtubeUrl"
                                 class="record_media_item_label"
                         >
-            <span class="record_media_icon">
-                ▶️
-            </span>
+                            <%-- URL 입력 기능을 직관적으로 나타내는 영상 재생 아이콘입니다. --%>
+                            <span class="record_media_icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <rect x="3.5" y="5" width="17" height="14" rx="3"
+                                          stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="m10 9 5 3-5 3V9Z"
+                                          fill="currentColor"/>
+                                </svg>
+                            </span>
 
                             <span>
                 <strong>

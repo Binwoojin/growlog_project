@@ -4,6 +4,7 @@ package kr.co.growlog.growlog_project.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,8 +36,8 @@ public class Category {
     @Column(name = "CREATED_AT", nullable = false, updatable = false)
     private LocalDateTime createdAt; // 카테고리 생성일
 
-    @CreationTimestamp
-    @Column(name = "UPDATED_AT", nullable = false, updatable = false)
+    @UpdateTimestamp
+    @Column(name = "UPDATED_AT", nullable = false)
     private LocalDateTime updatedAt; // 카테고리 수정일
 
 

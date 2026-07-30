@@ -1,5 +1,6 @@
 package kr.co.growlog.growlog_project.service;
 
+import kr.co.growlog.growlog_project.dto.MediaResponse;
 import kr.co.growlog.growlog_project.entity.GrowthRecord;
 import kr.co.growlog.growlog_project.entity.Media;
 import kr.co.growlog.growlog_project.entity.MediaType;
@@ -8,10 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-
-import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +33,6 @@ public class MediaService {
 
     private final MediaRepository mediaRepository;
     private final S3FileStorageService s3FileStorageService;
-    private final S3Presigner s3Presigner;
 
     /**
      * YouTube URL에서 11자리 영상 ID를 추출하기 위한 정규식
@@ -140,6 +139,96 @@ public class MediaService {
         return mediaRepository.countByGrowthRecordRecordNum(recordNum);
     }
 
+    public long countImageMediaByRecord(Long recordNum) {
+        return findMediaByRecord(recordNum).stream()
+                .filter(media -> media.getMediaType() == MediaType.IMAGE)
+                .count();
+    }
+
+    public int findNextSortOrder(Long recordNum) {
+        return findMediaByRecord(recordNum).stream()
+                .map(Media::getSortOrder)
+                .filter(java.util.Objects::nonNull)
+                .max(Integer::compareTo)
+                .map(order -> order + 1)
+                .orElse(0);
+    }
+
+    public List<Media> findMediaToDelete(Long recordNum, List<Long> mediaNums) {
+        validateRecordNum(recordNum);
+
+        if (mediaNums == null || mediaNums.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> requestedMediaNums = new HashSet<>(mediaNums);
+        if (requestedMediaNums.contains(null)) {
+            throw new IllegalArgumentException("삭제할 미디어 번호가 올바르지 않습니다.");
+        }
+
+        List<Media> mediaToDelete = mediaRepository.findAllById(requestedMediaNums);
+        boolean containsOtherRecordMedia = mediaToDelete.size() != requestedMediaNums.size()
+                || mediaToDelete.stream().anyMatch(media ->
+                        !recordNum.equals(media.getGrowthRecord().getRecordNum()));
+
+        if (containsOtherRecordMedia) {
+            throw new IllegalArgumentException("삭제할 수 없는 미디어가 포함되어 있습니다.");
+        }
+
+        return mediaToDelete;
+    }
+
+    @Transactional
+    public void deleteMediaList(List<Media> mediaList) {
+        if (mediaList == null || mediaList.isEmpty()) {
+            return;
+        }
+
+        for (Media media : mediaList) {
+            if (media.getMediaType() == MediaType.IMAGE
+                    && media.getMediaUrl() != null
+                    && !media.getMediaUrl().isBlank()) {
+                s3FileStorageService.deleteImage(media.getMediaUrl());
+            }
+        }
+
+        mediaRepository.deleteAll(mediaList);
+        mediaRepository.flush();
+    }
+
+    /**
+     * 특정 성장기록에 첨부된 미디어를 조회
+     *
+     * CB에 저장된 S3 Object Key를 Presigned URL로 변환한 뒤
+     * 상세 페이지에서 사용할 DTO 목록으로 반환한다.
+     */
+    public List<MediaResponse> findMediaByGrowthRecord(Long recordNum) {
+        List<Media> mediaList = mediaRepository.findByGrowthRecordRecordNumOrderBySortOrderAsc(recordNum);
+
+        return mediaList.stream().map(this::convertToMediaResponse).toList();
+    }
+
+    /**
+     * Media Entity를 화면 출력용 DTO로 변환
+     */
+    private MediaResponse convertToMediaResponse(Media media) {
+        String mediaUrl = null;
+
+        /*
+         * 이미지인 경우 DB에 저장된 Object Key를 사용하여 일정 시간 동안 접근 가능한
+         * Presigned URL을 그대로 사용할 수 있다.
+         */
+        if (media.getMediaType() == MediaType.IMAGE) {
+            mediaUrl = s3FileStorageService.createPresignedUrl(media.getMediaUrl());
+        }
+
+        if (media.getMediaType() == MediaType.YOUTUBE) {
+            mediaUrl = "https://www.youtube.com/embed/" + media.getYoutubeVideoId();
+        }
+
+        return new MediaResponse(media.getMediaNum(), media.getMediaType(), mediaUrl, media.getSortOrder());
+    }
+
     /**
      * 미디어 번호를 기준으로 미디어 한 건을 삭제
      * <p>
@@ -237,7 +326,7 @@ public class MediaService {
             throw new IllegalArgumentException("YouTube 영상 ID가 필요합니다.");
         }
 
-        return "https://img.youtube.com/vi" + youtubeVideoId + "/hqdefault.jpg";
+        return "https://img.youtube.com/vi/" + youtubeVideoId + "/hqdefault.jpg";
     }
 
     /**
@@ -360,6 +449,16 @@ public class MediaService {
      */
     @Transactional
     public List<Media> uploadAndSaveImageMediaList(GrowthRecord growthRecord, List<MultipartFile> imageFiles, Long memberNo) {
+        return uploadAndSaveImageMediaList(growthRecord, imageFiles, memberNo, 0);
+    }
+
+    @Transactional
+    public List<Media> uploadAndSaveImageMediaList(
+            GrowthRecord growthRecord,
+            List<MultipartFile> imageFiles,
+            Long memberNo,
+            int startSortOrder
+    ) {
         validateGrowthRecord(growthRecord);
 
         if (imageFiles == null || imageFiles.isEmpty()) {
@@ -387,7 +486,11 @@ public class MediaService {
                 String objectKey = s3FileStorageService.uploadImage(imageFile, "records", memberNo);
                 uploadObjectKeys.add(objectKey);
 
-                Media saveMedia = saveImageMedia(growthRecord, objectKey, index);
+                Media saveMedia = saveImageMedia(
+                        growthRecord,
+                        objectKey,
+                        startSortOrder + index
+                );
                 saveMediaList.add(saveMedia);
             }
 

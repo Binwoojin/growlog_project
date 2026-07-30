@@ -6,6 +6,8 @@ import kr.co.growlog.growlog_project.dto.GrowthRecordRequest;
 import kr.co.growlog.growlog_project.entity.Goal;
 import kr.co.growlog.growlog_project.entity.GrowthRecord;
 import kr.co.growlog.growlog_project.entity.Member;
+import kr.co.growlog.growlog_project.entity.Media;
+import kr.co.growlog.growlog_project.entity.MediaType;
 import kr.co.growlog.growlog_project.repository.GoalRepository;
 import kr.co.growlog.growlog_project.repository.GrowthRecordRepository;
 import kr.co.growlog.growlog_project.repository.MemberRepository;
@@ -16,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -26,6 +29,7 @@ public class GrowthRecordService {
     private final GrowthRecordRepository growthRecordRepository;
     private final MemberRepository memberRepository;
     private final GoalRepository goalRepository;
+    private final MediaService mediaService;
 
     private static final int MAX_IMAGE_COUNT = 5; // 성장기록 하나에 첨부할 수 있는 최대 이미지 개수
 
@@ -55,7 +59,7 @@ public class GrowthRecordService {
         validateRequest(request);
 
         // 첨부 이미지가
-        validateImageFiles(request.getImageFile());
+        validateImageFiles(request.getImageFiles());
 
         // 성장 기록 Entity 생성
         GrowthRecord growthRecord = GrowthRecord.builder()
@@ -66,7 +70,34 @@ public class GrowthRecordService {
                 .solution(normalizeText(request.getSolution()))
                 .retrospective(normalizeText(request.getRetrospective())).build();
 
-        return growthRecordRepository.save(growthRecord);
+        GrowthRecord savedRecord = growthRecordRepository.save(growthRecord);
+
+        List<MultipartFile> imageFiles = request.getImageFiles();
+        int imageCount = imageFiles == null
+                ? 0
+                : (int) imageFiles.stream()
+                        .filter(file -> file != null && !file.isEmpty())
+                        .count();
+
+        if (request.getYoutubeUrl() != null && !request.getYoutubeUrl().isBlank()) {
+            mediaService.extractYoutubeVideoId(request.getYoutubeUrl());
+        }
+
+        mediaService.uploadAndSaveImageMediaList(
+                savedRecord,
+                imageFiles,
+                memberNo
+        );
+
+        if (request.getYoutubeUrl() != null && !request.getYoutubeUrl().isBlank()) {
+            mediaService.saveYoutubeMedia(
+                    savedRecord,
+                    request.getYoutubeUrl(),
+                    imageCount
+            );
+        }
+
+        return savedRecord;
     }
     
     // 성장 기록 목록 조회
@@ -134,6 +165,7 @@ public class GrowthRecordService {
     public GrowthRecord updateRecord(Long recordNum, Long memberNo, GrowthRecordRequest request) {
         // 필수 입력값 검증
         validateRequest(request);
+        validateImageFiles(request.getImageFiles());
 
         // 성장 기록 번호와 로그인 회원 번호를 함께 조회하여
         // 다른 회원의 기록을 수정하지 못하도록 한다.
@@ -150,6 +182,34 @@ public class GrowthRecordService {
                     .orElseThrow(() -> new IllegalArgumentException("연결할 목표를 찾을 수 없습니다."));
         }
 
+        List<MultipartFile> imageFiles = request.getImageFiles();
+        int newImageCount = imageFiles == null
+                ? 0
+                : (int) imageFiles.stream()
+                        .filter(file -> file != null && !file.isEmpty())
+                        .count();
+        long existingImageCount = mediaService.countImageMediaByRecord(recordNum);
+        List<Media> mediaToDelete = mediaService.findMediaToDelete(
+                recordNum,
+                request.getDeleteMediaNums()
+        );
+        long deletedImageCount = mediaToDelete.stream()
+                .filter(media -> media.getMediaType() == MediaType.IMAGE)
+                .count();
+
+        if (existingImageCount - deletedImageCount + newImageCount > MAX_IMAGE_COUNT) {
+            throw new IllegalArgumentException(
+                    "기존 사진을 포함해 최대 " + MAX_IMAGE_COUNT + "장까지 등록할 수 있습니다."
+            );
+        }
+
+        String youtubeUrl = request.getYoutubeUrl();
+        if (youtubeUrl != null && !youtubeUrl.isBlank()) {
+            mediaService.extractYoutubeVideoId(youtubeUrl);
+        }
+
+        int nextSortOrder = mediaService.findNextSortOrder(recordNum);
+
         // 수정 요청값을 기존 Entity에 반영
         growthRecord.setGoal(goal);
         growthRecord.setTitle(request.getTitle().trim());
@@ -158,6 +218,23 @@ public class GrowthRecordService {
         growthRecord.setDifficulty(normalizeText(request.getDifficulty()));
         growthRecord.setSolution(normalizeText(request.getSolution()));
         growthRecord.setRetrospective(normalizeText(request.getRetrospective()));
+
+        mediaService.deleteMediaList(mediaToDelete);
+
+        mediaService.uploadAndSaveImageMediaList(
+                growthRecord,
+                imageFiles,
+                memberNo,
+                nextSortOrder
+        );
+
+        if (youtubeUrl != null && !youtubeUrl.isBlank()) {
+            mediaService.saveYoutubeMedia(
+                    growthRecord,
+                    youtubeUrl,
+                    nextSortOrder + newImageCount
+            );
+        }
 
         // 영속 상태의 Entity이므로 트랜젝션 종료 시,
         // JPA 변경 감지로 UPDATE 쿼리가 실행
@@ -177,6 +254,8 @@ public class GrowthRecordService {
         // 조회되지 않으면 예외를 발생시켜 삭제를 중단
         GrowthRecord growthRecord = growthRecordRepository.findByRecordNumAndMemberMemberNo(recordNum, memberNo)
                 .orElseThrow(() -> new IllegalArgumentException("삭제할 성장 기록을 찾을 수 없습니다."));
+
+        mediaService.deleteAllMediaByRecord(recordNum);
 
         // 확인된 성장 기록 삭제
         growthRecordRepository.delete(growthRecord);
@@ -236,5 +315,24 @@ public class GrowthRecordService {
         return value.trim();
     }
 
+    /**
+     * 로그인 회원이 선택한 달에 작성한 성장 기록을 조회한다.
+     */
+    public List<GrowthRecord> findRecordsByMemberAndMonth(Long memberNo, YearMonth yearMonth) {
+        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        return growthRecordRepository.findByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(memberNo, startOfMonth, startOfNextMonth);
+    }
+
+    /**
+     * 로그인 회원이 선택한 달에 작성한 성장 기록 개수를 조회한다.
+     */
+    public long countRecordByMemberAndMonth(Long memberNo, YearMonth yearMonth) {
+        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        return growthRecordRepository.countByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(memberNo, startOfMonth, startOfNextMonth);
+    }
 
 }

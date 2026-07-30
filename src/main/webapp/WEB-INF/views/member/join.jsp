@@ -4,6 +4,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <%-- [반응형 필수] 모바일 브라우저가 실제 기기 폭을 기준으로 렌더링하도록 합니다. --%>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입 | GrowLog</title>
     <!-- Common CSS -->
     <link rel="stylesheet"
@@ -12,6 +14,7 @@
     <!-- Join CSS -->
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/join.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 <body class="join_page">
 

@@ -16,6 +16,7 @@
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/settings-verify.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>

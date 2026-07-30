@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -17,6 +18,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -25,6 +27,11 @@ public class S3FileStorageService {
 
     // 업로드할 수 있는 이미지의 최대 크기 : 5MB
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+    );
 
     // AWS S3와 통신하기 위한 객체
     private final S3Client s3Client;
@@ -103,7 +110,13 @@ public class S3FileStorageService {
              * AWS 권한, 버킷 이름, 네트워크 문제 등으로
              * S3 업로드가 실패한 경우
              */
-            throw new IllegalArgumentException("S3 이미지 업로드에 실패했습니다,", e);
+            throw new IllegalStateException(createS3ErrorMessage("업로드", e), e);
+        } catch (SdkClientException e) {
+            throw new IllegalStateException(
+                    "AWS 자격 증명 또는 네트워크 문제로 S3 이미지 업로드에 실패했습니다. 원인: "
+                            + e.getMessage(),
+                    e
+            );
         } catch (IOException e) {
             /**
              * MultipartFile에서 파일 데이터를 읽는 과정에서
@@ -188,8 +201,8 @@ public class S3FileStorageService {
         // 3. 이미지 파일인지 확인
         String contentType = file.getContentType();
 
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException("JPG, PNG, WEBP 이미지 파일만 업로드할 수 있습니다.");
         }
 
         // 4. 최대 업로드 용량 검사 [ 현재는 5MB 제한 ]
@@ -249,7 +262,12 @@ public class S3FileStorageService {
                     .build();
             s3Client.deleteObject(deleteObjectRequest);
         } catch (S3Exception e) {
-            throw new IllegalArgumentException("S3 이미지 삭제에 실패했습니다.", e);
+            throw new IllegalStateException(createS3ErrorMessage("삭제", e), e);
+        } catch (SdkClientException e) {
+            throw new IllegalStateException(
+                    "AWS 자격 증명 또는 네트워크 문제로 S3 이미지 삭제에 실패했습니다.",
+                    e
+            );
         }
     }
 
@@ -310,8 +328,13 @@ public class S3FileStorageService {
              */
 
             return presignedRequest.url().toString();
-        } catch (RuntimeException e) {
-            throw new IllegalArgumentException("S3 이미지 접근 URL 생성에 실패했습니다.", e);
+        } catch (S3Exception e) {
+            throw new IllegalStateException(createS3ErrorMessage("접근 URL 생성", e), e);
+        } catch (SdkClientException e) {
+            throw new IllegalStateException(
+                    "AWS 자격 증명을 찾지 못해 S3 이미지 접근 URL을 생성하지 못했습니다.",
+                    e
+            );
         }
     }
 
@@ -321,5 +344,13 @@ public class S3FileStorageService {
         if (objectKey == null || objectKey.isBlank()) {
             throw new IllegalArgumentException("Object Key가 존재하지 않습니다.");
         }
+    }
+
+    private String createS3ErrorMessage(String operation, S3Exception exception) {
+        String awsMessage = exception.awsErrorDetails() == null
+                ? exception.getMessage()
+                : exception.awsErrorDetails().errorMessage();
+
+        return "S3 이미지 " + operation + "에 실패했습니다. AWS 응답: " + awsMessage;
     }
 }

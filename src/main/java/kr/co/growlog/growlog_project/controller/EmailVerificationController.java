@@ -7,6 +7,7 @@ import kr.co.growlog.growlog_project.dto.EmailVerifyRequest;
 import kr.co.growlog.growlog_project.repository.MemberRepository;
 import kr.co.growlog.growlog_project.service.EmailVerificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
+@Slf4j
 @RestController
 @RequestMapping("/api/email")
 public class EmailVerificationController {
@@ -56,12 +58,11 @@ public class EmailVerificationController {
             );
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("이메일 인증번호 발송에 실패했습니다. email={}", email, e);
 
             return new EmailVerificationResponse(
                     false,
-                    "이메일 발송에 실패했습니다: "
-                            + e.getMessage()
+                    "이메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요."
             );
         }
     }

@@ -11,9 +11,7 @@ import kr.co.growlog.growlog_project.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.temporal.TemporalAdjuster;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
@@ -192,5 +190,28 @@ public class GoalService {
         goalRepository.delete(goal);
     }
 
+    /**
+     * 로그인 회원이 선택한 달에 등록한 목표를 조회
+     *
+     * @param memberNo 로그인 회원 번호
+     * @param yearMonth 조회할 연, 월
+     * @return 선택한 달에 등록한 목표 목록
+     */
+    public List<Goal> findGoalsByMemberAndMonth(Long memberNo, YearMonth yearMonth) {
+        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        return goalRepository.findByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(memberNo, startOfMonth,startOfNextMonth);
+    }
+
+    /**
+     * 로그인 회원이 선택한 달에 등록한 목표 개수를 조회
+     */
+    public long countGoalsByMemberAndMonth(Long memberNo, YearMonth yearMonth) {
+        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        return goalRepository.countByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(memberNo, startOfMonth, startOfNextMonth);
+    }
 
 }

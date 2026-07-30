@@ -35,6 +35,7 @@
             rel="stylesheet"
             href="${contextPath}/css/record.css"
     >
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>
@@ -194,6 +195,62 @@
 
         </section>
 
+        <c:if test="${not empty mediaList}">
+            <section class="record_detail_section record_detail_media_section">
+                <span class="record_detail_section_label">
+                    MOMENTS
+                </span>
+
+                <div class="record_detail_media_heading">
+                    <h2 class="record_detail_section_title">
+                        함께 남긴 순간
+                    </h2>
+                    <span class="record_detail_media_count">
+                        <c:out value="${fn:length(mediaList)}" />개
+                    </span>
+                </div>
+
+                <div class="record_detail_media_grid">
+                    <c:forEach var="media" items="${mediaList}" varStatus="status">
+                        <c:choose>
+                            <c:when test="${media.mediaType eq 'IMAGE'}">
+                                <button
+                                        type="button"
+                                        class="record_detail_media_item record_detail_image_button"
+                                        data-record-image="${media.mediaUrl}"
+                                        data-record-image-alt="성장 기록 첨부 사진 ${status.count}"
+                                        aria-label="첨부 사진 ${status.count} 크게 보기"
+                                >
+                                    <img
+                                            src="${media.mediaUrl}"
+                                            alt="성장 기록 첨부 사진 ${status.count}"
+                                            loading="lazy"
+                                    >
+                                    <span class="record_detail_image_zoom" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+                                            <path d="m16 16 4 4M11 8v6M8 11h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </c:when>
+                            <c:when test="${media.mediaType eq 'YOUTUBE'}">
+                                <div class="record_detail_media_item record_detail_video">
+                                    <iframe
+                                            src="${media.mediaUrl}"
+                                            title="성장 기록 YouTube 영상 ${status.count}"
+                                            loading="lazy"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowfullscreen
+                                    ></iframe>
+                                </div>
+                            </c:when>
+                        </c:choose>
+                    </c:forEach>
+                </div>
+            </section>
+        </c:if>
+
 
         <%-- ========================================
              오늘 배운 내용
@@ -308,6 +365,15 @@
     </article>
 
 </main>
+
+<dialog class="record_image_dialog" data-record-image-dialog aria-label="첨부 사진 크게 보기">
+    <button type="button" class="record_image_dialog_close" data-record-image-close aria-label="사진 닫기">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+    <img src="" alt="" data-record-image-preview>
+</dialog>
 
 
 <%-- ========================================

@@ -19,6 +19,7 @@
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/goal.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body class="goal_page goal_edit_page">

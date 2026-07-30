@@ -2,9 +2,81 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     initGoalProgressBars();
+    initGoalListFilters();
     initGoalFormValidation();
     initGoalTextCounters();
 });
+
+/**
+ * [React 전환 준비] GoalPage 루트 안에서 목표 상태 필터와 파생 개수를 관리한다.
+ */
+function initGoalListFilters() {
+    const root = document.querySelector(
+        '[data-component="GoalPage"]'
+    );
+
+    if (!root) {
+        return;
+    }
+
+    const filterButtons = root.querySelectorAll(
+        "[data-goal-filter]"
+    );
+    const goalCards = root.querySelectorAll(
+        "[data-goal-filter-status]"
+    );
+    const countElement = root.querySelector(
+        "[data-visible-goal-count]"
+    );
+    const labelElement = root.querySelector(
+        "[data-goal-filter-label]"
+    );
+    const emptyState = root.querySelector(
+        "[data-goal-filter-empty]"
+    );
+
+    function applyFilter(selectedFilter) {
+        let visibleCount = 0;
+
+        goalCards.forEach((card) => {
+            const isVisible =
+                selectedFilter === "ALL"
+                || card.dataset.goalFilterStatus === selectedFilter;
+
+            card.hidden = !isVisible;
+
+            if (isVisible) {
+                visibleCount += 1;
+            }
+        });
+
+        if (countElement) {
+            countElement.textContent = String(visibleCount);
+        }
+
+        if (emptyState) {
+            emptyState.hidden = visibleCount !== 0;
+        }
+    }
+
+    filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            filterButtons.forEach((item) => {
+                const isSelected = item === button;
+
+                item.classList.toggle("active", isSelected);
+                item.setAttribute("aria-pressed", String(isSelected));
+            });
+
+            if (labelElement) {
+                labelElement.textContent =
+                    button.dataset.filterLabel || "전체";
+            }
+
+            applyFilter(button.dataset.goalFilter || "ALL");
+        });
+    });
+}
 
 /**
  * 목표 목록의 진행률 바를 0%부터 실제 진행률까지
@@ -280,9 +352,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalCategory =
         document.getElementById("goalModalCategory");
 
-    const modalCategoryIcon =
-        document.getElementById("goalModalCategoryIcon");
-
     const modalCategoryName =
         document.getElementById("goalModalCategoryName");
 
@@ -309,12 +378,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalDeleteForm =
         document.getElementById("goalModalDeleteForm");
 
+    /* [접근성 개선] 모달을 닫은 뒤 원래 선택한 목표 카드로 포커스를 돌려준다. */
+    let lastFocusedCard = null;
+
     /**
      * 목표 상세 모달을 연다.
      *
      * @param {HTMLElement} card 선택한 목표 카드
      */
     const openGoalModal = (card) => {
+        lastFocusedCard = card;
 
         const {
             goalNum,
@@ -323,7 +396,6 @@ document.addEventListener("DOMContentLoaded", () => {
             goalProgress,
             goalStatus,
             goalCategoryName,
-            goalCategoryIcon,
             goalCategoryColor,
             goalStartDate,
             goalEndDate
@@ -337,8 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
             goalContent || "등록된 목표 내용이 없습니다.";
 
         // 카테고리
-        modalCategoryIcon.textContent =
-            goalCategoryIcon || "📌";
+        /* [아이콘 통일] 모달의 SVG 아이콘은 유지하고 사용자 데이터로 교체하지 않는다. */
 
         modalCategoryName.textContent =
             goalCategoryName || "기타";
@@ -395,6 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 모달 열기
         goalModal.classList.add("show");
+        goalModal.removeAttribute("inert");
 
         goalModal.setAttribute(
             "aria-hidden",
@@ -406,6 +478,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList.add(
             "modal_open"
         );
+
+        goalModal.querySelector(".goal_modal_close")?.focus();
     };
 
     /**
@@ -414,6 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeGoalModal = () => {
 
         goalModal.classList.remove("show");
+        goalModal.setAttribute("inert", "");
 
         goalModal.setAttribute(
             "aria-hidden",
@@ -423,6 +498,29 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList.remove(
             "modal_open"
         );
+
+        /*
+    * 타임라인에서 전달받은 openGoal 파라미터를 제거한다.
+    *
+    * 페이지를 새로고침하지 않고 현재 주소만 정리한다.
+    * 이후 새로고침해도 닫았던 모달이 다시 열리지 않는다.
+    */
+        const currentUrl =
+            new URL(window.location.href);
+
+        if (currentUrl.searchParams.has("openGoal")) {
+            currentUrl.searchParams.delete("openGoal");
+
+            window.history.replaceState(
+                {},
+                "",
+                currentUrl.pathname
+                + currentUrl.search
+                + currentUrl.hash
+            );
+        }
+
+        lastFocusedCard?.focus();
     };
 
     // 목표 카드 클릭 이벤트
@@ -466,6 +564,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
     });
+
+    /**
+     * 타임라인 등 다른 페이지에서 전달한 목표 번호를 확인하여
+     * 목표 목록 페이지가 열린 직후 해당 목표의 상세 모달을 자동으로 연다.
+     *
+     * 주소 예시:
+     * /goal/list?openGoal=15
+     */
+    const searchParams =
+        new URLSearchParams(window.location.search);
+
+    const openGoalNum =
+        searchParams.get("openGoal");
+
+    if (openGoalNum) {
+        /*
+         * 목표 목록 카드에는 data-goal-num 속성이 들어 있다.
+         *
+         * 전달받은 목표 번호와 동일한 카드를 찾아
+         * 기존 openGoalModal() 함수에 전달한다.
+         */
+        const targetGoalCard =
+            Array.from(goalCards).find(
+                (card) =>
+                    card.dataset.goalNum === openGoalNum
+            );
+
+        if (targetGoalCard) {
+            openGoalModal(targetGoalCard);
+        }
+    }
+
+
 
     // 닫기 버튼과 배경 클릭
     goalModal

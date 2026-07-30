@@ -19,6 +19,7 @@
     <!-- 비밀번호 찾기 전용 스타일 -->
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/find-password.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>

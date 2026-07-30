@@ -21,29 +21,47 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @Configuration
 public class S3Config {
 
-    /**
-     * application.yaml의 액세스 키 값을 읽는다.
-     */
-    @Value("${cloud.aws.credentials.access-key}")
+    @Value("${cloud.aws.credentials.access-key:}")
     private String accessKey;
 
-    /**
-     * application.yaml의 비밀 액세스 키 값을 읽는다.
-     */
-    @Value("${cloud.aws.credentials.secret-key}")
+    @Value("${cloud.aws.credentials.secret-key:}")
     private String secretKey;
 
     /**
+     * application.yaml의 액세스 키 값을 읽는다.
+     */
+    /**
+     * application.yaml의 비밀 액세스 키 값을 읽는다.
+     */
+    /**
      * application.yaml의 AWS 리전 값을 읽는다.
      */
-    @Value("${cloud.aws.region.static}")
+    @Value("${cloud.aws.region.static:ap-northeast-2}")
     private String region;
 
 
     // AWS 인증 정보를 찾는 Credentials Provider Bean
     @Bean
     public AwsCredentialsProvider awsCredentialsProvider() {
-        return DefaultCredentialsProvider.create();
+        boolean hasAccessKey = accessKey != null && !accessKey.isBlank();
+        boolean hasSecretKey = secretKey != null && !secretKey.isBlank();
+
+        if (hasAccessKey != hasSecretKey) {
+            throw new IllegalStateException(
+                    "AWS Access Key와 Secret Key는 반드시 함께 설정해야 합니다."
+            );
+        }
+
+        if (hasAccessKey) {
+            return StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(
+                            accessKey.trim(),
+                            secretKey.trim()
+                    )
+            );
+        }
+
+        return DefaultCredentialsProvider.builder().build();
     }
 
     /**
@@ -75,7 +93,7 @@ public class S3Config {
     @Bean
     public S3Presigner s3Presigner(AwsCredentialsProvider credentialsProvider) {
         return S3Presigner.builder()
-                .region(Region.AP_NORTHEAST_2)
+                .region(Region.of(region))
                 .credentialsProvider(credentialsProvider)
                 .build();
     }

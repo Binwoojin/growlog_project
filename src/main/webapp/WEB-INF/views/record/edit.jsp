@@ -32,6 +32,7 @@
             rel="stylesheet"
             href="${contextPath}/css/record.css"
     >
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>
@@ -212,6 +213,7 @@
                     class="record_write_form"
                     action="${contextPath}/record/${record.recordNum}/edit"
                     method="post"
+                    enctype="multipart/form-data"
             >
 
                 <%-- ========================================
@@ -390,6 +392,122 @@
                     ><c:out value="${record.content}" /></textarea>
 
                 </div>
+
+                <section class="record_form_group record_media_group">
+                    <div class="record_media_heading">
+                        <div>
+                            <h3 class="record_form_label">사진 및 영상</h3>
+                            <p class="record_form_help">
+                                삭제할 기존 첨부를 선택한 뒤 새 사진이나 YouTube 영상을 추가할 수 있습니다.
+                            </p>
+                        </div>
+                        <span class="record_optional_badge">선택</span>
+                    </div>
+
+                    <c:if test="${not empty mediaList}">
+                        <div class="record_existing_media">
+                            <strong class="record_existing_media_title">현재 첨부</strong>
+                            <div class="record_existing_media_grid">
+                                <c:forEach var="media" items="${mediaList}" varStatus="status">
+                                    <div class="record_existing_media_item"
+                                         data-existing-media-item
+                                         data-media-type="${media.mediaType}">
+                                    <c:choose>
+                                        <c:when test="${media.mediaType eq 'IMAGE'}">
+                                            <img
+                                                    src="${media.mediaUrl}"
+                                                    alt="기존 첨부 사진 ${status.count}"
+                                                    loading="lazy"
+                                            >
+                                        </c:when>
+                                        <c:when test="${media.mediaType eq 'YOUTUBE'}">
+                                            <iframe
+                                                    src="${media.mediaUrl}"
+                                                    title="기존 YouTube 영상 ${status.count}"
+                                                    loading="lazy"
+                                                    allowfullscreen
+                                            ></iframe>
+                                        </c:when>
+                                    </c:choose>
+                                        <label class="record_media_delete_toggle">
+                                            <input
+                                                    type="checkbox"
+                                                    name="deleteMediaNums"
+                                                    value="${media.mediaNum}"
+                                                    data-delete-media
+                                            >
+                                            <span class="record_media_delete_icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24" fill="none">
+                                                    <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"
+                                                          stroke="currentColor" stroke-width="1.8"
+                                                          stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </span>
+                                            <span data-delete-label>삭제</span>
+                                        </label>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <div class="record_media_item">
+                        <label for="imageFiles" class="record_media_item_label">
+                            <span class="record_media_icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 7.5h3l1.4-2h7.2l1.4 2h3v11H4v-11Z"
+                                          stroke="currentColor" stroke-width="1.8"
+                                          stroke-linejoin="round"/>
+                                    <circle cx="12" cy="13" r="3.5"
+                                            stroke="currentColor" stroke-width="1.8"/>
+                                </svg>
+                            </span>
+                            <span>
+                                <strong>사진 추가</strong>
+                                <small>기존 사진을 포함해 최대 5장까지 등록할 수 있습니다.</small>
+                            </span>
+                        </label>
+
+                        <input
+                                type="file"
+                                id="imageFiles"
+                                name="imageFiles"
+                                class="record_media_file_input"
+                                accept="image/jpeg, image/png, image/webp"
+                                data-existing-image-count="${existingImageCount}"
+                                data-max-image-count="5"
+                                multiple
+                        >
+                        <p class="record_form_help">
+                            <span data-current-image-count>${existingImageCount}</span>장 유지 예정 · JPG, PNG, WEBP 지원
+                        </p>
+                        <div class="record_image_preview_list" id="imagePreviewList"></div>
+                    </div>
+
+                    <div class="record_media_item">
+                        <label for="youtubeUrl" class="record_media_item_label">
+                            <span class="record_media_icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <rect x="3.5" y="5" width="17" height="14" rx="3"
+                                          stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="m10 9 5 3-5 3V9Z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <span>
+                                <strong>YouTube 영상 추가</strong>
+                                <small>일반 영상, 단축 주소, Shorts 주소를 입력할 수 있습니다.</small>
+                            </span>
+                        </label>
+                        <input
+                                type="url"
+                                id="youtubeUrl"
+                                name="youtubeUrl"
+                                class="record_form_input"
+                                maxlength="500"
+                                placeholder="https://www.youtube.com/watch?v=..."
+                        >
+                    </div>
+                </section>
 
 
                 <%-- ========================================

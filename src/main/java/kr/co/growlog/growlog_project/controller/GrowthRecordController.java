@@ -2,13 +2,14 @@ package kr.co.growlog.growlog_project.controller;
 
 // 성장 기록 화면과 요청을 처리하는 Controller
 
-import jakarta.servlet.http.HttpSession;
 import kr.co.growlog.growlog_project.dto.GrowthRecordRequest;
 import kr.co.growlog.growlog_project.entity.GrowthRecord;
-import kr.co.growlog.growlog_project.entity.Member;
+import kr.co.growlog.growlog_project.security.LoginMemberPrincipal;
 import kr.co.growlog.growlog_project.service.GoalService;
 import kr.co.growlog.growlog_project.service.GrowthRecordService;
+import kr.co.growlog.growlog_project.service.MediaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -22,20 +23,17 @@ public class GrowthRecordController {
 
     private final GrowthRecordService growthRecordService;
     private final GoalService goalService;
+    private final MediaService mediaService;
 
     // 성장 기록 목록
 
     // 로그인한 회원의 성장 기록 목록 페이지로 이동
     @GetMapping("/list")
-    public String recordList(HttpSession session,
+    public String recordList(@AuthenticationPrincipal LoginMemberPrincipal principal,
                              Model model) {
-        Member loginMember = getLoginMember(session);
 
-        if (loginMember == null) {
-            return "redirect:/login";
-        }
 
-        List<GrowthRecord> records = growthRecordService.findRecordsByMember(loginMember.getMemberNo());
+        List<GrowthRecord> records = growthRecordService.findRecordsByMember(principal.getMemberNo());
         model.addAttribute("records", records);
 
         return "record/list";
@@ -45,16 +43,12 @@ public class GrowthRecordController {
 
     // 성장 기록 등록 페이지로 이동
     @GetMapping("/write")
-    public String recordWriteForm(HttpSession session,
+    public String recordWriteForm(@AuthenticationPrincipal LoginMemberPrincipal principal,
                                   Model model) {
-        Member loginMember = getLoginMember(session);
 
-        if (loginMember == null) {
-            return "redirect:/login";
-        }
 
         // 연결 가능한 로그인 회원의 목표 목록 전달
-        model.addAttribute("goals", goalService.findGoalsByMember(loginMember.getMemberNo()));
+        model.addAttribute("goals", goalService.findGoalsByMember(principal.getMemberNo()));
 
         return "record/write";
     }
@@ -64,14 +58,9 @@ public class GrowthRecordController {
     // 성장 기록 등록 요청을 처리
     @PostMapping("/write")
     public String saveRecord(@ModelAttribute GrowthRecordRequest request,
-                             HttpSession session) {
-        Member loginMember = getLoginMember(session);
+                             @AuthenticationPrincipal LoginMemberPrincipal principal) {
 
-        if (loginMember == null) {
-            return "redirect:/login";
-        }
-
-        growthRecordService.saveRecord(loginMember.getMemberNo(), request);
+        growthRecordService.saveRecord(principal.getMemberNo(), request);
 
         return "redirect:/record/list";
     }
@@ -88,17 +77,14 @@ public class GrowthRecordController {
     // @return 성장 기록 상세 JSP 경로
     @GetMapping("/{recordNum}")
     public String recordDetail(@PathVariable("recordNum") Long recordNum,
-                               HttpSession session,
+                               @AuthenticationPrincipal LoginMemberPrincipal principal,
                                Model model) {
-        Member loginMember = getLoginMember(session);
 
-        if (loginMember == null) {
-            return "redirect:/login";
-        }
 
-        GrowthRecord record = growthRecordService.findRecordById(recordNum, loginMember.getMemberNo());
+        GrowthRecord record = growthRecordService.findRecordById(recordNum, principal.getMemberNo());
 
         model.addAttribute("record", record);
+        model.addAttribute("mediaList", mediaService.findMediaByGrowthRecord(recordNum));
 
         return "record/detail";
     }
@@ -115,21 +101,20 @@ public class GrowthRecordController {
     // @return 성장 기록 수정 JSP
     @GetMapping("/{recordNum}/edit")
     public String recordEditForm(@PathVariable("recordNum") Long recordNum,
-                                 HttpSession session,
+                                 @AuthenticationPrincipal LoginMemberPrincipal principal,
                                  Model model) {
-        Member loginMember = getLoginMember(session);
 
-        if(loginMember == null) {
-            return "redirect:/login";
-        }
+        Long memberNo = principal.getMemberNo();
 
-        GrowthRecord record = growthRecordService.findRecordById(recordNum, loginMember.getMemberNo());
+        GrowthRecord record = growthRecordService.findRecordById(recordNum, memberNo);
 
         // 기존 성장 기록 전달
         model.addAttribute("record", record);
+        model.addAttribute("mediaList", mediaService.findMediaByGrowthRecord(recordNum));
+        model.addAttribute("existingImageCount", mediaService.countImageMediaByRecord(recordNum));
 
         // 수정 화면에서 선택할 수 있는 회원의 목표 목록 전달
-        model.addAttribute("goals", goalService.findGoalsByMember(loginMember.getMemberNo()));
+        model.addAttribute("goals", goalService.findGoalsByMember(memberNo));
 
         return "record/edit";
     }
@@ -145,15 +130,10 @@ public class GrowthRecordController {
     @PostMapping("/{recordNum}/edit")
     public String updateRecord(@PathVariable("recordNum") Long recordNum,
                                @ModelAttribute GrowthRecordRequest request,
-                               HttpSession session) {
-        Member loginMember = getLoginMember(session);
-
-        if (loginMember == null) {
-            return "redirect:/login";
-        }
+                               @AuthenticationPrincipal LoginMemberPrincipal principal) {
 
         // 성장 기록 수정 처리
-        growthRecordService.updateRecord(recordNum, loginMember.getMemberNo(), request);
+        growthRecordService.updateRecord(recordNum, principal.getMemberNo(), request);
 
         // 수정 완료 후 상세 페이지로 이동
         return "redirect:/record/" + recordNum;
@@ -169,26 +149,14 @@ public class GrowthRecordController {
     // @return 삭제 완료 후 성장 기록 목록 페이지
     @PostMapping("/{recordNum}/delete")
     public String deleteRecord(@PathVariable("recordNum") Long recordNum,
-                               HttpSession session) {
-        Member loginMember = getLoginMember(session);
-
-        if (loginMember == null) {
-            return "redirect:/login";
-        }
+                               @AuthenticationPrincipal LoginMemberPrincipal principal) {
 
         // 성장 기록 번호와 로그인 회원 번호를 함께 전달하여
         // 본인이 작성한 기록만 삭제할 수 있도록 한다.
-        growthRecordService.deleteRecord(recordNum, loginMember.getMemberNo());
+        growthRecordService.deleteRecord(recordNum, principal.getMemberNo());
 
         // 삭제 완료 후 성장 기록 목록으로 이동
         return "redirect:/record/list";
-    }
-
-    // 로그인 회원 조회
-
-    // 세션에서 로그인한 회원 정보를 조회
-    private Member getLoginMember(HttpSession session) {
-        return (Member) session.getAttribute("loginMember");
     }
 
 

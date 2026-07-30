@@ -82,7 +82,7 @@ public class GrowthRecord {
 
     // 성장 기록 수정일
     @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
 
@@ -107,6 +107,7 @@ public class GrowthRecord {
      */
     @OneToMany(mappedBy = "growthRecord", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
+    @Builder.Default
     private List<Media> mediaList = new ArrayList<>();
 
 }

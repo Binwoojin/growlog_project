@@ -19,6 +19,7 @@
     <!-- 마이페이지 전용 스타일 -->
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/mypage.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>

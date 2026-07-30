@@ -31,4 +31,19 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     // 목표 단건 조회
     @EntityGraph(attributePaths = "category")
     Optional<Goal> findByGoalNumAndMemberMemberNo(Long goalNum, Long memberNo);
+
+    /**
+     * 특정 회원이 지정된 기간에 등록한 목표를 최신순으로 조회
+     *
+     * 조최 기간은 시작 시각 이상, 종료 시각 미만으로 처리
+     * ex) 7월 조회 시 7월 1일 00:00 이상,
+     *     8월 1일 00:00 미만
+     */
+
+    List<Goal> findByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(Long memberNo, LocalDateTime startDateTime, LocalDateTime endDateTime);
+
+    /**
+     * 특정 회원이 지정된 기간에 등록한 목표 개수 조회
+     */
+    long countByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(Long memberNo, LocalDateTime startDateTime, LocalDateTime endDateTime);
 }

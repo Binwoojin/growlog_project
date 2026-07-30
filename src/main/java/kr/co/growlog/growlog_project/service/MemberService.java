@@ -148,7 +148,7 @@ public class MemberService {
 
         String currentPassword = request.getCurrentPassword() == null
                 ? ""
-                : request.getNewPassword();
+                : request.getCurrentPassword();
 
         String newPassword = request.getNewPassword() == null
                 ? ""

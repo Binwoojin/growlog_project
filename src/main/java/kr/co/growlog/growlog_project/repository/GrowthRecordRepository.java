@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +58,12 @@ public interface GrowthRecordRepository extends JpaRepository<GrowthRecord, Long
     // 오늘 목표 등록 여부를 확인할 때 사용
 //    boolean existsByMemberMemberNoAndCreatedAttGreaterThanEqualAndCreatedAtLessThan(Long memberNo, LocalDateTime startDateTime, LocalDateTime endDateTime);
 
+    /**
+     * 특정 회원이 지정된 기간에 작성한 성장 기록을 최신순으로 조회
+     *
+     * 타임라인에서 선택한 달의 성장 기록만 표시할 때 사용한다.
+     */
 
+    List<GrowthRecord> findByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(Long memberNo, LocalDateTime startDateTime, LocalDateTime endDateTime);
 
 }

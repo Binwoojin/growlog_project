@@ -23,6 +23,7 @@
     <!-- 계정 설정 전용 스타일 -->
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/settings.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body>

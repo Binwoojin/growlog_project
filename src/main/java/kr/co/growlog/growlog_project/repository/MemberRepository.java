@@ -15,4 +15,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // 닉네임을 변경하지 않고 그대로 저장하는 경우,
     // 자기 자신의 닉네임을 중복으로 판단하지 않도록 회원 번호를 제외
     boolean existsByNicknameAndMemberNoNot(String nickname, Long memberNo);
+
 }

@@ -23,6 +23,7 @@
             rel="stylesheet"
             href="${pageContext.request.contextPath}/css/logout.css"
     >
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body class="logout_page">

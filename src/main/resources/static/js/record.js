@@ -12,7 +12,39 @@ document.addEventListener("DOMContentLoaded", () => {
     initRecordListPage();
     initRecordWritePage();
     initRecordDelete();
+    initRecordImageViewer();
 });
+
+function initRecordImageViewer() {
+    const dialog = document.querySelector("[data-record-image-dialog]");
+    const preview = dialog?.querySelector("[data-record-image-preview]");
+    const closeButton = dialog?.querySelector("[data-record-image-close]");
+    const imageButtons = document.querySelectorAll("[data-record-image]");
+
+    if (!dialog || !preview || imageButtons.length === 0) {
+        return;
+    }
+
+    imageButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            preview.src = button.dataset.recordImage;
+            preview.alt = button.dataset.recordImageAlt || "성장 기록 첨부 사진";
+            dialog.showModal();
+        });
+    });
+
+    const closeDialog = () => {
+        dialog.close();
+        preview.src = "";
+    };
+
+    closeButton?.addEventListener("click", closeDialog);
+    dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+            closeDialog();
+        }
+    });
+}
 
 
 /* ========================================
@@ -23,68 +55,50 @@ document.addEventListener("DOMContentLoaded", () => {
  * 성장 기록 목록 페이지 기능을 초기화한다.
  *
  * 현재 기능
- * 1. 기록 카드 전체 클릭 시 상세 페이지로 이동
- * 2. 카드 내부 링크 클릭 시 중복 이동 방지
- * 3. 키보드 Enter / Space 입력으로 상세 페이지 이동
+ * 1. 전체 / 목표 연동 / 자유 기록 필터링
+ * 2. 선택한 필터의 기록 개수와 빈 상태 갱신
+ * 3. JSP 컴포넌트 루트 내부로 DOM 접근 범위 제한
  */
 function initRecordListPage() {
-    const recordCards = document.querySelectorAll(
-        ".record_card[data-record-url]"
+    /* [React 전환 준비] 페이지 전역 대신 컴포넌트 루트 안에서만 DOM을 조회한다. */
+    const timelineRoot = document.querySelector(
+        '[data-component="RecordTimeline"]'
     );
 
-    /* 목록 페이지가 아니거나 카드가 없으면 실행 종료 */
-    if (recordCards.length === 0) {
+    if (!timelineRoot) {
         return;
     }
 
-    /* ========================================
-   Record Filter
-======================================== */
-
-    /* 성장 기록 필터 버튼 */
-    const filterButtons = document.querySelectorAll(
+    const timelineItems = timelineRoot.querySelectorAll(
+        '[data-component="TimelineItem"]'
+    );
+    const filterButtons = timelineRoot.querySelectorAll(
         "[data-record-filter]"
     );
-
-    /* 필터 결과가 없을 때 표시할 안내 영역 */
-    const filterEmpty =
-        document.getElementById("recordFilterEmpty");
+    const filterEmpty = timelineRoot.querySelector("#recordFilterEmpty");
+    const visibleCountElement = timelineRoot.querySelector(
+        "[data-visible-count]"
+    );
+    const visibleLabelElement = timelineRoot.querySelector(
+        "[data-visible-label]"
+    );
 
     /**
-     * 선택한 유형에 따라 성장 기록 카드를 필터링한다.
-     *
-     * ALL  : 전체 기록
-     * GOAL : 목표 연동 기록
-     * FREE : 자유 기록
+     * [상태 분리] 선택 필터만 입력받고 표시 개수를 반환하므로
+     * 향후 React의 filter state와 파생 값으로 옮기기 쉽다.
      *
      * @param {string} selectedFilter
-     * 선택한 필터 값
-     */
-    /**
-     * 선택한 유형에 맞는 성장 기록 카드만 표시한다.
-     *
-     * @param {string} selectedFilter
-     * ALL, GOAL, FREE 중 선택된 필터값
+     * @returns {number}
      */
     function filterRecordCards(selectedFilter) {
         let visibleCount = 0;
 
-        recordCards.forEach((card) => {
-            const recordType = card.dataset.recordType;
-
-            /* 전체 보기이거나 카드 유형과 필터값이 같으면 표시 */
+        timelineItems.forEach((item) => {
             const shouldShow =
                 selectedFilter === "ALL"
-                || recordType === selectedFilter;
+                || item.dataset.recordType === selectedFilter;
 
-            /*
-             * hidden 속성을 사용해 필터에 해당하지 않는 카드를 숨긴다.
-             *
-             * CSS에 반드시 아래 코드가 있어야 한다.
-             * .record_card[hidden] { display: none; }
-             */
-            card.hidden = !shouldShow;
-
+            item.hidden = !shouldShow;
             if (shouldShow) {
                 visibleCount += 1;
             }
@@ -94,6 +108,8 @@ function initRecordListPage() {
         if (filterEmpty) {
             filterEmpty.hidden = visibleCount > 0;
         }
+
+        return visibleCount;
     }
 
     /**
@@ -126,62 +142,24 @@ function initRecordListPage() {
                 button.dataset.recordFilter;
 
             updateFilterButtons(button);
-            filterRecordCards(selectedFilter);
+
+            const visibleCount =
+                filterRecordCards(selectedFilter);
+
+            if (visibleCountElement) {
+                visibleCountElement.textContent =
+                    String(visibleCount);
+            }
+
+            if (visibleLabelElement) {
+                visibleLabelElement.textContent =
+                    button.dataset.filterLabel || "전체";
+            }
         });
     });
 
     /* 페이지 최초 진입 시 전체 기록 표시 */
     filterRecordCards("ALL");
-
-    /* ========================================
-           Record Card Move
-        ======================================== */
-
-    recordCards.forEach((card) => {
-        const recordUrl = card.dataset.recordUrl;
-
-        /* 이동할 상세 페이지 주소가 없으면 이벤트를 등록하지 않음 */
-        if (!recordUrl) {
-            return;
-        }
-
-        /**
-         * 카드 전체를 클릭했을 때 상세 페이지로 이동한다.
-         *
-         * 단, 카드 내부의 링크나 버튼 등을 클릭한 경우에는
-         * 해당 요소의 기본 동작을 유지한다.
-         */
-        card.addEventListener("click", (event) => {
-            const interactiveElement = event.target.closest(
-                "a, button, input, select, textarea, label"
-            );
-
-            if (interactiveElement) {
-                return;
-            }
-
-            window.location.href = recordUrl;
-        });
-
-        /**
-         * 키보드 사용자를 위해
-         * Enter 또는 Space 키로 상세 페이지에 이동한다.
-         */
-        card.addEventListener("keydown", (event) => {
-            const isMoveKey =
-                event.key === "Enter"
-                || event.key === " ";
-
-            if (!isMoveKey) {
-                return;
-            }
-
-            event.preventDefault();
-            window.location.href = recordUrl;
-        });
-    });
-
-
 }
 
 /* ========================================
@@ -237,6 +215,20 @@ function initRecordWritePage() {
     const contentTextarea =
         document.getElementById("content");
 
+    const imageInput =
+        document.getElementById("imageFiles");
+
+    const imagePreviewList =
+        document.getElementById("imagePreviewList");
+
+    const deleteMediaInputs =
+        form.querySelectorAll("[data-delete-media]");
+
+    const currentImageCount =
+        form.querySelector("[data-current-image-count]");
+
+    let previewUrls = [];
+
     /* 저장 버튼 */
     const submitButton =
         form.querySelector('button[type="submit"]');
@@ -250,6 +242,80 @@ function initRecordWritePage() {
 
     /* 페이지 최초 진입 시 폼 상태 */
     const initialFormState = createFormState(form);
+
+    function clearImagePreviews() {
+        previewUrls.forEach((url) => URL.revokeObjectURL(url));
+        previewUrls = [];
+
+        if (imagePreviewList) {
+            imagePreviewList.replaceChildren();
+        }
+    }
+
+    function getDeletedImageCount() {
+        return Array.from(deleteMediaInputs).filter((input) =>
+            input.checked
+            && input.closest("[data-existing-media-item]")?.dataset.mediaType === "IMAGE"
+        ).length;
+    }
+
+    function getRetainedImageCount() {
+        const existingCount = Number(imageInput?.dataset.existingImageCount || 0);
+        return Math.max(0, existingCount - getDeletedImageCount());
+    }
+
+    function updateExistingMediaState(input) {
+        const mediaItem = input.closest("[data-existing-media-item]");
+        const deleteLabel = mediaItem?.querySelector("[data-delete-label]");
+
+        mediaItem?.classList.toggle("is-pending-delete", input.checked);
+        if (deleteLabel) {
+            deleteLabel.textContent = input.checked ? "삭제 취소" : "삭제";
+        }
+
+        if (currentImageCount) {
+            currentImageCount.textContent = String(getRetainedImageCount());
+        }
+    }
+
+    deleteMediaInputs.forEach((input) => {
+        input.addEventListener("change", () => {
+            updateExistingMediaState(input);
+
+            const selectedFileCount = imageInput?.files?.length || 0;
+            const maxCount = Number(imageInput?.dataset.maxImageCount || 5);
+            if (getRetainedImageCount() + selectedFileCount > maxCount) {
+                alert(`유지할 기존 사진과 새 사진은 최대 ${maxCount}장까지 등록할 수 있습니다.`);
+                imageInput.value = "";
+                clearImagePreviews();
+            }
+        });
+    });
+
+    imageInput?.addEventListener("change", () => {
+        clearImagePreviews();
+
+        const files = Array.from(imageInput.files || []);
+        const existingCount = getRetainedImageCount();
+        const maxCount = Number(imageInput.dataset.maxImageCount || 5);
+
+        if (existingCount + files.length > maxCount) {
+            alert(`유지할 기존 사진과 새 사진은 최대 ${maxCount}장까지 등록할 수 있습니다.`);
+            imageInput.value = "";
+            return;
+        }
+
+        files.forEach((file, index) => {
+            const previewUrl = URL.createObjectURL(file);
+            const image = document.createElement("img");
+
+            previewUrls.push(previewUrl);
+            image.src = previewUrl;
+            image.alt = `새로 추가할 사진 ${index + 1}`;
+            image.loading = "lazy";
+            imagePreviewList?.append(image);
+        });
+    });
 
 
     /* ========================================

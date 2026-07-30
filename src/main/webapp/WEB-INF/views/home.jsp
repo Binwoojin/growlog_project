@@ -11,6 +11,7 @@
           href="${pageContext.request.contextPath}/css/common.css">
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/home.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 <body class="home_page">
 

@@ -2,7 +2,6 @@ package kr.co.growlog.growlog_project.controller;
 
 import jakarta.servlet.http.HttpSession;
 import kr.co.growlog.growlog_project.dto.AttendanceSummary;
-import kr.co.growlog.growlog_project.dto.LoginRequest;
 import kr.co.growlog.growlog_project.entity.Goal;
 import kr.co.growlog.growlog_project.entity.GrowthRecord;
 import kr.co.growlog.growlog_project.entity.Member;
@@ -14,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -32,31 +30,21 @@ public class HomeController {
 
 
     // 로그인 페이지 이동
-    @GetMapping({"/", "/login"})
+    @GetMapping("/")
+    public String root(HttpSession session) {
+        if (session.getAttribute("loginMember") != null) {
+            return "redirect:/home";
+        }
+
+        return "redirect:/login";
+    }
+
+    @GetMapping("/login")
     public String loginPage() {
         return "login";
     }
 
 
-    // 로그인 처리
-    @PostMapping("/login")
-    public String login(@ModelAttribute LoginRequest request,
-                        HttpSession session,
-                        RedirectAttributes redirectAttributes) {
-        try {
-            Member loginMember = memberService.login(request);
-
-            session.setAttribute("loginMember", loginMember);
-
-            return "redirect:/home";
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("loginErrorMessage", e.getMessage());
-
-            return "redirect:/login";
-        }
-
-
-    }
 
     // 홈 페이지 이동
     @GetMapping("/home")
@@ -98,10 +86,8 @@ public class HomeController {
     }
 
 
-    @PostMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
-
+    @GetMapping("/logout-complete")
+    public String logoutCompletePage() {
         return "logout";
     }
 }

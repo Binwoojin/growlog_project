@@ -149,6 +149,10 @@ Common Header
                             method="post"
                             class="logout_form"
                     >
+                        <input
+                            type="hidden"
+                            name="${_csrf.parameterName}"
+                            value="${_csrf.token}">
                         <button
                                 type="submit"
                                 class="logout_button"

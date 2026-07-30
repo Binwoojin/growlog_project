@@ -86,10 +86,12 @@ public class MyPageController {
         // 회원이 작성한 전체 성장 기록 개수를 조회
         long recordCount = growthRecordService.countRecordByMember(member.getMemberNo());
 
+        AttendanceSummary attendanceSummary = attendanceService.getAttendanceSummary(member.getMemberNo());
+
         model.addAttribute("member", member);
         model.addAttribute("goalCount", goalCount);
         model.addAttribute("recordCount", recordCount);
-        model.addAttribute("currentStreak", 0);
+        model.addAttribute("currentStreak", attendanceSummary.getCurrentStreak());
 
         return "mypage/profile";
     }
@@ -266,7 +268,7 @@ public class MyPageController {
     }
 
     // 계정 설정 화면에서 비밀번호 변경 요청을 처리
-
+    @PostMapping("/settings/password")
     public String updatePassword(@ModelAttribute PasswordUpdateRequest request,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
