@@ -4,6 +4,23 @@
 
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
+<%-- [React 전환 준비] 서버 계산값은 추후 GoalSummary props로 그대로 옮길 수 있습니다. --%>
+<c:set var="activeGoalCount" value="0" />
+<c:set var="completedGoalCount" value="0" />
+<c:forEach var="summaryGoal" items="${goal}">
+    <c:choose>
+        <c:when test="${summaryGoal.goalStatus eq '완료'}">
+            <c:set var="completedGoalCount" value="${completedGoalCount + 1}" />
+        </c:when>
+        <c:when test="${summaryGoal.goalStatus eq '중단'}">
+            <%-- 중단 목표는 진행 중 요약에서 제외하고 상태 필터에서만 제공합니다. --%>
+        </c:when>
+        <c:otherwise>
+            <c:set var="activeGoalCount" value="${activeGoalCount + 1}" />
+        </c:otherwise>
+    </c:choose>
+</c:forEach>
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -15,88 +32,21 @@
     <title>나의 목표 | GrowLog</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/common.css">
+          href="${pageContext.request.contextPath}/css/common.css?v=20260731-1">
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/goal.css">
+          href="${pageContext.request.contextPath}/css/goal.css?v=20260728-2">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body class="goal_page">
 
-<header class="main_header">
+<jsp:include page="/WEB-INF/views/common/header.jsp" />
 
-    <a href="${pageContext.request.contextPath}/home"
-       class="header_logo">
-
-        <img
-                src="${pageContext.request.contextPath}/images/logo.png"
-                alt="GrowLog"
-        >
-
-        <span>GrowLog</span>
-    </a>
-
-    <nav class="main_nav" id="mainNav">
-
-        <a href="${pageContext.request.contextPath}/home"
-           data-nav-link>
-            홈
-        </a>
-
-        <a href="${pageContext.request.contextPath}/record/list"
-           data-nav-link>
-            성장 기록
-        </a>
-
-        <a href="${pageContext.request.contextPath}/goal/list"
-           data-nav-link>
-            목표
-        </a>
-
-        <a href="${pageContext.request.contextPath}/timeline"
-           data-nav-link>
-            타임라인
-        </a>
-
-    </nav>
-
-    <div class="profile_area">
-
-        <button
-                type="button"
-                class="profile_button"
-                data-dropdown-button="profileMenu"
-                aria-expanded="false"
-                aria-controls="profileMenu"
-        >
-            ${sessionScope.loginMember.nickname}
-        </button>
-
-        <div class="profile_menu"
-             id="profileMenu">
-
-            <a href="#">마이페이지</a>
-
-            <form
-                    action="${pageContext.request.contextPath}/logout"
-                    method="post"
-                    class="logout_form"
-            >
-                <button
-                        type="submit"
-                        class="logout_button"
-                        data-confirm="로그아웃하시겠습니까?"
-                >
-                    로그아웃
-                </button>
-            </form>
-
-        </div>
-    </div>
-
-</header>
-
-<main class="goal_container">
+<%-- [컴포넌트 경계] GoalPage 전체를 향후 React 마운트 루트로 사용합니다. --%>
+<main class="goal_container"
+      data-component="GoalPage"
+      data-goal-count="${goal.size()}">
 
     <!-- ========================================
      Goal Page Header
@@ -112,12 +62,13 @@
         </span>
 
             <h1>
-                나의 목표
+                오늘의 작은 실천이<br>
+                내일의 성장을 만들어요.
             </h1>
 
             <p class="goal_header_description">
-                이루고 싶은 목표를 정하고
-                조금씩 성장하는 과정을 확인해 보세요.
+                이루고 싶은 모습을 목표로 구체화하고<br>
+                나만의 속도로 채워가는 과정을 확인해 보세요.
             </p>
 
             <div class="goal_header_actions">
@@ -126,16 +77,21 @@
                         href="${pageContext.request.contextPath}/goal/write"
                         class="goal_primary_button"
                 >
-                <span class="goal_button_icon">
-                    ＋
-                </span>
+                    <svg class="goal_button_icon" aria-hidden="true"
+                         viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
 
                     새로운 목표 만들기
                 </a>
 
                 <span class="goal_header_hint">
-                작은 목표부터 천천히 시작해 보세요 🌱
-            </span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24"
+                         width="17" height="17">
+                        <path d="M12 21v-9m0 3c-4.5 0-7-2.5-7-7 4.5 0 7 2.5 7 7Zm0-3c0-4.5 2.5-7 7-7 0 4.5-2.5 7-7 7Z" />
+                    </svg>
+                    작은 목표부터 천천히 시작해 보세요
+                </span>
 
             </div>
 
@@ -177,14 +133,82 @@
         </div>
     </c:if>
 
-    <section class="goal_list_panel">
+    <%-- [컴포넌트 경계] 성장기록·타임라인과 동일한 요약 카드 계층입니다. --%>
+    <section class="goal_summary" aria-label="목표 현황 요약" data-component="GoalSummary">
+        <article class="goal_summary_card total">
+            <span class="goal_summary_icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="25" height="25"><path d="M6 4h12v16H6zM9 9h6M9 13h6M9 17h4" /></svg>
+            </span>
+            <div>
+                <span>전체 목표</span>
+                <strong>${goal.size()}<small>개</small></strong>
+                <p>지금까지 만든 성장 약속이에요</p>
+            </div>
+        </article>
+
+        <article class="goal_summary_card active">
+            <span class="goal_summary_icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="25" height="25"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+            </span>
+            <div>
+                <span>진행 중</span>
+                <strong>${activeGoalCount}<small>개</small></strong>
+                <p>오늘 이어갈 수 있는 목표예요</p>
+            </div>
+        </article>
+
+        <article class="goal_summary_card completed">
+            <span class="goal_summary_icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="25" height="25"><path d="m5 12 4 4L19 6"/></svg>
+            </span>
+            <div>
+                <span>완료한 목표</span>
+                <strong>${completedGoalCount}<small>개</small></strong>
+                <p>스스로 만들어낸 성장 순간이에요</p>
+            </div>
+        </article>
+    </section>
+
+    <section class="goal_list_panel" aria-labelledby="goalListTitle">
 
         <div class="goal_list_header">
-            <h2>등록한 목표</h2>
+            <div>
+                <span class="goal_list_label">MY GOALS</span>
+                <h2 id="goalListTitle">나의 목표 보드</h2>
+                <p>현재 집중하고 있는 목표부터 완료한 목표까지 모아봤어요.</p>
+            </div>
 
-            <span class="goal_list_count">
-                총 ${goal.size()}개의 목표
+            <span class="goal_list_count" aria-live="polite">
+                <span data-goal-filter-label>전체</span>
+                <strong data-visible-goal-count>${goal.size()}</strong>개의 목표
             </span>
+        </div>
+
+        <%-- [상태 분리] 영문 enum을 유지해 React filter state로 쉽게 전환합니다. --%>
+        <div class="goal_filter_toolbar">
+            <div class="goal_filter_group" role="group" aria-label="목표 상태 필터">
+                <button type="button" class="active"
+                        data-goal-filter="ALL" data-filter-label="전체"
+                        aria-pressed="true">전체</button>
+                <button type="button"
+                        data-goal-filter="ACTIVE" data-filter-label="진행 중"
+                        aria-pressed="false">진행 중</button>
+                <button type="button"
+                        data-goal-filter="COMPLETED" data-filter-label="완료"
+                        aria-pressed="false">완료</button>
+                <button type="button"
+                        data-goal-filter="PAUSED" data-filter-label="중단"
+                        aria-pressed="false">중단</button>
+            </div>
+
+            <a href="${pageContext.request.contextPath}/goal/write"
+               class="goal_toolbar_write">
+                <svg aria-hidden="true" viewBox="0 0 24 24"
+                     width="18" height="18">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                새 목표
+            </a>
         </div>
 
         <c:choose>
@@ -193,7 +217,11 @@
 
                 <div class="goal_empty">
 
-                    <div class="goal_empty_icon">🌱</div>
+                    <div class="goal_empty_icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="34" height="34">
+                            <path d="M12 21v-9m0 3c-4.5 0-7-2.5-7-7 4.5 0 7 2.5 7 7Zm0-3c0-4.5 2.5-7 7-7 0 4.5-2.5 7-7 7Z" />
+                        </svg>
+                    </div>
 
                     <h2>아직 등록한 목표가 없어요</h2>
 
@@ -239,9 +267,9 @@
                                 data-goal-content="${goalItem.goalContent}"
                                 data-goal-progress="${goalItem.goalProgress}"
                                 data-goal-status="${goalItem.goalStatus}"
+                                data-goal-filter-status="${goalItem.goalStatus eq '완료' ? 'COMPLETED' : (goalItem.goalStatus eq '중단' ? 'PAUSED' : 'ACTIVE')}"
 
                                 data-goal-category-name="${goalItem.category.categoryName}"
-                                data-goal-category-icon="${goalItem.category.categoryIcon}"
                                 data-goal-category-color="${goalItem.category.categoryColor}"
 
                                 data-goal-start-date="${goalItem.startDate}"
@@ -260,9 +288,11 @@
                                                 border-color: ${goalItem.category.categoryColor}40;
                                                 "
                                 >
-                        <span class="goal_category_icon">
-                                ${goalItem.category.categoryIcon}
-                        </span>
+                                    <span class="goal_category_icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" width="15" height="15">
+                                            <path d="M12 21v-9m0 3c-4.5 0-7-2.5-7-7 4.5 0 7 2.5 7 7Zm0-3c0-4.5 2.5-7 7-7 0 4.5-2.5 7-7 7Z" />
+                                        </svg>
+                                    </span>
 
                         <span>
                                 ${goalItem.category.categoryName}
@@ -373,11 +403,16 @@
                                             action="${pageContext.request.contextPath}/goal/delete/${goalItem.goalNum}"
                                             method="post"
                                             class="goal_delete_form"
-                                            onsubmit="return confirm('이 목표를 정말 삭제하시겠습니까?');"
                                     >
+                                        <%-- Spring Security CSRF 검증용 토큰 --%>
+                                        <input type="hidden"
+                                               name="${_csrf.parameterName}"
+                                               value="${_csrf.token}">
+
                                         <button
                                                 type="submit"
                                                 class="goal_action_button delete"
+                                                data-confirm="이 목표를 정말 삭제하시겠습니까?"
                                         >
                                             삭제
                                         </button>
@@ -393,6 +428,15 @@
 
                 </div>
 
+                <div class="goal_filter_empty" data-goal-filter-empty hidden>
+                    <svg aria-hidden="true" viewBox="0 0 24 24"
+                         width="34" height="34">
+                        <path d="M4 5h16M7 12h10m-7 7h4" />
+                    </svg>
+                    <h3>선택한 상태의 목표가 없어요</h3>
+                    <p>다른 필터를 선택하거나 새로운 목표를 만들어 보세요.</p>
+                </div>
+
             </c:otherwise>
 
         </c:choose>
@@ -401,6 +445,9 @@
 
 </main>
 
+<%-- 모든 서비스 페이지에서 동일한 공통 Footer를 사용합니다. --%>
+<jsp:include page="/WEB-INF/views/common/footer.jsp" />
+
 <!-- ========================================
      Goal Detail Modal
 ======================================== -->
@@ -408,7 +455,9 @@
 <div
         class="goal_modal"
         id="goalDetailModal"
+        data-context-path="${pageContext.request.contextPath}"
         aria-hidden="true"
+        inert
 >
     <!-- 모달 바깥 배경 -->
     <div
@@ -439,7 +488,11 @@
                 class="goal_modal_category"
                 id="goalModalCategory"
         >
-            <span id="goalModalCategoryIcon"></span>
+            <span id="goalModalCategoryIcon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M12 21v-9m0 3c-4.5 0-7-2.5-7-7 4.5 0 7 2.5 7 7Zm0-3c0-4.5 2.5-7 7-7 0 4.5-2.5 7-7 7Z" />
+                </svg>
+            </span>
 
             <span id="goalModalCategoryName"></span>
         </div>
@@ -511,11 +564,16 @@
                     id="goalModalDeleteForm"
                     method="post"
                     class="goal_modal_delete_form"
-                    onsubmit="return confirm('이 목표를 정말 삭제하시겠습니까?');"
             >
+                <%-- JavaScript가 action만 변경하며 CSRF 토큰은 그대로 전송한다. --%>
+                <input type="hidden"
+                       name="${_csrf.parameterName}"
+                       value="${_csrf.token}">
+
                 <button
                         type="submit"
                         class="goal_modal_button delete"
+                        data-confirm="이 목표를 정말 삭제하시겠습니까?"
                 >
                     삭제하기
                 </button>
@@ -543,7 +601,7 @@
 </script>
 
 <script
-        src="${pageContext.request.contextPath}/js/goal.js">
+        src="${pageContext.request.contextPath}/js/goal.js?v=20260728-2">
 </script>
 
 </body>

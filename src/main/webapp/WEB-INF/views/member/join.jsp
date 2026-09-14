@@ -3,15 +3,21 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <%-- JavaScript POST 요청에서 사용할 CSRF 토큰과 헤더 이름 --%>
+    <meta name="_csrf" content="${_csrf.token}">
+    <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
+    <%-- [반응형 필수] 모바일 브라우저가 실제 기기 폭을 기준으로 렌더링하도록 합니다. --%>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입 | GrowLog</title>
     <!-- Common CSS -->
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/common.css">
+          href="${pageContext.request.contextPath}/css/common.css?v=20260731-1">
 
     <!-- Join CSS -->
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/join.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 <body class="join_page">
 
@@ -58,6 +64,11 @@
                 class="join_form"
                 action="${pageContext.request.contextPath}/join"
                 method="post">
+            <%-- Spring Security CSRF 검증용 토큰 --%>
+            <input type="hidden"
+                   name="${_csrf.parameterName}"
+                   value="${_csrf.token}">
+
 
             <!-- 이메일 -->
             <div class="form_group">
@@ -211,14 +222,8 @@
 </main>
 
 
-<!-- ================= Footer ================= -->
-<footer class="main_footer">
-
-    <p>
-        © 2026 GrowLog. All Rights Reserved.
-    </p>
-
-</footer>
+<%-- 회원가입 전용 임시 Footer 대신 전체 서비스 공통 Footer를 사용합니다. --%>
+<jsp:include page="/WEB-INF/views/common/footer.jsp" />
 
 
 <!-- JS -->

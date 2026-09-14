@@ -16,13 +16,14 @@
 
     <link
             rel="stylesheet"
-            href="${pageContext.request.contextPath}/css/common.css"
+            href="${pageContext.request.contextPath}/css/common.css?v=20260731-1"
     >
 
     <link
             rel="stylesheet"
             href="${pageContext.request.contextPath}/css/logout.css"
     >
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body class="logout_page">

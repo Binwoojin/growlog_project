@@ -191,39 +191,58 @@ function initConfirmActions() {
 }
 
 /**
- * 현재 URL과 일치하는 메뉴에 active 클래스를 적용한다.
+ * 현재 URL에 해당하는 메뉴에 active 클래스를 적용한다.
  *
- * 메뉴 링크에 data-nav-link 속성을 추가해서 사용한다.
+ * data-nav-prefix 값으로 목록, 작성, 수정 페이지를
+ * 하나의 메뉴 그룹으로 처리한다.
  */
 function setActiveNavigation() {
-    const links = document.querySelectorAll(
-        "[data-nav-link]"
-    );
 
-    const currentPath = normalizePath(
-        window.location.pathname
-    );
+    const links =
+        document.querySelectorAll("[data-nav-link]");
+
+    const currentPath =
+        normalizePath(window.location.pathname);
 
     links.forEach((link) => {
-        const href = link.getAttribute("href");
 
-        if (!href || href === "#") {
-            return;
-        }
+        const contextPath =
+            new URL(
+                link.href,
+                window.location.origin
+            ).pathname;
 
-        const linkPath = normalizePath(
-            new URL(href, window.location.origin).pathname
-        );
+        const linkElementPath =
+            normalizePath(contextPath);
 
-        const isActive =
-            currentPath === linkPath ||
-            (
-                linkPath !== "/" &&
-                currentPath.startsWith(`${linkPath}/`)
+        const navPrefix =
+            link.dataset.navPrefix;
+
+        const applicationContextPath =
+            linkElementPath.substring(
+                0,
+                linkElementPath.indexOf(
+                    navPrefix
+                )
             );
 
-        link.classList.toggle("active", isActive);
+        const fullPrefix =
+            `${applicationContextPath}${navPrefix}`;
+
+        const isActive =
+            currentPath === linkElementPath
+            || currentPath.startsWith(
+                `${fullPrefix}/`
+            )
+            || currentPath === fullPrefix;
+
+        link.classList.toggle(
+            "active",
+            isActive
+        );
+
     });
+
 }
 
 function normalizePath(path) {

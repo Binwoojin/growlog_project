@@ -249,6 +249,93 @@ public class EmailVerificationService {
                 && email.equals(verifiedEmail);
     }
 
+    // 비밀번호 재설정 인증번호를 실제 이메일을 발송
+    public void sendPasswordResetCode(String receiverEmail, String code) {
+        try {
+            sendPasswordResetEmail(receiverEmail, code);
+        } catch (MessagingException e) {
+            throw new IllegalArgumentException("비밀번호 재설정 인증번호 이메일 발송에 실패했습니다.", e);
+        }
+    }
+
+    // 비밀번호 재설정용 HTML 이메일을 생성
+    private void sendPasswordResetEmail(String receiverEmail, String code) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+        helper.setFrom(senderEmail);
+        helper.setTo(receiverEmail);
+        helper.setSubject("[GrowLog] 비밀번호 재설정 인증번호");
+        helper.setText(createPasswordResetEmailContent(code), true);
+
+        mailSender.send(message);
+    }
+
+    // 비밀번호 재설정 이메일의 HTML 본문을 생성
+    private String createPasswordResetEmailContent(String code) {
+        return """
+            <div style="
+                width:100%;
+                padding:40px 0;
+                background:#f7faf6;
+                font-family:Arial, sans-serif;
+            ">
+                <div style="
+                    width:90%;
+                    max-width:520px;
+                    margin:0 auto;
+                    padding:40px;
+                    box-sizing:border-box;
+                    background:#ffffff;
+                    border:1px solid #e2ebe3;
+                    border-radius:20px;
+                ">
+                    <h1 style="
+                        margin:0 0 16px;
+                        color:#315538;
+                        font-size:26px;
+                    ">
+                        GrowLog 비밀번호 재설정
+                    </h1>
+
+                    <p style="
+                        margin:0;
+                        color:#667068;
+                        font-size:15px;
+                        line-height:1.7;
+                    ">
+                        GrowLog 비밀번호 재설정을 위한 인증번호입니다.<br>
+                        아래 인증번호를 비밀번호 찾기 화면에 입력해주세요.
+                    </p>
+
+                    <div style="
+                        margin:30px 0;
+                        padding:22px;
+                        background:#eef7ec;
+                        border-radius:14px;
+                        color:#4f8f5c;
+                        font-size:32px;
+                        font-weight:bold;
+                        text-align:center;
+                        letter-spacing:8px;
+                    ">
+            """ + code + """
+                    </div>
+
+                    <p style="
+                        margin:0;
+                        color:#8a938c;
+                        font-size:13px;
+                        line-height:1.6;
+                    ">
+                        인증번호는 5분 동안 유효합니다.<br>
+                        본인이 요청하지 않았다면 이 메일을 무시해주세요.
+                    </p>
+                </div>
+            </div>
+            """;
+    }
+
     /**
      * 인증 관련 세션 정보 제거
      */

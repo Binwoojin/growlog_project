@@ -16,13 +16,14 @@
 
     <link
             rel="stylesheet"
-            href="${pageContext.request.contextPath}/css/common.css"
+            href="${pageContext.request.contextPath}/css/common.css?v=20260731-1"
     >
 
     <link
             rel="stylesheet"
             href="${pageContext.request.contextPath}/css/login.css"
     >
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body class="login_page">
@@ -98,10 +99,23 @@
 
         </div>
 
+        <%--
+            Spring Security 로그인에 실패하면 /login?error로 이동한다.
+
+            param.error가 존재하면 기존 login.js가 표시할 수 있도록
+            공통 오류 메시지를 hidden input에 저장한다.
+
+            이메일이 틀렸는지 비밀번호가 틀렸는지를 구분해서 알려주면
+            가입된 이메일을 추측하는 데 악용될 수 있으므로
+            동일한 오류 메시지를 사용한다.
+        --%>
+
         <input
                 type="hidden"
                 id="loginErrorMessage"
-                value="${loginErrorMessage}"
+                value="${param.error != null
+                ? '이메일 또는 비밀번호가 올바르지 않습니다.'
+                : ''}"
         >
 
         <form
@@ -109,6 +123,11 @@
                 method="post"
                 class="login_form"
         >
+            <%-- Spring Security CSRF 검증용 토큰 --%>
+            <input type="hidden"
+                   name="${_csrf.parameterName}"
+                   value="${_csrf.token}">
+
 
             <div class="input_group">
 

@@ -7,6 +7,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    /*
+     * Spring Security가 발급한 CSRF 토큰을 JSP의 meta 태그에서 읽는다.
+     * JSON POST 요청은 일반 form처럼 hidden input이 자동 전송되지 않으므로
+     * 서버가 알려준 헤더 이름으로 토큰을 직접 전달해야 한다.
+     */
+    const csrfToken =
+        document.querySelector('meta[name="_csrf"]')?.content;
+
+    const csrfHeaderName =
+        document.querySelector('meta[name="_csrf_header"]')?.content;
+
     /* ========================================
        입력 요소
     ======================================== */
@@ -574,7 +585,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             method: "POST",
                             headers: {
                                 "Content-Type":
-                                    "application/json"
+                                    "application/json",
+                                [csrfHeaderName]:
+                                    csrfToken
                             },
                             body: JSON.stringify({
                                 email: email
@@ -725,7 +738,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             method: "POST",
                             headers: {
                                 "Content-Type":
-                                    "application/json"
+                                    "application/json",
+                                [csrfHeaderName]:
+                                    csrfToken
                             },
                             body: JSON.stringify({
                                 email: email,

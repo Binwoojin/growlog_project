@@ -15,10 +15,11 @@
     <title>목표 수정 | GrowLog</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/common.css">
+          href="${pageContext.request.contextPath}/css/common.css?v=20260731-1">
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/goal.css">
+    <jsp:include page="/WEB-INF/views/common/responsive-styles.jsp" />
 </head>
 
 <body class="goal_page goal_edit_page">
@@ -27,79 +28,7 @@
      Header
 ======================================== -->
 
-<header class="main_header">
-
-    <a href="${pageContext.request.contextPath}/home"
-       class="header_logo">
-
-        <img
-                src="${pageContext.request.contextPath}/images/logo.png"
-                alt="GrowLog"
-        >
-
-        <span>GrowLog</span>
-    </a>
-
-    <nav class="main_nav"
-         id="mainNav">
-
-        <a href="${pageContext.request.contextPath}/home"
-           data-nav-link>
-            홈
-        </a>
-
-        <a href="${pageContext.request.contextPath}/record/list"
-           data-nav-link>
-            성장 기록
-        </a>
-
-        <a href="${pageContext.request.contextPath}/goal/list"
-           data-nav-link>
-            목표
-        </a>
-
-        <a href="${pageContext.request.contextPath}/timeline"
-           data-nav-link>
-            타임라인
-        </a>
-
-    </nav>
-
-    <div class="profile_area">
-
-        <button
-                type="button"
-                class="profile_button"
-                data-dropdown-button="profileMenu"
-                aria-expanded="false"
-                aria-controls="profileMenu"
-        >
-            ${sessionScope.loginMember.nickname}
-        </button>
-
-        <div class="profile_menu"
-             id="profileMenu">
-
-            <a href="#">마이페이지</a>
-
-            <form
-                    action="${pageContext.request.contextPath}/logout"
-                    method="post"
-                    class="logout_form"
-            >
-                <button
-                        type="submit"
-                        class="logout_button"
-                >
-                    로그아웃
-                </button>
-            </form>
-
-        </div>
-
-    </div>
-
-</header>
+<jsp:include page="/WEB-INF/views/common/header.jsp" />
 
 <!-- ========================================
      Goal Edit Page
@@ -226,6 +155,11 @@
                 method="post"
                 class="goal_form_panel goal_edit_form"
         >
+            <%-- Spring Security CSRF 검증용 토큰 --%>
+            <input type="hidden"
+                   name="${_csrf.parameterName}"
+                   value="${_csrf.token}">
+
 
             <div class="goal_form_heading">
 
@@ -480,6 +414,9 @@
     </section>
 
 </main>
+
+<%-- 모든 서비스 페이지에서 동일한 공통 Footer를 사용합니다. --%>
+<jsp:include page="/WEB-INF/views/common/footer.jsp" />
 
 <script
         src="${pageContext.request.contextPath}/js/common.js">

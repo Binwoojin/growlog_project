@@ -11,6 +11,9 @@ import kr.co.growlog.growlog_project.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.*;
+import java.time.temporal.TemporalAdjuster;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -47,6 +50,26 @@ public class GoalService {
     public List<Goal> findGoalsByMember(Long memberNo) {
         return goalRepository.findByMemberMemberNoOrderByCreatedAtDesc(memberNo);
     }
+
+    // 로그인한 회원이 이번 주에 등록한 진행 중 목표 개수를 조회
+
+    // 이번 주의 기준 : 월요일 0시부터 현재 시점까지
+
+    // @param memberNo 로그인한 회원 번호
+    // @return 이번 주에 등록된 진행중 목표 개수
+    public long countThisWeekInProgressGoals(Long memberNo) {
+
+        // 오늘 날짜를 기준으로 이번 주 월요일을 구한다
+        LocalDate thisMonday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
+        // 월요일 날짜를 월요일 00시로 변환
+        LocalDateTime startOfWeek = thisMonday.atStartOfDay();
+
+        // 이번 주 월요일 이후에 생성된 진행중 목표 개수 조회
+        return goalRepository.countByMemberMemberNoAndGoalStatusAndCreatedAtGreaterThanEqual(memberNo, "진행중", startOfWeek);
+    }
+
+
 
     // 목표 개수 조회 추가
     public long countGoalsByMember(Long memberNo) {
@@ -167,5 +190,28 @@ public class GoalService {
         goalRepository.delete(goal);
     }
 
+    /**
+     * 로그인 회원이 선택한 달에 등록한 목표를 조회
+     *
+     * @param memberNo 로그인 회원 번호
+     * @param yearMonth 조회할 연, 월
+     * @return 선택한 달에 등록한 목표 목록
+     */
+    public List<Goal> findGoalsByMemberAndMonth(Long memberNo, YearMonth yearMonth) {
+        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        return goalRepository.findByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(memberNo, startOfMonth,startOfNextMonth);
+    }
+
+    /**
+     * 로그인 회원이 선택한 달에 등록한 목표 개수를 조회
+     */
+    public long countGoalsByMemberAndMonth(Long memberNo, YearMonth yearMonth) {
+        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        return goalRepository.countByMemberMemberNoAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(memberNo, startOfMonth, startOfNextMonth);
+    }
 
 }
