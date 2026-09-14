@@ -74,6 +74,20 @@ Bean이 동작하는 MockMvc 통합 테스트(`AuthControllerTest`)로 아래 5�
 - 허용된 Origin(`localhost:5173`)의 CORS preflight → 200 + `Access-Control-Allow-Origin` 헤더
 - 허용되지 않은 Origin의 CORS preflight → `Access-Control-Allow-Origin` 헤더 없음
 
+### 6. (실제 브라우저 검증에서 발견) Axios의 `withXSRFToken: true`가 빠지면 로그인이 403으로 막힌다
+
+로컬에서 실제 브라우저로 로그인을 처음 테스트했을 때 `POST /login`이 403으로
+거부됐다. 원인은 Axios 1.6부터 추가된 보안 정책 때문이었다 — Axios는 기본적으로
+XSRF 쿠키→헤더 자동 변환을 **같은 Origin 요청에만** 적용하고, Cross-Origin
+요청(Vue `:5173` → Spring Boot `:8080`)에는 적용하지 않는다. `withXSRFToken: true`를
+명시적으로 켜야 우리 SPA 구조에서도 CSRF 토큰이 실제로 헤더에 실린다.
+
+MockMvc 통합 테스트만으로는 이 문제를 잡을 수 없었다 — MockMvc는 백엔드
+필터 체인만 검증할 뿐, Axios가 실제로 어떤 헤더를 보내는지는 검증 범위 밖이기
+때문이다. 실제 두 서버를 띄우고 브라우저로 로그인해본 뒤에야 발견했다. 이후
+로드맵에서도 인증/CORS/CSRF처럼 "여러 계층이 맞물리는" 기능은 로컬 실기동
+검증을 반드시 한 번은 거쳐야 한다는 교훈으로 남긴다.
+
 ### 부수적으로 고친 것: 백엔드 빌드가 애초에 깨져 있었음
 
 `SecurityConfig`/`LoginMemberPrincipal`/`S3Config`가 참조하는
