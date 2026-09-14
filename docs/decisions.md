@@ -240,3 +240,45 @@ RDS에 직접 붙어 검증했다.
 확인 못 했다. Goal/Record 작성 화면이 아직 JSP에만 있어서(Vue 전환은
 Day 8~9, 13), 실제로 값이 있는 케이스를 보려면 JSP 화면에서 데이터를
 등록해보거나 Day 8 이후에 재검증이 필요하다.
+
+---
+
+## master 병합 (2026-09-14) — 저위험 항목만 선별 반영
+
+`claude/keen-darwin-2f77lc`와 `master`가 공통 조상(2026-07-30) 이후 각자
+7개/20개 커밋으로 갈라져 있어서, 전체 병합 전에 파일 단위로 위험도를
+분류했다. 이번엔 그중 **가장 안전한 항목만** 먼저 반영하고, 나머지는
+의도적으로 손대지 않았다.
+
+### 가져온 것 (master → 이 브랜치)
+
+- **`pom.xml`**: AWS S3 SDK 버전을 `2.29.52` → `2.31.67`로 올림. master가
+  독립적으로 이 버전을 채택했고, 우리 쪽엔 이 버전을 고정해야 할 이유가
+  없어서 최신 쪽에 맞췄다. `spring-security-test`(CSRF 테스트용, master엔
+  없음)는 그대로 유지.
+- **`application.yaml` — `spring.jpa.open-in-view: false`**: Open Session
+  In View 안티패턴을 끈다. master가 독립적으로 같은 결론에 도달한 걸
+  보고 반영. 기존 `database-platform` 설정과 무관한 설정이라 그대로 뒀다.
+- **`application.yaml` — `spring.servlet.multipart`**: 이미지 업로드 요청
+  크기 제한(`max-file-size: 5MB`, `max-request-size: 25MB`). 리뉴얼과
+  무관하고 순수하게 누락되어 있던 설정이라 반영.
+
+### 의도적으로 제외한 것
+
+- **`SecurityConfig.java` 전체** — master는 CORS 설정이 없고 CSRF를
+  `disable()`로 완전히 꺼둔, 우리와 근본적으로 다른 구조다. Day 1~4에서
+  맞춘 CORS/CSRF-쿠키/SameSite 구조를 그대로 유지해야 하므로 손대지 않음.
+- **`application.yaml`의 CORS/세션 쿠키 관련 설정** — 위와 동일한 이유.
+- **`server.port`/`server.address`** — 이번 선별 반영 범위(S3, multipart,
+  open-in-view)에 포함되지 않아서 제외. 필요해지면 별도로 검토.
+- **`MemberController.java`, `HomeController.java`, `MyPageController.java`**
+  — master가 `@AuthenticationPrincipal` 대신 `HttpSession.getAttribute
+  ("loginMember")` 레거시 패턴으로 되돌아가 있다. 우리 쪽엔 그 세션
+  속성을 채워주는 `LoginSuccessHandler`가 없어서, 그대로 가져오면 로그인
+  후에도 로그인 안 된 것처럼 동작하는 회귀가 생긴다. `LoginSuccessHandler`
+  도입 여부를 포함해서 별도로 검토해야 할 대상으로 남겨둔다.
+- **뱃지/타임라인 삭제, Goal/Record/MyPage 관련 JSP·CSS·JS 다수** — 아직
+  세부 검토 전. 이번 작업 범위 밖.
+
+빌드 및 전체 테스트(28개) 통과 확인. 변경 파일은 `pom.xml`,
+`application.yaml` 단 2개뿐이고, `SecurityConfig.java`는 diff 없음.

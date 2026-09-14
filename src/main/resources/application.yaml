@@ -31,6 +31,11 @@ spring:
       hibernate:
         format_sql=true
     database-platform: org.hibernate.dialect.MySQLDialect
+    # Open Session In View를 끈다. 기본값(true)은 컨트롤러가 끝난 뒤에도
+    # JPA 세션을 뷰 렌더링(JSP)까지 열어두는데, 이 안티패턴을 끄면
+    # 지연 로딩을 컨트롤러/서비스 계층 밖에서 실수로 사용하는 걸 막아준다.
+    # master 브랜치가 독립적으로 같은 결론에 도달해서 그대로 반영했다.
+    open-in-view: false
 
     # ===========================
     # JSP View Resolver
@@ -40,6 +45,12 @@ spring:
     view:
       prefix: /WEB-INF/views/
       suffix: .jsp
+
+  # 성장 기록 이미지 업로드(S3) 요청 크기 제한
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 25MB
 
       # ===========================
       # Email 인증 진행을 위한 설정
