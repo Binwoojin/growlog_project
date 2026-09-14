@@ -11,13 +11,17 @@
 
 ## Week 1 — 연동 리스크 제거 + 대표 UI
 
-### Day 1 — 프로젝트 기반 + 인증 기술 검증
-- [ ] Vue 3 + Vite + TypeScript + Vue Router + Pinia + Axios 세팅
-- [ ] CORS 설정 확인 (Spring Boot 쪽)
-- [ ] Axios `withCredentials: true` 적용
-- [ ] Session Cookie 발급/유지 확인
-- [ ] CSRF 동작 확인
-- [ ] **성공 기준**: Login → Session → Cookie 유지 → `GET /api/me` 성공
+### Day 1 — 프로젝트 기반 + 인증 기술 검증 ✅ (2026-09-14)
+- [x] Vue 3 + Vite + TypeScript + Vue Router + Pinia + Axios 세팅 (`frontend/`)
+- [x] CORS 설정 확인 (Spring Boot 쪽) — `SecurityConfig`에 Origin 화이트리스트 + credentials 허용 추가
+- [x] Axios `withCredentials: true` 적용 (`frontend/src/api/axios.ts`)
+- [x] Session Cookie 발급/유지 확인 — CSRF 쿠키(XSRF-TOKEN)까지 SPA가 읽을 수 있도록 전환
+- [x] CSRF 동작 확인 — 쿠키 기반 저장소 + 매 요청 강제 로드 필터로 SPA 대응
+- [x] **성공 기준**: Login → Session → Cookie 유지 → `GET /api/me` 성공
+      — `AuthControllerTest` (MockMvc, 실제 SecurityFilterChain 사용)로 자동 검증.
+      실제 DB(RDS)가 이 환경에서 접근 불가해 브라우저 수동 검증은 아직 못 했음 — 로컬에서
+      `mvn spring-boot:run` + `cd frontend && npm run dev`로 직접 한 번 확인 필요.
+      자세한 배경은 `docs/decisions.md` Day 1 항목 참고.
 
 ### Day 2 — 인증 최소 흐름 완성
 - [ ] Login / Logout
