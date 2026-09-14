@@ -36,5 +36,6 @@ build/
 .env
 .env.*
 !frontend/.env.development
+env.sh
 src/main/resources/application-local.yaml
 src/main/resources/application-local.yml
