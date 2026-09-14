@@ -57,6 +57,11 @@
       Quick Action 버튼은 아직 기능 없이 배치만(Goal/Record 화면은 Day 8~9, 13에 연결 예정)
 - 새 공통 컴포넌트 추가 없음 — Day 3의 `BaseCard`/`BaseButton`/`BaseBadge`로 충분해서
       재사용만 함 (검토 결과 신규 컴포넌트 불필요로 판단)
+- [x] **실제 RDS 데이터 기준 최종 검증 완료** (2026-09-14, DBeaver로 SQL 직접 대조) —
+      이번 달 기록 수 / 진행 중 목표 수 / 연속 기록 / Recent Timeline 4개 항목
+      모두 실제 DB 값과 화면이 일치함을 확인. 현재 테스트 계정(member_no=1)에
+      이번 주/이번 달 데이터가 없어서 전부 0/빈 상태로 확인됐고, Empty State
+      문구("아직 이번 달 기록이 없어요...")도 정상 표시됨을 확인.
 
 ### Day 5 — Timeline + TypeScript 설계
 - [ ] `TimelineItem` Discriminated Union 타입 정의 (Goal / Record)
