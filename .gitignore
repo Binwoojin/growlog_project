@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 로컬 전용 환경변수/자격증명 (절대 커밋하지 않는다) ###
+.env
+.env.*
+!frontend/.env.development
+src/main/resources/application-local.yaml
+src/main/resources/application-local.yml
