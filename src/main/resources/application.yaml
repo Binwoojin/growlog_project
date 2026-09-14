@@ -63,6 +63,28 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
+server:
+  servlet:
+    session:
+      cookie:
+        # 세션 쿠키(JSESSIONID)의 기본 SameSite 값은 Lax인데, 이 값은
+        # Cross-Origin XHR/fetch 요청(Vue :5173 -> Spring Boot :8080)에는
+        # 브라우저가 쿠키를 아예 실어 보내지 않는다. (Lax는 "같은 사이트로의
+        # 최상위 이동(링크 클릭 등)"에만 쿠키를 허용하고, XHR/fetch 같은
+        # sub-request에는 method와 무관하게 무조건 차단한다.)
+        # CSRF 토큰은 JS가 document.cookie로 직접 읽어 헤더에 실어 보내므로
+        # 이 제약을 안 받지만, 세션 쿠키는 브라우저가 자동으로 붙이는 것이라
+        # SameSite=None으로 명시해야 로그인 후 GET /api/me 같은 요청에
+        # 세션이 유지된다.
+        #
+        # SameSite=None인 쿠키는 브라우저가 Secure 속성도 함께 요구한다.
+        # 원래는 HTTPS에서만 유효하지만, 최신 브라우저는 http://localhost를
+        # "안전한 컨텍스트"로 취급해 로컬 개발(http)에서도 정상 동작한다.
+        # 실제 배포 시에는 프론트/백엔드 모두 HTTPS를 쓰게 되므로 이 설정이
+        # 그대로 맞는 설정이 된다.
+        same-site: none
+        secure: true
+
 app:
   cors:
     # 콤마로 구분된 허용 Origin 목록. Vue 개발 서버(Vite) 기본 포트를 기본값으로 둔다.

@@ -88,6 +88,27 @@ MockMvc 통합 테스트만으로는 이 문제를 잡을 수 없었다 — Mock
 로드맵에서도 인증/CORS/CSRF처럼 "여러 계층이 맞물리는" 기능은 로컬 실기동
 검증을 반드시 한 번은 거쳐야 한다는 교훈으로 남긴다.
 
+### 7. (실제 브라우저 검증에서 발견) 세션 쿠키에 SameSite=None을 명시해야 한다
+
+`withXSRFToken` 문제를 고친 뒤에도 로그인 후 `GET /api/me`가 계속 401이었다.
+`POST /login`은 성공(세션 생성)했는데도 그랬다. 원인은 세션 쿠키
+(`JSESSIONID`)의 기본 `SameSite` 값이 `Lax`였기 때문이다.
+
+`SameSite=Lax`는 "같은 사이트로의 최상위 이동(링크 클릭 등)"에만 쿠키를
+허용하고, XHR/fetch 같은 하위 요청(sub-request)에는 GET이든 POST든 무조건
+차단한다. CSRF 토큰(XSRF-TOKEN)은 JS가 `document.cookie`로 직접 읽어서
+헤더로 수동 전달하기 때문에 이 제약을 안 받지만(브라우저가 자동으로
+Cookie 헤더에 붙이는 게 아니라 우리 코드가 값을 직접 옮겨 심는 것이라
+SameSite 검사 대상이 아니다), 세션 쿠키는 브라우저가 요청마다 자동으로
+붙여주는 방식이라 이 정책의 영향을 그대로 받는다.
+
+`server.servlet.session.cookie.same-site=none` (+ `secure=true`)로
+명시해서 해결했다. `SameSite=None`은 `Secure` 속성을 반드시 요구하는데,
+`http://localhost`는 최신 브라우저에서 예외적으로 "안전한 컨텍스트"로
+취급되어 HTTPS 없이도 정상 동작한다. 실제 배포 환경은 어차피 HTTPS를
+쓰게 되므로, 이 설정은 로컬 개발용 임시방편이 아니라 배포 환경에서도
+그대로 유효한 설정이다.
+
 ### 부수적으로 고친 것: 백엔드 빌드가 애초에 깨져 있었음
 
 `SecurityConfig`/`LoginMemberPrincipal`/`S3Config`가 참조하는
