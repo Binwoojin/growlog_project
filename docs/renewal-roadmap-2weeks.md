@@ -34,10 +34,18 @@
       이동시킨다. 앱 최초 로드 시의 "로그인 여부 확인"용 401은 라우터 가드가
       이미 조용히 처리하므로 중복 리다이렉트 없음.
 
-### Day 3 — Design System + Dashboard UX 설계
-- [ ] Color / Typography / Spacing 정의
-- [ ] Button / Card / Input / Badge / Modal 공통 컴포넌트 설계
-- [ ] Dashboard 와이어프레임 (Greeting / Summary Cards / Quick Action / Recent Timeline)
+### Day 3 — Design System + Dashboard UX 설계 ✅ (2026-09-14)
+- [x] Color / Typography / Spacing 정의 — `frontend/src/styles/tokens.css`
+      (CSS 변수: Primary/Success/Warning/Error/Background/Surface/Border/
+      Text Primary/Secondary, 4px 기준 spacing scale)
+- [x] Button / Card / Input / Badge / Modal 공통 컴포넌트 설계 —
+      `frontend/src/components/common/` (`BaseButton`, `BaseCard`,
+      `BaseInput`, `BaseBadge`, `BaseModal`). `LoginView.vue`를 이 컴포넌트로
+      리팩터링해서 실제로 잘 조립되는지 확인함.
+- [x] Dashboard 와이어프레임 (Greeting / Summary Cards / Quick Action /
+      Recent Timeline) — `DashboardView.vue`. 지금은 목(mock) 데이터,
+      실제 API 연동은 Day 4~5. Playwright로 데스크톱/모바일 스크린샷
+      확인 완료 (여백/카드/반응형 정상).
 
 ### Day 4 — Dashboard 구현
 - [ ] 실제 로그인 사용자 데이터 연결

@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store'
+import BaseButton from '../components/common/BaseButton.vue'
+import BaseCard from '../components/common/BaseCard.vue'
+import BaseInput from '../components/common/BaseInput.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -28,62 +31,55 @@ async function onSubmit() {
 
 <template>
   <main class="login">
-    <h1>GrowLog 로그인</h1>
+    <h1 class="login__title">GrowLog</h1>
+    <p class="login__subtitle">오늘의 성장을 기록해보세요.</p>
 
-    <form @submit.prevent="onSubmit">
-      <label>
-        이메일
-        <input v-model="email" type="email" required />
-      </label>
+    <BaseCard>
+      <form class="login__form" @submit.prevent="onSubmit">
+        <BaseInput v-model="email" label="이메일" type="email" required />
+        <BaseInput v-model="password" label="비밀번호" type="password" required />
 
-      <label>
-        비밀번호
-        <input v-model="password" type="password" required />
-      </label>
+        <BaseButton type="submit" :disabled="authStore.status === 'loading'">
+          {{ authStore.status === 'loading' ? '로그인 중...' : '로그인' }}
+        </BaseButton>
 
-      <button type="submit" :disabled="authStore.status === 'loading'">
-        {{ authStore.status === 'loading' ? '로그인 중...' : '로그인' }}
-      </button>
-
-      <p v-if="authStore.error" class="error">{{ authStore.error }}</p>
-    </form>
+        <p v-if="authStore.error" class="login__error">{{ authStore.error }}</p>
+      </form>
+    </BaseCard>
   </main>
 </template>
 
 <style scoped>
 .login {
-  max-width: 320px;
-  margin: 80px auto;
+  max-width: 360px;
+  margin: var(--space-12) auto;
+  padding: 0 var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-6);
 }
 
-form {
+.login__title {
+  font-size: var(--font-size-2xl);
+  text-align: center;
+}
+
+.login__subtitle {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.login__form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-4);
 }
 
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 14px;
-}
-
-input {
-  padding: 8px;
-  font-size: 14px;
-}
-
-button {
-  padding: 10px;
-  cursor: pointer;
-}
-
-.error {
-  color: #d93025;
-  font-size: 13px;
+.login__error {
+  margin: 0;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
 }
 </style>
