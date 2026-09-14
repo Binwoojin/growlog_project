@@ -68,6 +68,17 @@ app:
     # 콤마로 구분된 허용 Origin 목록. Vue 개발 서버(Vite) 기본 포트를 기본값으로 둔다.
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
+  s3:
+    bucket: ${S3_BUCKET:growlog-media-2026}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    region:
+      static: ${AWS_REGION:ap-northeast-2}
+
 
 
 
