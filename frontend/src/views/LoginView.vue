@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const password = ref('')
@@ -12,7 +13,13 @@ const password = ref('')
 async function onSubmit() {
   try {
     await authStore.login({ email: email.value, password: password.value })
-    router.push({ name: 'dashboard' })
+    /*
+     * 보호된 화면에 접근하려다 세션이 없어서 로그인으로 튕겨왔다면
+     * (Router Guard, 401 인터셉터 모두 ?redirect=원래경로를 붙여서 보낸다)
+     * 로그인 후 그 원래 화면으로 돌려보낸다.
+     */
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined
+    router.push(redirect ?? { name: 'dashboard' })
   } catch {
     /* authStore.error에 메시지가 이미 채워져 있으므로 템플릿에서 그대로 보여준다 */
   }

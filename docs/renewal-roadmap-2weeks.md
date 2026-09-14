@@ -24,11 +24,15 @@
       설정 누락 등 3개의 실제 버그를 브라우저 검증 중에 추가로 발견/수정함.
       자세한 배경은 `docs/decisions.md` Day 1 항목 참고.
 
-### Day 2 — 인증 최소 흐름 완성
-- [ ] Login / Logout
-- [ ] 현재 사용자 조회
-- [ ] Router Guard
-- [ ] 401 / 403 처리
+### Day 2 — 인증 최소 흐름 완성 ✅ (2026-09-14)
+- [x] Login / Logout — Day 1에 구현 완료 (`authStore.login/logout`)
+- [x] 현재 사용자 조회 — Day 1에 구현 완료 (`GET /api/me`)
+- [x] Router Guard — Day 1에 구현 완료, 오늘 로그인 후 원래 가려던 화면으로
+      돌아가는 `?redirect=` 처리 추가 (`LoginView.vue`)
+- [x] 401 / 403 처리 — Axios 응답 인터셉터(`frontend/src/api/interceptors.ts`)
+      추가: 로그인된 화면에서 세션이 끊기면(401) 자동으로 로그인 화면으로
+      이동시킨다. 앱 최초 로드 시의 "로그인 여부 확인"용 401은 라우터 가드가
+      이미 조용히 처리하므로 중복 리다이렉트 없음.
 
 ### Day 3 — Design System + Dashboard UX 설계
 - [ ] Color / Typography / Spacing 정의
