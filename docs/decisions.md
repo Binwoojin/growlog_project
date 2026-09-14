@@ -158,3 +158,61 @@ auth.store.ts <- router <- axios.ts` 순으로 순환 참조가 생긴다. 인�
 Router Guard와 401 인터셉터 둘 다 `?redirect=원래경로`를 붙여서 로그인
 화면으로 보낸다. `LoginView.vue`가 로그인 성공 시 이 쿼리 파라미터를 읽어서
 무조건 Dashboard로 보내지 않고 원래 가려던 화면으로 돌려보내도록 했다.
+
+---
+
+## Day 4 (2026-09-14) — Dashboard 실제 데이터 연결 (+ 브랜치/보안 점검)
+
+### master와의 관계: 지금은 병합하지 않기로 결정
+
+Day 4 시작 전 `origin/master`와의 차이를 확인했다. 공통 조상(2026-07-30)
+이후 master가 7개, 이 브랜치가 18개 커밋을 각자 진행해서 갈라져 있었고,
+공통 조상 이후 양쪽에서 모두 손댄 파일이 67개였다. master는 우리가 모르는
+사이에 레거시 JSP 백엔드 작업이 별도로 계속된 것으로 보인다 — 특히
+`SecurityConfig.java`를 독자적으로 다시 작성했는데(CORS 없음, CSRF는
+`disable()`로 완전히 꺼둠, `LoginSuccessHandler` 신규 추가), 이건 Day 1에서
+공들여 맞춘 CORS/CSRF/SameSite 구조와 정면으로 충돌한다. 뱃지/타임라인
+관련 파일 삭제 등 다른 실질적 충돌도 많았다.
+
+지금 병합하면 (1) 67개 파일의 실제 충돌을 수작업으로 풀어야 하고 (2) 잘못
+풀면 Day 1~3 인증 구조가 깨질 위험이 있고 (3) Day 4 작업 자체엔 master의
+변경사항이 전혀 필요 없다. 그래서 지금은 병합을 미루고, 이 브랜치만으로
+Day 4를 진행하기로 했다. 병합은 사람이 파일 단위로 리뷰할 시간이 있을 때
+(예: master의 `DB_URL` 환경변수화, `open-in-view: false`, multipart 업로드
+제한처럼 리뉴얼과 무관하고 안전한 개선사항만 선별해서) 별도로 진행한다.
+
+### DB_URL도 환경변수로 분리
+
+기존엔 `DB_USERNAME`/`DB_PASSWORD`만 환경변수였고 RDS 호스트가 포함된
+`url`은 하드코딩되어 있었다. master가 독립적으로 같은 결론(`${DB_URL}`)에
+도달한 걸 보고, 우리도 반영했다. 기본값을 기존 RDS 주소로 그대로 둬서
+이미 만들어둔 `env.sh`/`env.bat`는 수정 없이 계속 동작한다 — `DB_URL`을
+새로 설정해야만 다른 값으로 바뀐다.
+
+### Dashboard API는 새 로직 없이 기존 Service 재사용만으로 구성
+
+`HomeController.homePage()`가 기존 JSP `/home` 화면에 넘기던 값들
+(`goalService.countThisWeekInProgressGoals`, `growthRecordService.countThisMonthRecords`,
+`attendanceService.getAttendanceSummary().currentStreak`, `timelineService.getTimeline()`)을
+그대로 호출해서 `GET /api/dashboard`로 JSON 재포장만 했다. Service/Repository
+변경은 전혀 없다.
+
+`countThisWeekInProgressGoals`는 이름상 "이번 주 등록된 진행중" 목표
+개수라 로드맵 문구("진행 중 목표 수")와 완전히 같은 의미는 아니지만,
+기존 JSP `/home` 화면도 같은 메서드를 쓰고 있어서 그대로 재사용했다 —
+그래야 JSP 홈 화면과 Vue Dashboard가 같은 숫자를 보여준다. 통계 정의를
+새로 내리는 건 이번 리뉴얼 범위(백엔드 재설계 금지) 밖이라고 판단했다.
+
+Recent Timeline Preview는 `TimelineItem` DTO(GOAL/RECORD를 합쳐서
+최신순 정렬해주는 기존 DTO)를 그대로 쓰고 상위 3개만 잘라서 내려준다.
+Day 5에서 전체 Timeline 화면을 만들 때 프론트엔드 타입도 그대로 확장해서
+쓸 수 있도록 `frontend/src/types/dashboard.ts`의 `DashboardTimelineItem`을
+백엔드 DTO 필드명과 1:1로 맞춰뒀다.
+
+### 새 공통 컴포넌트는 추가하지 않음
+
+Day 3에서 만든 `BaseCard`/`BaseButton`/`BaseBadge`만으로 Summary Card,
+Quick Action, Timeline Preview를 전부 조립할 수 있어서 새 컴포넌트를
+만들지 않았다. Loading/Error 상태는 아직 전용 컴포넌트 없이 텍스트로만
+처리했다 — Skeleton 등 제대로 된 UX는 Timeline을 만드는 Day 6에서 함께
+다듬을 계획이다.

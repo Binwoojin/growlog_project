@@ -1,28 +1,32 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store'
+import { fetchDashboard } from '../api/dashboard.api'
+import type { DashboardSummary } from '../types/dashboard'
 import BaseBadge from '../components/common/BaseBadge.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
 
 /*
- * Day 3 — Dashboard 와이어프레임.
- * Summary Card / Recent Timeline의 숫자와 목록은 아직 목(mock) 데이터다.
- * 실제 GET /api/dashboard, /api/timeline 연동은 Day 4~5에서 진행한다.
+ * Day 4 — GET /api/dashboard로 실제 로그인 사용자 데이터를 가져와 표시한다.
+ * Loading/Error/Empty 상태를 제대로 갖춘 UX는 Day 6에서 Timeline과 함께
+ * 다듬는다. 지금은 화면이 깨지지 않을 정도의 최소 상태만 둔다.
  */
 const authStore = useAuthStore()
 const router = useRouter()
 
-const summary = {
-  recordsThisMonth: 12,
-  activeGoals: 3,
-  streakDays: 7,
-}
+const summary = ref<DashboardSummary | null>(null)
+const status = ref<'loading' | 'success' | 'error'>('loading')
 
-const recentTimeline = [
-  { id: 1, type: 'goal' as const, title: '프론트엔드 포트폴리오 완성하기', progress: 80 },
-  { id: 2, type: 'record' as const, title: 'Vue Composition API 학습', summary: '오늘 컴포넌트 구조를 정리했다.' },
-]
+onMounted(async () => {
+  try {
+    summary.value = await fetchDashboard()
+    status.value = 'success'
+  } catch {
+    status.value = 'error'
+  }
+})
 
 async function onLogout() {
   await authStore.logout()
@@ -42,41 +46,52 @@ async function onLogout() {
       <BaseButton variant="ghost" @click="onLogout">로그아웃</BaseButton>
     </header>
 
-    <section class="dashboard__summary">
-      <BaseCard class="summary-card">
-        <p class="summary-card__value">{{ summary.recordsThisMonth }}</p>
-        <p class="summary-card__label">이번 달 기록</p>
-      </BaseCard>
-      <BaseCard class="summary-card">
-        <p class="summary-card__value">{{ summary.activeGoals }}</p>
-        <p class="summary-card__label">진행 중 목표</p>
-      </BaseCard>
-      <BaseCard class="summary-card">
-        <p class="summary-card__value">🔥 {{ summary.streakDays }}일</p>
-        <p class="summary-card__label">연속 기록</p>
-      </BaseCard>
-    </section>
+    <p v-if="status === 'loading'" class="dashboard__status">불러오는 중...</p>
+    <p v-else-if="status === 'error'" class="dashboard__status dashboard__status--error">
+      데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+    </p>
 
-    <section class="dashboard__quick-actions">
-      <BaseButton variant="primary">목표 추가</BaseButton>
-      <BaseButton variant="secondary">기록 남기기</BaseButton>
-    </section>
+    <template v-else-if="summary">
+      <section class="dashboard__summary">
+        <BaseCard class="summary-card">
+          <p class="summary-card__value">{{ summary.recordsThisMonth }}</p>
+          <p class="summary-card__label">이번 달 기록</p>
+        </BaseCard>
+        <BaseCard class="summary-card">
+          <p class="summary-card__value">{{ summary.activeGoalCount }}</p>
+          <p class="summary-card__label">진행 중 목표</p>
+        </BaseCard>
+        <BaseCard class="summary-card">
+          <p class="summary-card__value">🔥 {{ summary.streakDays }}일</p>
+          <p class="summary-card__label">연속 기록</p>
+        </BaseCard>
+      </section>
 
-    <section class="dashboard__timeline">
-      <h2 class="dashboard__section-title">최근 타임라인</h2>
-      <BaseCard v-for="item in recentTimeline" :key="item.id" class="timeline-item">
-        <template v-if="item.type === 'goal'">
-          <BaseBadge variant="primary">🌱 목표</BaseBadge>
+      <section class="dashboard__quick-actions">
+        <BaseButton variant="primary">목표 추가</BaseButton>
+        <BaseButton variant="secondary">기록 남기기</BaseButton>
+      </section>
+
+      <section class="dashboard__timeline">
+        <h2 class="dashboard__section-title">최근 타임라인</h2>
+
+        <p v-if="summary.recentTimeline.length === 0" class="dashboard__status">
+          아직 이번 달 기록이 없어요. 오늘의 성장을 기록해보세요.
+        </p>
+
+        <BaseCard
+          v-for="item in summary.recentTimeline"
+          :key="`${item.type}-${item.itemNum}`"
+          class="timeline-item"
+        >
+          <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
+            {{ item.type === 'GOAL' ? '🌱 목표' : '📖 성장 기록' }}
+          </BaseBadge>
           <p class="timeline-item__title">{{ item.title }}</p>
-          <p class="timeline-item__meta">진행률 {{ item.progress }}%</p>
-        </template>
-        <template v-else>
-          <BaseBadge variant="success">📖 성장 기록</BaseBadge>
-          <p class="timeline-item__title">{{ item.title }}</p>
-          <p class="timeline-item__meta">{{ item.summary }}</p>
-        </template>
-      </BaseCard>
-    </section>
+          <p class="timeline-item__meta">{{ item.content }}</p>
+        </BaseCard>
+      </section>
+    </template>
   </main>
 </template>
 
@@ -105,6 +120,15 @@ async function onLogout() {
   margin: var(--space-1) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.dashboard__status {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.dashboard__status--error {
+  color: var(--color-error);
 }
 
 .dashboard__summary {

@@ -47,10 +47,16 @@
       실제 API 연동은 Day 4~5. Playwright로 데스크톱/모바일 스크린샷
       확인 완료 (여백/카드/반응형 정상).
 
-### Day 4 — Dashboard 구현
-- [ ] 실제 로그인 사용자 데이터 연결
-- [ ] 이번 달 기록 수 / 진행 중 Goal 수 / 연속 기록
-- [ ] Quick Action, Recent Timeline Preview
+### Day 4 — Dashboard 구현 ✅ (2026-09-14)
+- [x] 실제 로그인 사용자 데이터 연결 — 새 `GET /api/dashboard` (`DashboardController`)가
+      기존 `HomeController.homePage()`와 동일한 Service 메서드를 재사용해서
+      JSON으로 조립. Service/Repository 변경 없음.
+- [x] 이번 달 기록 수 / 진행 중 Goal 수 / 연속 기록 — `growthRecordService.countThisMonthRecords`,
+      `goalService.countThisWeekInProgressGoals`, `attendanceService.getAttendanceSummary().currentStreak` 재사용
+- [x] Quick Action, Recent Timeline Preview — `timelineService.getTimeline()` 상위 3개 재사용.
+      Quick Action 버튼은 아직 기능 없이 배치만(Goal/Record 화면은 Day 8~9, 13에 연결 예정)
+- 새 공통 컴포넌트 추가 없음 — Day 3의 `BaseCard`/`BaseButton`/`BaseBadge`로 충분해서
+      재사용만 함 (검토 결과 신규 컴포넌트 불필요로 판단)
 
 ### Day 5 — Timeline + TypeScript 설계
 - [ ] `TimelineItem` Discriminated Union 타입 정의 (Goal / Record)
