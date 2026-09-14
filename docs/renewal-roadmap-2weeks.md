@@ -18,9 +18,10 @@
 - [x] Session Cookie 발급/유지 확인 — CSRF 쿠키(XSRF-TOKEN)까지 SPA가 읽을 수 있도록 전환
 - [x] CSRF 동작 확인 — 쿠키 기반 저장소 + 매 요청 강제 로드 필터로 SPA 대응
 - [x] **성공 기준**: Login → Session → Cookie 유지 → `GET /api/me` 성공
-      — `AuthControllerTest` (MockMvc, 실제 SecurityFilterChain 사용)로 자동 검증.
-      실제 DB(RDS)가 이 환경에서 접근 불가해 브라우저 수동 검증은 아직 못 했음 — 로컬에서
-      `mvn spring-boot:run` + `cd frontend && npm run dev`로 직접 한 번 확인 필요.
+      — `AuthControllerTest` (MockMvc)로 자동 검증 + 로컬에서 실제 브라우저로
+      IntelliJ Run + `npm run dev` 띄워서 최종 확인 완료 (2026-09-14).
+      과정에서 Axios `withXSRFToken`, 세션 쿠키 `SameSite=None`, `app.s3.bucket`
+      설정 누락 등 3개의 실제 버그를 브라우저 검증 중에 추가로 발견/수정함.
       자세한 배경은 `docs/decisions.md` Day 1 항목 참고.
 
 ### Day 2 — 인증 최소 흐름 완성
