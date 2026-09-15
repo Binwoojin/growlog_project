@@ -104,16 +104,16 @@ onMounted(() => {
 
 <style scoped>
 .hero {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(480px, 1.1fr);
   align-items: center;
   gap: var(--space-12);
-  max-width: 1220px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: calc(var(--space-12) * 1.5) var(--space-6);
+  padding: calc(var(--space-12) * 1.5) var(--space-8);
 }
 
 .hero__copy {
-  flex: 1;
   max-width: 560px;
   display: flex;
   flex-direction: column;
@@ -144,22 +144,26 @@ onMounted(() => {
 }
 
 /*
- * Scene — 세 레이어가 겹치는 고정 캔버스. 폭은 Hero 전체가 넓어진 만큼
- * copy(560px 상한)보다 훨씬 넉넉하게 쓴다.
+ * Scene — main panel을 normal flow에 그대로 둬서(position만 relative)
+ * scene의 높이가 실제 컨텐츠 높이를 그대로 따라간다. 이전처럼 scene
+ * 전체에 고정 height(460px)를 주고 세 레이어를 모두 absolute로 배치하면
+ * 뷰포트/폰트 크기에 따라 내용이 길어졌을 때 패널이 잘리거나 서로
+ * 벌어지는 문제가 있었다. goal/record는 main panel을 기준으로(anchor)
+ * 그 모서리에 걸쳐 겹치므로, main이 커지거나 작아져도 항상 main에 맞게
+ * 따라온다. goal/record가 main 아래로 살짝 튀어나오는 만큼만
+ * padding-bottom으로 여유를 둔다.
  */
 .hero__scene {
   position: relative;
-  flex: 1.15;
   min-width: 0;
-  height: 460px;
+  padding-bottom: 72px;
 }
 
 .hero__scene-main {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 360px;
-  max-width: 100%;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -223,17 +227,16 @@ onMounted(() => {
 }
 
 /*
- * Goal Progress Panel — Dashboard의 목표 정보에서 파생된 세부라는 관계가
- * 느껴지도록 main panel의 왼쪽-아래 모서리에 걸쳐 겹친다. depth를
- * --shadow-card로 한 단계 낮춰서 main panel보다 뒤/아래에 있다는 걸
- * 표현한다.
+ * Goal Progress Panel — main panel(anchor) 기준 left/bottom으로 왼쪽-
+ * 아래 모서리에 걸쳐 겹친다. main의 실제 렌더 크기와 무관하게 항상 그
+ * 모서리를 따라가므로 고정 top 좌표(과거 170px)에 의존하지 않는다.
  */
 .hero__scene-goal {
   position: absolute;
   left: 0;
-  top: 170px;
-  width: 230px;
-  max-width: 62%;
+  bottom: -24px;
+  width: 220px;
+  max-width: 58%;
   padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -280,17 +283,15 @@ onMounted(() => {
 }
 
 /*
- * Record Card — "최근 기록이 Dashboard/Timeline과 연결된다"는 관계를
- * main panel 하단에 걸쳐 겹치는 위치로 표현한다. Goal panel과는 다른
- * 코너(오른쪽)에 둬서 세 레이어가 한 대각선 흐름(위→아래, 요약→세부→
- * 최근 활동)으로 읽히게 했다.
+ * Record Card — main panel(anchor) 기준 right/bottom으로 반대쪽
+ * 아래에 걸쳐 겹친다. Goal과 다른 코너를 써서 서로 충돌하지 않는다.
  */
 .hero__scene-record {
   position: absolute;
-  right: 24px;
-  bottom: 0;
-  width: 250px;
-  max-width: 66%;
+  right: 0;
+  bottom: -44px;
+  width: 230px;
+  max-width: 58%;
   padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -375,21 +376,21 @@ onMounted(() => {
   animation-delay: 420ms;
 }
 
-@media (max-width: 900px) {
-  .hero__scene {
-    height: 420px;
-  }
-
-  .hero__scene-main {
-    width: 320px;
+/*
+ * Tablet(768~1199px) — 2-column grid를 유지하기엔 480px min 폭이 너무
+ * 빡빡해서(카피가 심하게 눌림) 억지로 축소하는 대신, 아래 900px
+ * 스택 규칙으로 Tablet 전체를 자연스러운 세로 구성으로 통일한다.
+ */
+@media (max-width: 1199px) {
+  .hero {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .hero {
-    flex-direction: column;
-    align-items: stretch;
-    padding: var(--space-8) var(--space-4);
+    grid-template-columns: 1fr;
   }
 
   .hero__copy {
@@ -397,12 +398,12 @@ onMounted(() => {
   }
 
   /*
-   * Mobile — absolute 겹침 구성은 좁은 화면에서 깨지기 쉬워서, 세
-   * 레이어를 자연스러운 세로 stack으로 전환한다(main → goal → record
+   * absolute 겹침 구성은 좁은 화면에서 깨지기 쉬워서, 세 레이어를
+   * 자연스러운 세로 stack으로 전환한다(Dashboard → Goal → Record
    * 순서, 겹침 없이).
    */
   .hero__scene {
-    height: auto;
+    padding-bottom: 0;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
@@ -414,6 +415,16 @@ onMounted(() => {
     position: static;
     width: auto;
     max-width: none;
+    margin: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-8);
   }
 }
 </style>

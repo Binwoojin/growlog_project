@@ -178,9 +178,23 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .journey {
-  max-width: 1180px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: calc(var(--space-12) * 1.2) var(--space-6);
+  padding: calc(var(--space-12) * 1.2) var(--space-8);
+}
+
+@media (max-width: 1199px) {
+  .journey {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .journey {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
 }
 
 /*
@@ -189,7 +203,7 @@ onBeforeUnmount(() => {
  * 패턴이 기계적으로 반복되지 않게 하는 중간 지점.
  */
 .journey__title {
-  margin: 0 auto var(--space-10);
+  margin: 0 auto var(--space-8);
   max-width: 640px;
   padding-left: var(--space-4);
   font-size: var(--font-size-section-title);

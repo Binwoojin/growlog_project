@@ -190,9 +190,23 @@ const {
 
 <style scoped>
 .feature-section {
-  max-width: 1180px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: calc(var(--space-12) * 1.2) var(--space-6);
+  padding: calc(var(--space-12) * 1.2) var(--space-8);
+}
+
+@media (max-width: 1199px) {
+  .feature-section {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .feature-section {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
 }
 
 .feature-section__title {
@@ -202,27 +216,43 @@ const {
   text-align: left;
 }
 
-/* 기존 4-card grid의 gap(var(--space-6))보다 훨씬 넓게 둔다 */
+/* 기존 4-card grid의 gap(var(--space-6)=24px)보다 넓되, 늘어져 보이지
+   않는 범위(96~144px)로 뒀다 */
 .feature-section__rows {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--space-12) * 1.8);
+  gap: 112px;
 }
 
+/*
+ * row마다 column 폭이 달라지지 않도록 고정 2-column grid를 쓴다.
+ * 시각 순서 반전은 `flex-direction: row-reverse` 대신 `order`로
+ * 처리한다 — DOM은 항상 text가 먼저이므로(마크업 순서 유지), Mobile
+ * media query에서 order만 초기화하면 모든 row가 자동으로 text →
+ * preview 순서가 된다.
+ */
 .story {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.2fr);
   align-items: center;
-  gap: var(--space-10);
-}
-
-.story--reverse {
-  flex-direction: row-reverse;
+  gap: var(--space-8);
 }
 
 .story__text {
-  flex: 1;
+  order: 1;
   min-width: 0;
-  max-width: 420px;
+}
+
+.story__preview {
+  order: 2;
+}
+
+.story--reverse .story__text {
+  order: 2;
+}
+
+.story--reverse .story__preview {
+  order: 1;
 }
 
 .story__number {
@@ -255,9 +285,22 @@ const {
   line-height: 1.7;
 }
 
+/*
+ * Preview 영역의 bounding box(폭/최소 높이/정렬)를 4개 row 전부
+ * 동일하게 둔다 — 안의 카드 내용(Goal/Record/Timeline/Dashboard)은
+ * 서로 달라도, "Preview가 들어가는 슬롯" 자체는 하나의 시스템처럼
+ * 보이게 하기 위함이다.
+ */
 .story__preview {
-  flex: 1.1;
   min-width: 0;
+  width: 100%;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+}
+
+.story__preview > * {
+  width: 100%;
 }
 
 /* ===== 01 Goal preview — Progress family ===== */
@@ -377,7 +420,7 @@ const {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .story__timeline::before {
@@ -532,16 +575,23 @@ const {
   transition-delay: 80ms;
 }
 
-@media (max-width: 900px) {
-  .story,
-  .story--reverse {
-    flex-direction: column;
-    align-items: stretch;
+/*
+ * Mobile(767px 이하) — 1-column으로 쌓고, order를 전부 초기화해서
+ * desktop에서 `.story--reverse`가 준 순서 반전을 무효화한다. DOM은
+ * 애초에 항상 text가 먼저이므로, order만 없애면 4개 row 전부 자동으로
+ * text → preview 순서가 된다.
+ */
+@media (max-width: 767px) {
+  .story {
+    grid-template-columns: 1fr;
     gap: var(--space-6);
   }
 
-  .story__text {
-    max-width: none;
+  .story__text,
+  .story--reverse .story__text,
+  .story__preview,
+  .story--reverse .story__preview {
+    order: 0;
   }
 }
 </style>

@@ -101,14 +101,16 @@ const {
 <template>
   <div class="landing">
     <header class="landing-header">
-      <span class="landing-header__logo">GrowLog</span>
-      <nav class="landing-header__nav" aria-label="페이지 내 이동">
-        <a href="#intro">GrowLog 소개</a>
-        <a href="#features">주요 기능</a>
-      </nav>
-      <BaseButton variant="secondary" @click="goToCtaTarget">
-        {{ authStore.isAuthenticated ? 'Dashboard로 이동' : '로그인' }}
-      </BaseButton>
+      <div class="landing-header__inner">
+        <span class="landing-header__logo">GrowLog</span>
+        <nav class="landing-header__nav" aria-label="페이지 내 이동">
+          <a href="#intro">GrowLog 소개</a>
+          <a href="#features">주요 기능</a>
+        </nav>
+        <BaseButton variant="secondary" @click="goToCtaTarget">
+          {{ authStore.isAuthenticated ? 'Dashboard로 이동' : '로그인' }}
+        </BaseButton>
+      </div>
     </header>
 
     <HeroSection :cta-label="ctaLabel" @cta="goToCtaTarget" />
@@ -159,21 +161,53 @@ const {
 </template>
 
 <style scoped>
-.landing {
-  display: flex;
-  flex-direction: column;
+/*
+ * `.landing`은 원래 `display:flex; flex-direction:column`이었는데,
+ * 여기 직접 자식인 `.hero`/`.intro`/`.journey`(GrowthJourney 루트)는
+ * 각자 `max-width` + `margin:0 auto`로 스스로 중앙 정렬한다. flex
+ * item에 cross-axis auto margin이 있으면(column flex의 cross axis는
+ * 가로) stretch 대신 content-fit 크기로 줄어드는 flexbox 스펙 동작
+ * 때문에, 이 섹션들이 max-width를 못 채우고 내용 크기만큼만 줄어들어
+ * 섹션마다 좌우 기준선이 제각각으로 보였다(Feature/Final CTA는 래퍼
+ * div 안에 있어서 영향을 안 받았음). flex를 안 쓰는 일반 block으로
+ * 바꾸면 모든 섹션이 표준 block+margin:auto 중앙 정렬을 받는다 — 이
+ * 레벨에서 flex가 필요한 이유가 원래 없었다(gap/justify 등 미사용).
+ */
+
+/*
+ * 상단 네비게이션 바는 페이지 캔버스(Background)와 구분되는 Surface로
+ * 둔다. background/border는 full-width, 안쪽 내용만 다른 섹션과 같은
+ * container(max-width 1200px + 공통 padding)를 써서 logo/button의
+ * 좌우 기준선이 Hero copy/scene과 맞도록 한다.
+ */
+.landing-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
 }
 
-/* 상단 네비게이션 바는 페이지 캔버스(Background)와 구분되는 Surface로 둔다 */
-.landing-header {
+.landing-header__inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
-  padding: var(--space-4) var(--space-6);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-8);
+}
+
+@media (max-width: 1199px) {
+  .landing-header__inner {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .landing-header__inner {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
 }
 
 .landing-header__logo {
@@ -197,9 +231,23 @@ const {
 }
 
 .intro {
-  max-width: 1180px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: calc(var(--space-12) * 1.2) var(--space-6);
+  padding: calc(var(--space-12) * 1.2) var(--space-8);
+}
+
+@media (max-width: 1199px) {
+  .intro {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .intro {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
 }
 
 /*
@@ -215,7 +263,7 @@ const {
  * 콘텐츠"가 섹션마다 반복되지 않도록 하기 위함이다.
  */
 .intro__title {
-  margin: 0 0 var(--space-10);
+  margin: 0 0 var(--space-8);
   max-width: 640px;
   font-size: 24px;
   font-weight: var(--font-weight-semibold);
@@ -230,8 +278,9 @@ const {
 
 /*
  * 01 → 03으로 갈수록 왼쪽에서 오른쪽으로 조금씩 밀려서, 세 문장이 계단
- * 처럼 아래로 읽히게 한다. 좁은 화면에서는 이 오프셋을 0으로 되돌린다
- * (media query에서 처리).
+ * 처럼 아래로 읽히게 한다. 고정 px 값만 써서(vw 기반 clamp 제거) 뷰포트
+ * 폭에 따라 오프셋이 계속 달라져 보이는 걸 막았다 — 좁은 화면(900px
+ * 이하)에서는 이 오프셋을 0으로 되돌린다.
  */
 .intro__statement {
   display: flex;
@@ -246,11 +295,11 @@ const {
 }
 
 .intro__statement--1 {
-  margin-left: clamp(0px, 8vw, 96px);
+  margin-left: 48px;
 }
 
 .intro__statement--2 {
-  margin-left: clamp(0px, 16vw, 192px);
+  margin-left: 96px;
 }
 
 .intro__statement-number {
@@ -308,7 +357,7 @@ const {
   line-height: 1.7;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .intro__statement--0,
   .intro__statement--1,
   .intro__statement--2 {
@@ -329,14 +378,28 @@ const {
   flex-direction: column;
   align-items: center;
   gap: var(--space-4);
-  max-width: 1180px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: calc(var(--space-12) * 1.5) var(--space-6);
+  padding: calc(var(--space-12) * 1.5) var(--space-8);
   text-align: center;
 }
 
 .final-cta-band {
   background: var(--color-primary-bg);
+}
+
+@media (max-width: 1199px) {
+  .final-cta {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .final-cta {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
 }
 
 .final-cta__title {
