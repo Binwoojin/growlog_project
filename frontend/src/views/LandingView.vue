@@ -119,7 +119,8 @@ const {
 
     <HeroSection :cta-label="ctaLabel" @cta="goToCtaTarget" />
 
-    <section id="intro" class="intro">
+    <div class="intro-band">
+      <section id="intro" class="intro">
       <h2 class="intro__title">성장은 눈에 잘 보이지 않습니다.</h2>
 
       <div class="intro__statements">
@@ -176,12 +177,15 @@ const {
         나의 성장을 발견할 수 있도록 돕습니다.
       </p>
     </section>
+    </div>
 
-    <div id="features">
+    <div id="features" class="features-band">
       <FeatureSection />
     </div>
 
-    <GrowthJourney />
+    <div class="journey-band">
+      <GrowthJourney />
+    </div>
 
     <div class="final-cta-band">
       <section
@@ -268,6 +272,36 @@ const {
 
 .landing-header__nav a:hover {
   color: var(--color-primary);
+}
+
+/*
+ * Section Band — Hero/Why GrowLog/주요 기능/Growth Journey가 전부 같은
+ * 배경 위에 이어져서 서로 다른 chapter라는 구분감이 부족했다. 카드로
+ * 감싸는 대신(다시 SaaS 템플릿처럼 보이는 걸 피하기 위해) full-bleed
+ * background band + 아주 얇은 divider 조합으로만 구분한다. 배경/
+ * divider는 이 wrapper가 담당하고, 안쪽 콘텐츠의 max-width/padding은
+ * 각 section 자신(.intro/FeatureSection.vue/GrowthJourney.vue)이 그대로
+ * 담당한다 — wrapper에는 padding을 주지 않아서 이중으로 넓어지지
+ * 않는다.
+ *
+ * 모든 경계에 기계적으로 같은 처리를 하지 않았다: Hero→Why는 배경
+ * 대비(기본 bg → surface white) + 아주 얇은 top divider 하나,
+ * Why→기능은 배경 대비만(흰색 surface → 기본 bg, divider 없음),
+ * 기능→Journey는 배경은 같아서 top divider 하나로만, Journey→Final
+ * CTA는 기존 final-cta-band의 Soft Green 배경 자체로 충분해 별도
+ * divider를 추가하지 않았다.
+ */
+.intro-band {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+.features-band {
+  background: var(--color-bg);
+}
+
+.journey-band {
+  border-top: 1px solid var(--color-border);
 }
 
 .intro {
