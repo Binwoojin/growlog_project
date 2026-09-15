@@ -119,16 +119,44 @@ const {
       <h2 class="intro__title">성장은 눈에 잘 보이지 않습니다.</h2>
 
       <div class="intro__statements">
-        <p
+        <div
           v-for="(point, index) in whyGrowLogPoints"
           :key="point.number"
           :ref="(el) => setPointRef(el as Element | null, index)"
           class="intro__statement"
           :class="[`intro__statement--${index}`, { 'points--motion': whyMotionEnabled, 'is-visible': revealedPoints[index] }]"
         >
-          <span class="intro__statement-number">{{ point.number }}</span>
-          <span class="intro__statement-text">{{ point.text }}</span>
-        </p>
+          <div class="intro__statement-copy">
+            <span class="intro__statement-number">{{ point.number }}</span>
+            <span class="intro__statement-text">{{ point.text }}</span>
+          </div>
+
+          <!-- 01 — 흐릿해지는 목표: 체크박스+라벨이 아래로 갈수록 옅어진다 -->
+          <div v-if="index === 0" class="intro__visual intro__visual--fade" aria-hidden="true">
+            <span class="intro__fade-row">
+              <span class="intro__fade-check" />
+              <span class="intro__fade-bar intro__fade-bar--full" />
+            </span>
+            <span class="intro__fade-bar intro__fade-bar--mid" />
+            <span class="intro__fade-bar intro__fade-bar--faint" />
+          </div>
+
+          <!-- 02 — 기록되지 않은 작은 변화: 연결선 없이 흩어진 옅은 점들 -->
+          <div v-else-if="index === 1" class="intro__visual intro__visual--scatter" aria-hidden="true">
+            <span class="intro__scatter-dot intro__scatter-dot--1" />
+            <span class="intro__scatter-dot intro__scatter-dot--2" />
+            <span class="intro__scatter-dot intro__scatter-dot--3" />
+            <span class="intro__scatter-dot intro__scatter-dot--4" />
+            <span class="intro__scatter-dot intro__scatter-dot--5" />
+          </div>
+
+          <!-- 03 — 축적: 기록 카드가 쌓이며 위로 갈수록 진해진다 -->
+          <div v-else class="intro__visual intro__visual--stack" aria-hidden="true">
+            <span class="intro__stack-bar intro__stack-bar--1" />
+            <span class="intro__stack-bar intro__stack-bar--2" />
+            <span class="intro__stack-bar intro__stack-bar--3" />
+          </div>
+        </div>
       </div>
 
       <p class="intro__conclusion">
@@ -284,10 +312,18 @@ const {
  */
 .intro__statement {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin: 0;
+  max-width: 700px;
+}
+
+.intro__statement-copy {
+  display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin: 0;
-  max-width: 620px;
+  min-width: 0;
 }
 
 .intro__statement--0 {
@@ -324,6 +360,145 @@ const {
   color: var(--color-text-primary);
   font-size: var(--font-size-lg);
   line-height: 1.7;
+}
+
+/*
+ * 문장 옆의 작은 visual — 아이콘/일러스트가 아니라 CSS 도형만으로 각
+ * statement의 의미를 보조한다(주인공은 여전히 텍스트). 3개 모두 서로
+ * 다른 형태를 쓴다 — 동일한 아이콘/카드 3개 반복이나 또 다른 dot-line
+ * timeline이 되지 않도록.
+ */
+.intro__visual {
+  flex-shrink: 0;
+  width: 88px;
+}
+
+/* 01 — 흐릿해지는 목표: 체크박스+라벨 한 줄, 그 아래로 갈수록 옅어지는 바 */
+.intro__visual--fade {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.intro__fade-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.intro__fade-check {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: 3px;
+}
+
+.intro__fade-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border);
+}
+
+.intro__fade-bar--full {
+  width: 56px;
+}
+
+.intro__fade-bar--mid {
+  width: 44px;
+  margin-left: 19px;
+  opacity: 0.55;
+}
+
+.intro__fade-bar--faint {
+  width: 30px;
+  margin-left: 19px;
+  opacity: 0.25;
+}
+
+/* 02 — 기록되지 않은 작은 변화: 연결선 없이 흩어진 옅은 점들(timeline과 구분) */
+.intro__visual--scatter {
+  position: relative;
+  height: 40px;
+}
+
+.intro__scatter-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--color-text-secondary);
+}
+
+.intro__scatter-dot--1 {
+  top: 2px;
+  left: 4px;
+  width: 5px;
+  height: 5px;
+  opacity: 0.35;
+}
+
+.intro__scatter-dot--2 {
+  top: 14px;
+  left: 30px;
+  width: 7px;
+  height: 7px;
+  opacity: 0.25;
+}
+
+.intro__scatter-dot--3 {
+  top: 26px;
+  left: 8px;
+  width: 4px;
+  height: 4px;
+  opacity: 0.4;
+}
+
+.intro__scatter-dot--4 {
+  top: 4px;
+  left: 58px;
+  width: 6px;
+  height: 6px;
+  opacity: 0.2;
+}
+
+.intro__scatter-dot--5 {
+  top: 24px;
+  left: 66px;
+  width: 5px;
+  height: 5px;
+  opacity: 0.3;
+}
+
+/* 03 — 축적: 기록 카드가 쌓이며 위로 갈수록 짙어진다(Primary Green으로 도착) */
+.intro__visual--stack {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 5px;
+}
+
+.intro__stack-bar {
+  height: 9px;
+  border-radius: 3px;
+}
+
+.intro__stack-bar--1 {
+  width: 60px;
+  background: var(--color-primary-bg);
+}
+
+.intro__stack-bar--2 {
+  width: 74px;
+  background: var(--color-accent);
+}
+
+.intro__stack-bar--3 {
+  width: 88px;
+  background: var(--color-primary);
+}
+
+@media (max-width: 480px) {
+  .intro__visual {
+    display: none;
+  }
 }
 
 /*

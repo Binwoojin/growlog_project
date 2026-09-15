@@ -2,32 +2,31 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 /*
- * GrowLog의 대표 Visual Identity 섹션 — "주요 기능"이 기능을 나열한다면
- * 여기는 GrowLog를 사용했을 때 사용자가 실제로 경험하는 변화의 과정을
- * 보여준다. 기능명(Goal/Record/Timeline/Growth) 나열을 반복하지 않는다.
+ * GrowLog의 대표 Visual Identity 섹션 — "기록 → 연결 → 축적 → 성장"을
+ * 위에서 아래로 읽히는 Vertical Journey로 보여준다(Desktop 포함 전
+ * 구간 동일 구조). 이전엔 Desktop에서 4단계가 가로로 나란히 배치돼
+ * 있어서 "스크롤에 따라 순차 진입"이라는 신호 자체가 없었고(4개 노드가
+ * 뷰포트 진입 시점이 사실상 동일), 그래서 섹션 전체 스크롤 진행률을
+ * 계산해 4단계에 매핑하는 우회 로직이 필요했다. Vertical 구조에서는
+ * 각 노드가 실제로 서로 다른 시점에 뷰포트에 들어오므로, 그 우회가
+ * 필요 없다 — 노드마다 IntersectionObserver로 각자의 진입을 직접
+ * 관찰하고(rAF scroll 리스너/진행률 계산 전부 제거), 뷰포트에
+ * 들어오면 그 노드만 활성화하고 즉시 unobserve한다(monotonic — 이미
+ * 활성화된 단계는 다시 비활성화하지 않는다).
  *
- * 01→04로 갈수록 노드가 아주 조금씩 커지고(30→36px), 색이 --color-
- * primary-bg → --color-accent → --color-primary → --color-primary-hover
- * 순으로 짙어진다 — "작은 기록이 점점 쌓여 성장한다"는 걸 은유한다.
+ * 연결선(rail)은 노드마다 개별 segment로 정확히 잇는 대신(문장이 몇
+ * 줄로 줄바꿈될지 미리 알 수 없어 노드 중심 좌표를 CSS만으로 정확히
+ * 계산할 수 없음), 활성화된 노드 수에 비례해 scaleY로 자라는 단일
+ * 연속선 하나로 단순화했다 — "line이 아래로 성장한다"는 인터랙션은
+ * 동일하게 유지된다.
  *
- * Scroll Progression — Progressive Enhancement: 기본 CSS(.journey--
- * motion 없음)는 4단계가 전부 최종 활성 상태로 보인다(지금까지의 정적
- * 모습 그대로). `.journey--motion`은 JS가 motion을 켤 수 있을 때만
- * (prefers-reduced-motion이 아닐 때만) 붙고, 그때만 노드가 흐려진
- * "대기" 상태로 시작해서 스크롤에 따라 하나씩 활성화된다. 이미
- * 활성화된 단계는 다시 비활성화하지 않는다(단방향 축적).
- *
- * 구현 방식 — 처음엔 4개 노드 각각을 IntersectionObserver로 관찰했는데,
- * Desktop에서는 4개 노드가 가로로 나란히 배치돼 있어(같은 row) 뷰포트
- * 진입 시점(Y 좌표)이 사실상 동일해서 전부 동시에 활성화되는 문제가
- * 있었다 — 가로 배치에서는 "스크롤에 따라 순차 진입"이라는 신호 자체가
- * 없기 때문이다. 그래서 개별 노드 관찰 대신, 섹션 전체의 스크롤 진행률
- * (섹션이 뷰포트 중간 지점을 지나가는 비율)을 계산해서 그 진행률을
- * 4단계에 매핑하는 방식으로 바꿨다. "지속적인 scroll 리스너 금지"
- * 원칙은, 이 계산을 섹션이 뷰포트 안에 있을 때만(IntersectionObserver로
- * 게이팅) 붙였다 떼는 rAF 스로틀 리스너로 지켜서 절충했다 — 화면 어디에
- * 있든 항상 감시하는 전역 scroll 리스너가 아니라, 이 섹션 근처에 있을
- * 때만 짧게 붙는다.
+ * 01→04로 갈수록 노드 dot이 아주 조금씩 커지고(32→38px), 색이
+ * --color-primary-bg → --color-accent → --color-primary → --color-
+ * primary-hover 순으로 짙어진다 — "작은 기록이 점점 쌓여 성장한다"는
+ * 걸 은유한다(이전 라운드와 동일한 언어를 유지). 좌우 zig-zag 대신
+ * 각 step의 text body에만 아주 작은 수평 오프셋을 줘서(0→28→10→0px)
+ * 단조로운 "왼쪽 선 + 오른쪽 카드 반복" 느낌을 덜면서도, line/dot은
+ * 항상 같은 수직선 위에 있어 reading order가 위→아래로 명확하다.
  */
 const steps = [
   { label: '방향을 정합니다', description: '지금 이루고 싶은 목표를 정합니다.' },
@@ -36,71 +35,17 @@ const steps = [
   { label: '변화를 발견합니다', description: '쌓인 기록 속에서 내가 얼마나 달라졌는지 확인합니다.' },
 ]
 
-const railEl = ref<HTMLElement | null>(null)
+const nodeRefs = ref<(Element | null)[]>([])
 const activatedSteps = ref<boolean[]>(steps.map(() => false))
 const journeyMotionEnabled = ref(false)
 const activatedCount = computed(() => activatedSteps.value.filter(Boolean).length)
-/* Mobile 세로 rail은 항목별 실제 렌더링 높이(줄바꿈에 따라 달라짐)를 CSS만으로
- * 정확히 알 수 없어서, Why GrowLog와 같은 이유로 활성화 개수 비례 scaleY로 단순화한다. */
-const mobileRailFraction = computed(() => activatedCount.value / steps.length)
+const railFraction = computed(() => activatedCount.value / steps.length)
 
-function activateUpTo(index: number) {
-  for (let i = 0; i <= index; i++) {
-    activatedSteps.value[i] = true
-  }
+function setNodeRef(el: Element | null, index: number) {
+  nodeRefs.value[index] = el
 }
 
-let sectionObserver: IntersectionObserver | null = null
-let rafId: number | null = null
-let scrollListenerAttached = false
-
-/*
- * 진행률 0 = 섹션 상단이 뷰포트 아래쪽(85%)에 막 나타나는 시점, 진행률
- * 1 = 섹션 상단이 뷰포트 중간보다 살짝 위(45%)에 닿는 시점. 4단계에
- * 균등 매핑한다. rail 자신의 높이(rect.height)를 분모로 쓰지 않는
- * 이유 — Desktop에서는 한 줄짜리 rail이라 높이가 아주 작아서(약
- * 110px), "중간을 지나 자기 높이만큼 더" 방식으로 계산하면 페이지
- * 맨 아래(Final CTA 바로 다음, 그 아래 콘텐츠가 없음)에서 스크롤이
- * 막혀 마지막 단계가 끝내 활성화되지 못하는 문제가 있었다. 뷰포트
- * 높이 비율 기반의 고정된 구간(뷰포트의 40%)으로 바꿔서 문서 맨
- * 아래에서도 항상 도달 가능하게 했다.
- */
-function computeProgressStep() {
-  rafId = null
-  if (!railEl.value) return
-
-  const rect = railEl.value.getBoundingClientRect()
-  const viewportH = window.innerHeight
-  const startTrigger = viewportH * 0.85
-  const endTrigger = viewportH * 0.45
-  const progress = (startTrigger - rect.top) / (startTrigger - endTrigger)
-  const clamped = Math.min(1, Math.max(0, progress))
-  const stepIndex = Math.min(steps.length - 1, Math.floor(clamped * steps.length))
-
-  activateUpTo(stepIndex)
-}
-
-function onScroll() {
-  if (rafId !== null) return
-  rafId = requestAnimationFrame(computeProgressStep)
-}
-
-function attachScrollListener() {
-  if (scrollListenerAttached) return
-  window.addEventListener('scroll', onScroll, { passive: true })
-  scrollListenerAttached = true
-  computeProgressStep()
-}
-
-function detachScrollListener() {
-  if (!scrollListenerAttached) return
-  window.removeEventListener('scroll', onScroll)
-  scrollListenerAttached = false
-  if (rafId !== null) {
-    cancelAnimationFrame(rafId)
-    rafId = null
-  }
-}
+let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -110,29 +55,24 @@ onMounted(() => {
   }
 
   journeyMotionEnabled.value = true
-  if (!railEl.value) return
-
-  sectionObserver = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting) {
-        attachScrollListener()
-        return
-      }
-      detachScrollListener()
-      if (activatedCount.value === steps.length) {
-        sectionObserver?.disconnect()
-        sectionObserver = null
-      }
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        const index = nodeRefs.value.indexOf(entry.target)
+        if (index === -1) return
+        activatedSteps.value[index] = true
+        observer?.unobserve(entry.target)
+      })
     },
-    { threshold: 0 },
+    { threshold: 0.35, rootMargin: '0px 0px -20% 0px' },
   )
-  sectionObserver.observe(railEl.value)
+  nodeRefs.value.forEach((el) => el && observer?.observe(el))
 })
 
 onBeforeUnmount(() => {
-  detachScrollListener()
-  sectionObserver?.disconnect()
-  sectionObserver = null
+  observer?.disconnect()
+  observer = null
 })
 </script>
 
@@ -141,36 +81,22 @@ onBeforeUnmount(() => {
     <h2 class="journey__title">작은 기록이 성장으로 이어지는 과정</h2>
 
     <ol
-      :ref="(el) => (railEl = el as HTMLElement | null)"
       class="journey__rail"
       :class="{ 'journey--motion': journeyMotionEnabled }"
-      :style="{ '--mobile-rail-fraction': mobileRailFraction }"
+      :style="{ '--rail-fraction': railFraction }"
     >
-      <span
-        class="journey__connector journey__connector--1"
-        :class="{ 'is-active': activatedSteps[1] }"
-        aria-hidden="true"
-      />
-      <span
-        class="journey__connector journey__connector--2"
-        :class="{ 'is-active': activatedSteps[2] }"
-        aria-hidden="true"
-      />
-      <span
-        class="journey__connector journey__connector--3"
-        :class="{ 'is-active': activatedSteps[3] }"
-        aria-hidden="true"
-      />
-
       <li
         v-for="(step, index) in steps"
         :key="step.label"
+        :ref="(el) => setNodeRef(el as Element | null, index)"
         class="journey__node"
         :class="[`journey__node--${index}`, { 'is-active': activatedSteps[index] }]"
       >
         <span class="journey__dot" aria-hidden="true">{{ index + 1 }}</span>
-        <p class="journey__label">{{ step.label }}</p>
-        <p class="journey__description">{{ step.description }}</p>
+        <div class="journey__body">
+          <p class="journey__label">{{ step.label }}</p>
+          <p class="journey__description">{{ step.description }}</p>
+        </div>
       </li>
     </ol>
   </section>
@@ -198,70 +124,61 @@ onBeforeUnmount(() => {
 }
 
 /*
- * 이 섹션은 slightly-offset center로 둔다 — Hero/Why GrowLog/Feature의
- * left 정렬과, Final CTA의 정확한 center 사이에서 "중앙 제목 → 콘텐츠"
- * 패턴이 기계적으로 반복되지 않게 하는 중간 지점.
+ * Landing에서 성장의 전체 과정을 보여주는 유일한 섹션이라 제목은
+ * 명확한 center로 둔다(다른 섹션의 left/editorial 톤과는 의도적으로
+ * 다르게).
  */
 .journey__title {
   margin: 0 auto var(--space-8);
   max-width: 640px;
-  padding-left: var(--space-4);
+  text-align: center;
   font-size: var(--font-size-section-title);
   font-weight: var(--font-weight-semibold);
-  text-align: left;
 }
 
 /*
- * gap은 주지 않는다 — connector(아래)가 4개 flex:1 노드를 12.5/37.5/
- * 62.5% 고정 비율로 잇는 계산이 "노드 사이에 gap 없음"을 전제로 하기
- * 때문이다(gap을 주면 노드 중심과 connector 위치가 어긋난다). 노드
- * 사이 여백은 대신 .journey 자체의 max-width를 960→1180px로 넓혀서
- * 4개 flex:1 노드가 자연스럽게 더 넓게 벌어지게 하는 방식으로 늘렸다.
+ * Rail은 640px로 좁혀 중앙에 두고, 위→아래로 읽히는 하나의 editorial
+ * column으로 만든다. line은 dot들의 대략적인 중심(38px 최대 dot의
+ * 절반=19px)에 맞춘 고정 left 좌표를 쓴다.
  */
 .journey__rail {
   position: relative;
   list-style: none;
-  margin: 0;
+  margin: 0 auto;
   padding: 0;
+  max-width: 640px;
   display: flex;
+  flex-direction: column;
+  gap: 56px;
 }
 
-/* 구간별로 --color-primary-bg → --color-accent → --color-primary 순서로 짙어진다 */
-.journey__connector {
+.journey__rail::before {
+  content: '';
   position: absolute;
-  top: 17px;
-  height: 1.5px;
+  top: 6px;
+  bottom: 6px;
+  left: 19px;
+  width: 1.5px;
+  background: var(--color-border);
 }
 
-.journey__connector--1 {
-  left: 12.5%;
-  width: 25%;
-  background: var(--color-primary-bg);
-}
-
-.journey__connector--2 {
-  left: 37.5%;
-  width: 25%;
-  background: var(--color-accent);
-}
-
-.journey__connector--3 {
-  left: 62.5%;
-  width: 25%;
-  background: var(--color-primary);
+.journey--motion .journey__rail::before {
+  transform: scaleY(var(--rail-fraction, 1));
+  transform-origin: top;
+  transition: transform 0.5s ease;
 }
 
 .journey__node {
   position: relative;
-  flex: 1;
-  padding-top: 48px;
-  text-align: center;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
 }
 
 .journey__dot {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -270,37 +187,52 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-sm);
 }
 
-/* 노드 크기(30→36px)와 색(연함→짙음)이 단계마다 아주 조금씩 진행된다 */
+/* 노드 크기(32→38px)와 색(연함→짙음)이 단계마다 아주 조금씩 진행된다 */
 .journey__node--0 .journey__dot {
-  top: 3px;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   background: var(--color-primary-bg);
   color: var(--color-text-primary);
 }
 
 .journey__node--1 .journey__dot {
-  top: 2px;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: var(--color-accent);
   color: var(--color-text-primary);
 }
 
 .journey__node--2 .journey__dot {
-  top: 1px;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   background: var(--color-primary);
   color: var(--color-text-inverse);
 }
 
 .journey__node--3 .journey__dot {
-  top: 0;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   background: var(--color-primary-hover);
   color: var(--color-text-inverse);
+}
+
+.journey__body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+/*
+ * Step마다 text body에만 아주 작은 수평 오프셋을 줘서(line/dot은 그대로
+ * 고정) 전형적인 "왼쪽 선 + 오른쪽 카드 반복" 느낌을 완화한다. 04는
+ * 도착 지점이라 다시 기준선으로 돌아온다.
+ */
+.journey__node--1 .journey__body {
+  margin-left: 28px;
+}
+
+.journey__node--2 .journey__body {
+  margin-left: 10px;
 }
 
 .journey__label {
@@ -320,7 +252,7 @@ onBeforeUnmount(() => {
 }
 
 .journey__description {
-  margin: var(--space-1) var(--space-2) 0;
+  margin: var(--space-1) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }
@@ -328,28 +260,19 @@ onBeforeUnmount(() => {
 /*
  * Progressive Enhancement — 기본 상태(.journey--motion 없음)는 이미 위
  * 색/크기 값 그대로 "전부 활성화된 최종 모습"이다. `.journey--motion`이
- * 붙어야만(JS가 motion을 켤 때만) 연결선이 접히고 점이 흐려진 대기
- * 상태로 시작해서, `.is-active`가 붙을 때마다 원래 모습으로 펼쳐진다.
+ * 붙어야만(JS가 motion을 켤 때만) line이 접히고 dot이 흐려진 대기
+ * 상태로 시작해서, `.is-active`가 붙을 때마다(뷰포트 진입) 원래 모습
+ * 으로 펼쳐진다.
  */
-.journey--motion .journey__connector {
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.6s ease;
-}
-
-.journey--motion .journey__connector.is-active {
-  transform: scaleX(1);
-}
-
 .journey--motion .journey__dot {
   opacity: 0.5;
-  transform: translateX(-50%) scale(0.85);
+  transform: scale(0.85);
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .journey--motion .journey__node.is-active .journey__dot {
   opacity: 1;
-  transform: translateX(-50%) scale(1);
+  transform: scale(1);
 }
 
 .journey--motion .journey__label {
@@ -365,63 +288,9 @@ onBeforeUnmount(() => {
   color: var(--color-primary);
 }
 
-@media (max-width: 720px) {
-  .journey__rail {
-    flex-direction: column;
-    gap: var(--space-6);
-  }
-
-  /*
-   * 세로 스택에서는 각 노드의 본문 줄 수가 달라 실제 중심 좌표를 CSS만으로
-   * 정확히 계산할 수 없다. desktop처럼 구간별 톤을 정확히 맞추는 대신
-   * 하나의 은은한 세로선으로 단순화해서 "흐름"만 유지한다 — 단계별 진행은
-   * 각 점의 크기/색으로 계속 보인다. Scroll Progression이 켜져 있으면
-   * (.journey--motion) 이 선도 활성화된 단계 수에 비례해 scaleY로 자란다.
-   */
-  .journey__connector {
-    display: none;
-  }
-
-  .journey__rail::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 17px;
-    width: 1.5px;
-    background: var(--color-primary-bg);
-  }
-
-  .journey--motion.journey__rail::before {
-    transform: scaleY(var(--mobile-rail-fraction, 1));
-    transform-origin: top;
-    transition: transform 0.5s ease;
-  }
-
-  .journey__node {
-    padding-top: 0;
-    padding-left: 48px;
-    text-align: left;
-  }
-
-  .journey__node--0 .journey__dot,
-  .journey__node--1 .journey__dot,
-  .journey__node--2 .journey__dot,
-  .journey__node--3 .journey__dot {
-    top: 0;
-    left: 0;
-    transform: none;
-  }
-
-  .journey--motion .journey__dot {
-    transform: scale(0.85);
-  }
-
-  .journey--motion .journey__node.is-active .journey__dot {
-    transform: scale(1);
-  }
-
-  .journey__description {
+@media (max-width: 480px) {
+  .journey__node--1 .journey__body,
+  .journey__node--2 .journey__body {
     margin-left: 0;
   }
 }
