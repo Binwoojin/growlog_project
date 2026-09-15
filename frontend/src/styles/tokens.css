@@ -52,11 +52,13 @@
   --font-sans: Pretendard, system-ui, -apple-system, 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
 
   /*
-   * Application UI(Dashboard/Timeline/Goal/Login)가 이 값들을 그대로
-   * 참조하고 있어서, 이번 Landing 작업에서는 기존 값을 그대로 유지한다.
-   * Landing에서 더 큰 Section/Page Title이 필요한 곳은 각 컴포넌트
-   * 스코프 안에서 로컬 값으로 처리했다(전역 계층 변경은 Application UI
-   * 전체를 다룰 다음 단계에서 다시 검토).
+   * `--font-size-xl`/`--font-size-2xl`은 Login도 그대로 참조하고 있어서
+   * (LoginView.vue 타이틀이 --font-size-2xl) 값 자체는 건드리지 않는다.
+   * 대신 실제로 더 큰 제목이 필요한 화면(Dashboard/Timeline/Goal)에는
+   * 역할이 분명한 새 토큰을 추가해서 그 화면들에서만 쓴다 — Login은
+   * 계속 기존 --font-size-2xl(28px)만 참조하므로 영향이 없다. 모든
+   * Application 화면이 완성되면 이 역할 토큰들을 기준으로 전체 scale을
+   * 다시 통합 검토한다.
    */
   --font-size-sm: 13px;
   --font-size-base: 15px;
@@ -66,6 +68,16 @@
 
   /* Landing Hero 전용 — Application UI에서는 쓰지 않는다 */
   --font-size-hero: 44px;
+
+  /*
+   * 역할 기반 타이포 토큰 — Dashboard/Timeline/Goal의 페이지 제목,
+   * Landing의 섹션 제목, Dashboard Summary Card처럼 강조가 필요한
+   * 큰 숫자에만 쓴다. 기존 --font-size-xl/2xl과 별개 토큰이라
+   * Login 등 다른 화면에는 영향이 없다.
+   */
+  --font-size-page-title: 28px;
+  --font-size-section-title: 24px;
+  --font-size-display: 32px;
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -92,6 +104,11 @@
    * 와이어프레임 단계에서 뺐던 그림자를 낮은 강도로 복원한다. 카드가
    * "떠 있는" 느낌이 아니라 Surface(#fff)와 Background(#f7f8f5)를
    * 아주 미세하게만 구분하는 수준으로 제한했다.
+   *
+   * Depth는 2단계로만 제한한다: 기본 카드는 --shadow-card, Hero
+   * Preview의 레이어드 카드나 hover처럼 한 단계 더 강조가 필요한
+   * 곳만 --shadow-elevated. 3단계 이상 elevation은 만들지 않는다.
    */
   --shadow-card: 0 1px 2px rgba(34, 40, 36, 0.04), 0 2px 8px rgba(34, 40, 36, 0.05);
+  --shadow-elevated: 0 2px 4px rgba(34, 40, 36, 0.06), 0 8px 20px rgba(34, 40, 36, 0.08);
 }

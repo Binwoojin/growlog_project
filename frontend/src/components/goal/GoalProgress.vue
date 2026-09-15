@@ -31,13 +31,18 @@ const clampedProgress = () => Math.min(100, Math.max(0, props.progress))
 
 .goal-progress__track {
   flex: 1;
-  height: 10px;
+  height: 12px;
   border-radius: 999px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
+/*
+ * Progress는 GrowLog Growth의 핵심 시각 요소라 Primary Green을 쓴다.
+ * 다른 요소(제목/기간 등)까지 전부 Green으로 강조하지 않고 여기에만
+ * 집중해서 쓰는 것으로 "성장" 의미를 진행률 하나에 모은다.
+ */
 .goal-progress__fill {
   height: 100%;
   border-radius: 999px;
@@ -46,10 +51,10 @@ const clampedProgress = () => Math.min(100, Math.max(0, props.progress))
 }
 
 .goal-progress__label {
-  min-width: 36px;
+  min-width: 38px;
   text-align: right;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
 }
 </style>

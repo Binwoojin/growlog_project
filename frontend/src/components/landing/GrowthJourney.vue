@@ -1,14 +1,14 @@
 <script setup lang="ts">
 /*
- * "주요 기능"이 기능 목록을 나열하는 섹션이라면, 여기는 GrowLog를
- * 사용했을 때 사용자가 실제로 경험하는 변화의 과정을 보여주는
- * 섹션이다 — 기능명(Goal/Record/Timeline/Growth) 나열을 반복하지
- * 않는다.
+ * GrowLog의 대표 Visual Identity 섹션 — "주요 기능"이 기능을 나열한다면
+ * 여기는 GrowLog를 사용했을 때 사용자가 실제로 경험하는 변화의 과정을
+ * 보여준다. 기능명(Goal/Record/Timeline/Growth) 나열을 반복하지 않는다.
  *
- * emoji를 쓰지 않고 번호가 있는 점(dot)과 연결선으로만 표현한다 —
- * GrowLog Visual Language "점 → 선 → 흐름 → 축적 → 성장"을 가장
- * 직접적으로 대표하는 요소로 이 섹션을 쓴다. 정적 레이아웃만 쓰고
- * 애니메이션은 추가하지 않는다.
+ * 01→04로 갈수록 노드가 아주 조금씩 커지고(30→36px), 색이 --color-
+ * primary-bg → --color-accent → --color-primary → --color-primary-hover
+ * 순으로 짙어진다 — "작은 기록이 점점 쌓여 성장한다"는 걸 은유한다.
+ * 연결선(desktop)도 같은 3개 톤을 구간별로 써서 "line progress"를
+ * 표현했지만, 굵기는 1.5px로 얇게 유지했다. 애니메이션은 없다.
  */
 const steps = [
   { label: '방향을 정합니다', description: '지금 이루고 싶은 목표를 정합니다.' },
@@ -23,7 +23,11 @@ const steps = [
     <h2 class="journey__title">작은 기록이 성장으로 이어지는 과정</h2>
 
     <ol class="journey__rail">
-      <li v-for="(step, index) in steps" :key="step.label" class="journey__node">
+      <span class="journey__connector journey__connector--1" aria-hidden="true" />
+      <span class="journey__connector journey__connector--2" aria-hidden="true" />
+      <span class="journey__connector journey__connector--3" aria-hidden="true" />
+
+      <li v-for="(step, index) in steps" :key="step.label" class="journey__node" :class="`journey__node--${index}`">
         <span class="journey__dot" aria-hidden="true">{{ index + 1 }}</span>
         <p class="journey__label">{{ step.label }}</p>
         <p class="journey__description">{{ step.description }}</p>
@@ -39,10 +43,9 @@ const steps = [
   padding: var(--space-8) var(--space-4);
 }
 
-/* LandingView.vue의 intro__title과 같은 이유로 로컬 값을 쓴다 */
 .journey__title {
   margin: 0 0 var(--space-8);
-  font-size: 24px;
+  font-size: var(--font-size-section-title);
   font-weight: var(--font-weight-semibold);
   text-align: center;
 }
@@ -55,19 +58,29 @@ const steps = [
   display: flex;
 }
 
-/*
- * 점들을 잇는 연결선 — 첫 점과 마지막 점의 중심 사이만 지나가도록 좌우를
- * 인셋한다. Primary Green 점과 연결되는 선이라 중립 border보다 살짝
- * 진한 Soft Green 톤(--color-primary-bg)을 써서 연결감을 또렷하게 했다.
- */
-.journey__rail::before {
-  content: '';
+/* 구간별로 --color-primary-bg → --color-accent → --color-primary 순서로 짙어진다 */
+.journey__connector {
   position: absolute;
-  top: 16px;
+  top: 17px;
+  height: 1.5px;
+}
+
+.journey__connector--1 {
   left: 12.5%;
-  right: 12.5%;
-  height: 2px;
+  width: 25%;
   background: var(--color-primary-bg);
+}
+
+.journey__connector--2 {
+  left: 37.5%;
+  width: 25%;
+  background: var(--color-accent);
+}
+
+.journey__connector--3 {
+  left: 62.5%;
+  width: 25%;
+  background: var(--color-primary);
 }
 
 .journey__node {
@@ -79,19 +92,47 @@ const steps = [
 
 .journey__dot {
   position: absolute;
-  top: 0;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
   border-radius: 50%;
-  background: var(--color-primary);
-  color: var(--color-text-inverse);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
+}
+
+/* 노드 크기(30→36px)와 색(연함→짙음)이 단계마다 아주 조금씩 진행된다 */
+.journey__node--0 .journey__dot {
+  top: 3px;
+  width: 30px;
+  height: 30px;
+  background: var(--color-primary-bg);
+  color: var(--color-text-primary);
+}
+
+.journey__node--1 .journey__dot {
+  top: 2px;
+  width: 32px;
+  height: 32px;
+  background: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.journey__node--2 .journey__dot {
+  top: 1px;
+  width: 34px;
+  height: 34px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.journey__node--3 .journey__dot {
+  top: 0;
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary-hover);
+  color: var(--color-text-inverse);
 }
 
 .journey__label {
@@ -111,13 +152,24 @@ const steps = [
     gap: var(--space-6);
   }
 
+  /*
+   * 세로 스택에서는 각 노드의 본문 줄 수가 달라 실제 중심 좌표를 CSS만으로
+   * 정확히 계산할 수 없다. desktop처럼 구간별 톤을 정확히 맞추는 대신
+   * 하나의 은은한 세로선으로 단순화해서 "흐름"만 유지한다 — 단계별 진행은
+   * 각 점의 크기/색으로 계속 보인다.
+   */
+  .journey__connector {
+    display: none;
+  }
+
   .journey__rail::before {
+    content: '';
+    position: absolute;
     top: 0;
     bottom: 0;
-    left: 15px;
-    right: auto;
-    width: 2px;
-    height: auto;
+    left: 17px;
+    width: 1.5px;
+    background: var(--color-primary-bg);
   }
 
   .journey__node {
@@ -126,7 +178,10 @@ const steps = [
     text-align: left;
   }
 
-  .journey__dot {
+  .journey__node--0 .journey__dot,
+  .journey__node--1 .journey__dot,
+  .journey__node--2 .journey__dot,
+  .journey__node--3 .journey__dot {
     top: 0;
     left: 0;
     transform: none;

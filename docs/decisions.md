@@ -878,3 +878,151 @@ timeline.api.ts` 모듈 요청까지 가로채 앱이 깨지는 걸 발견 —
 백엔드 origin(`http://localhost:8080/...`)으로 패턴을 좁혀서 해결한
 것은 테스트 스크립트 버그였고 실제 앱 코드 문제는 아니었다. Login도
 별도로 캡처해서 이번 변경이 cascade되지 않았음을 확인했다.
+
+---
+
+## Visual Design 고도화 — 와이어프레임 단계 종료 (2026-09-15)
+
+목표는 "와이어프레임 + 색상만 입힌 화면"에서 "실제 출시를 준비하는
+Product UI"로 넘어가는 것. Day One/Sunsama/Reflect/Linear의 레이아웃
+원리만 가져오고 GrowLog 기존 브랜드 토큰으로만 구현했다. 기능/API/
+Router/Pinia는 전혀 건드리지 않았다.
+
+### 아이콘 — `lucide-vue-next` 대신 `@lucide/vue`
+
+승인받은 `lucide-vue-next`를 설치하자 `npm warn deprecated
+lucide-vue-next@1.0.0: Please use @lucide/vue instead`가 떠서, 같은
+Lucide 아이콘 세트의 유지보수되는 공식 후속 패키지인 `@lucide/vue`
+(v1.46.0)로 바로 교체했다. import 방식(named export)은 동일해서
+설계에 영향 없음. 트리쉐이킹이 정상 동작해서(`npm run build` 결과
+아이콘 1개당 별도 청크가 0.3~3KB 수준) 실제 쓰는 아이콘만 번들에
+포함된다.
+
+이모지를 대체한 아이콘: 목표 관리→`Target`, 성장 기록→`NotebookPen`,
+성장 타임라인→`Route`, 성장 대시보드→`LayoutDashboard`, 연속 기록→
+`Flame`, Timeline/Dashboard의 기록 타입 배지→`NotebookText`, Goal
+상태 배지(진행중/완료/중단)→`Flag`/`CircleCheck`/`CircleX`, Goal
+카드 액션→`Pencil`/`Trash2`, 기간→`Calendar`, Timeline 필터
+"전체"→`LayoutGrid`, AppNav→`LayoutDashboard`/`Route`/`Target`.
+색상은 `--color-primary` 또는 `--color-text-secondary` 두 가지로만
+제한하고 `stroke-width`는 1.75로 통일했다. Goal 카테고리 아이콘
+(`goal.category.categoryIcon`, 예: 📁)은 이모지가 아니라 사용자가
+고른 실제 카테고리 데이터라서 교체하지 않았다.
+
+### 역할 기반 타이포 토큰 — `--font-size-xl/2xl`은 여전히 그대로
+
+`--font-size-page-title`(28px)/`--font-size-section-title`(24px)/
+`--font-size-display`(32px) 3개를 새로 추가했다. `--font-size-xl`
+(22px)/`--font-size-2xl`(28px) 값 자체는 전혀 바꾸지 않았다 —
+`LoginView.vue`가 지금도 `--font-size-2xl`을 그대로 쓰고 있어서,
+가지고 있는 모든 화면의 h1(Dashboard 인사말/Timeline/GoalList/
+GoalForm 제목)만 새 `--font-size-page-title`로 옮겨 실제로 커지게
+하고 Login은 옛 토큰을 그대로 참조하니 영향이 없다. Landing의 섹션
+제목(Why GrowLog/주요 기능/Growth Journey)도 각자 하드코딩했던
+"24px"를 `--font-size-section-title`로 통일했다(값은 그대로라 시각
+변화 없음). Dashboard Summary Card의 큰 숫자는 `--font-size-display`
+(32px)로 승격해서 "숫자가 가장 강하게" 원칙을 강화했다 — 이 토큰은
+Login의 `--font-size-2xl`(28px)과 별개라 서로 영향을 주지 않는다.
+
+### `--shadow-elevated` — Depth는 2단계까지만
+
+기본 카드는 `--shadow-card`, Hero Preview의 레이어드 카드나 hover
+강조가 필요한 곳(Feature 카드/Goal 카드/Timeline·Dashboard 타임라인
+아이템)만 `--shadow-elevated` 한 단계 더 쓰는 것으로 제한했다. 3단계
+이상 elevation은 만들지 않았다.
+
+### Hero Product Preview
+
+`HeroSection.vue`를 다시 썼다. 실제 API를 연결하지 않고 정적
+프레젠테이션 데이터만 쓰되, GrowLog Dashboard가 실제로 보여주는
+정보(이번 달 기록/진행 중 목표/연속 기록 3개 숫자, Goal Progress,
+최근 타임라인 1개)만 축약해서 보여준다 — 존재하지 않는 기능을 새로
+지어내지 않았다. Soft Green 배경 카드를 흰 카드 뒤에 살짝 어긋나게
+겹쳐서(layered surface) depth를 표현했고, elevation은
+`--shadow-elevated` 한 단계만 썼다.
+
+### Why GrowLog — rail을 infographic처럼 만들지 않기
+
+점 크기를 리스트 아래로 갈수록 키우거나 대비를 강하게 주면 "진행률
+그래프"처럼 보일 위험이 있어서, rail 자체(점 크기/색)는 손대지 않고
+결론 문단만 옅은 Soft Green 배경으로 구분해 "도착 지점"만 표시하는
+정도로 절제했다. 카피가 계속 중심이다.
+
+### Growth Journey — 대표 Visual Identity로 재설계
+
+박스+화살표 구조를 점(dot)+연결선 구조로 이미 바꿔뒀던 걸, 이번엔
+"진행"을 실제로 표현하도록 발전시켰다: 노드 크기가 30→32→34→36px로
+아주 조금씩 커지고, 배경색이 `--color-primary-bg`→`--color-accent`→
+`--color-primary`→`--color-primary-hover` 순서로 짙어진다. Desktop
+연결선도 같은 3톤을 구간별로 나눠서(각 구간은 flex 컬럼 폭 기준
+정확한 %라 텍스트 길이와 무관하게 항상 정확하다) "line progress"를
+표현했다. Mobile(세로 스택)에서는 각 노드의 실제 렌더링 높이가
+설명 텍스트 길이에 따라 달라져서 CSS만으로 정확한 구간 경계를 계산할
+수 없다 — 그래서 mobile은 연결선을 은은한 단일 톤으로 단순화했고,
+"진행"은 각 점의 크기/색으로 계속 보여준다. 애니메이션은 없다.
+
+### Timeline — 핵심 브랜드 화면
+
+Dashboard의 rail보다 한 단계 더 또렷하게(점 8px vs 7px, 선 1.5px vs
+1px) 만들어서 "이 화면이 진짜"라는 위계를 뒀다. 카드 내부를 유형+
+아이콘 배지 → 제목 → 본문 → 날짜 순으로 정리했다. 날짜는 백엔드가
+이미 내려주던 `TimelineItem.createdAt` 필드를 처음으로 화면에 노출한
+것뿐이라 새 API가 필요 없었다 — `frontend/src/utils/date.ts`의
+`formatTimelineDate()`로 "M월 D일" 형식으로만 축약한다. Goal/Record
+구분은 여전히 rail 색이 아니라 배지+아이콘에만 맡겼다.
+
+### Dashboard
+
+Summary Card는 숫자(`--font-size-display`, 가장 진하게) → label →
+hint(`opacity: 0.75`, 가장 약하게) 순서의 대비를 더 벌렸다. Accent
+bar는 모든 카드에 넣지 않았다 — Primary Green을 카드 3개에 전부
+쓰면 오히려 단조로워진다는 지적을 반영해 surface/typography 대비로만
+위계를 만들었다(연속 기록의 Flame 아이콘 하나만 예외적으로 강조).
+Quick Action은 아이콘+텍스트를 넣되 패딩/폰트 크기를 줄여서
+(`.quick-action`) Summary Card보다 작게 유지했다. Recent Timeline도
+Timeline과 같은 방식으로 날짜/아이콘/hover를 추가했다. API 연동
+(`fetchDashboard`)과 상태 관리는 전혀 건드리지 않았다.
+
+### Goal Card
+
+title → status(아이콘 배지) → 기간(Calendar 아이콘) → progress →
+action 순서는 그대로 유지하고 대비만 올렸다. Progress bar만 Primary
+Green을 강조하는 핵심 요소로 남겨두고(두께 12px, % 라벨도 Primary
+Green), 그 외 요소(제목/기간)는 Primary Green을 쓰지 않아서 "progress
+만 성장을 상징"하도록 분리했다. 카드 전체에 hover(translateY -1px +
+`--shadow-elevated`)를 추가했다. `GoalEditModal`/`ConfirmDialog`가
+쓰는 클릭/수정/삭제 로직은 전혀 건드리지 않았다.
+
+### AppNav 아이콘 — 적용하기로 결정
+
+필수는 아니었지만, 이제 Feature 카드/필터/배지 전체에 이미 같은
+아이콘 세트(`Route`=타임라인, `Target`=목표, `LayoutDashboard`=
+대시보드)를 쓰고 있어서 nav만 텍스트로 남으면 오히려 일관성이
+깨진다고 판단해 추가했다. 크기(15px)를 텍스트와 맞춰서 nav가 복잡해
+보이지 않게 했다.
+
+### Section Background — Stripe 대신 반복 등장
+
+Background/Surface/Soft Green 3개 표면만 썼다. 전체 섹션을 번갈아
+채우는 "stripe" 대신, 헤더만 Surface(흰색, 페이지 캔버스와
+구분되는 상단 바)로 두고 나머지는 Background를 기본으로 유지하면서
+Soft Green을 Hero Preview backdrop·Why GrowLog 결론·Final CTA에서
+반복 등장시키는 방식을 택했다 — "리듬은 필요하지만 명확하게 잘리는
+느낌은 피하고 싶다"는 요청에 맞춰, 전체 폭 배경색 전환보다 이 쪽이
+더 안전하다고 판단했다.
+
+### Record 화면은 여전히 유보
+
+Record Detail/Create 화면은 만들지 않았다. Dashboard Recent
+Timeline과 TimelineView의 Record 표현만 위 내용대로 개선했다.
+
+### 검증
+
+`npm run build` 통과(트리쉐이킹된 아이콘 청크 확인) 후, Playwright로
+Landing(1280px/390px, Hero Preview 클로즈업 포함)·Dashboard·
+Timeline·Goal List(1280px/390px)·Goal 수정 모달·Login을 전부
+캡처했다. Timeline 목록 하단에 정체불명의 점이 더 있는 것처럼
+보이는 스크린샷이 있어서 DOM 높이를 직접 측정해 확인했는데,
+`.timeline__list`의 실제 bounding rect는 카드 3개 높이에 정확히
+맞았고 그 아래는 `#app`의 `min-height: 100vh`가 만드는 배경일
+뿐이었다 — 이미지 압축으로 인한 착시였고 실제 버그는 아니었다.

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { LayoutGrid, NotebookText, Target } from '@lucide/vue'
 import { fetchTimeline } from '../api/timeline.api'
 import type { TimelineFilter, TimelineResponse } from '../types/timeline'
+import { formatTimelineDate } from '../utils/date'
 import AppNav from '../components/common/AppNav.vue'
 import BaseBadge from '../components/common/BaseBadge.vue'
 import BaseButton from '../components/common/BaseButton.vue'
@@ -50,23 +52,17 @@ onMounted(async () => {
     </header>
 
     <nav v-if="status === 'success'" class="timeline__filter" aria-label="타임라인 필터">
-      <BaseButton
-        :variant="filter === 'ALL' ? 'primary' : 'secondary'"
-        @click="filter = 'ALL'"
-      >
+      <BaseButton :variant="filter === 'ALL' ? 'primary' : 'secondary'" @click="filter = 'ALL'">
+        <LayoutGrid :size="14" :stroke-width="1.75" />
         전체
       </BaseButton>
-      <BaseButton
-        :variant="filter === 'GOAL' ? 'primary' : 'secondary'"
-        @click="filter = 'GOAL'"
-      >
-        🌱 목표
+      <BaseButton :variant="filter === 'GOAL' ? 'primary' : 'secondary'" @click="filter = 'GOAL'">
+        <Target :size="14" :stroke-width="1.75" />
+        목표
       </BaseButton>
-      <BaseButton
-        :variant="filter === 'RECORD' ? 'primary' : 'secondary'"
-        @click="filter = 'RECORD'"
-      >
-        📖 기록
+      <BaseButton :variant="filter === 'RECORD' ? 'primary' : 'secondary'" @click="filter = 'RECORD'">
+        <NotebookText :size="14" :stroke-width="1.75" />
+        기록
       </BaseButton>
     </nav>
 
@@ -90,9 +86,13 @@ onMounted(async () => {
       <ul v-else class="timeline__list">
         <li v-for="item in filteredItems" :key="`${item.type}-${item.itemNum}`" class="timeline__node">
           <BaseCard class="timeline-item">
-            <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
-              {{ item.type === 'GOAL' ? '🌱 목표' : '📖 성장 기록' }}
-            </BaseBadge>
+            <div class="timeline-item__head">
+              <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
+                <component :is="item.type === 'GOAL' ? Target : NotebookText" :size="12" :stroke-width="1.75" />
+                {{ item.type === 'GOAL' ? '목표' : '성장 기록' }}
+              </BaseBadge>
+              <span class="timeline-item__date">{{ formatTimelineDate(item.createdAt) }}</span>
+            </div>
             <p class="timeline-item__title">{{ item.title }}</p>
             <p class="timeline-item__meta">{{ item.content }}</p>
           </BaseCard>
@@ -121,7 +121,8 @@ onMounted(async () => {
 }
 
 .timeline__header h1 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-bold);
 }
 
 .timeline__subtitle {
@@ -146,16 +147,17 @@ onMounted(async () => {
 }
 
 /*
- * Reflect의 점-선 연결 구조 — Goal/Record 종류는 rail 색으로 구분하지
- * 않고 중립/Soft Green 톤으로 통일한다. 종류 구분은 카드 내부의
- * BaseBadge에만 맡기고, rail은 "시간에 따라 기록이 이어진다"는 흐름만
- * 보여준다.
+ * Timeline은 GrowLog의 핵심 브랜드 화면이라 Dashboard의 rail보다 한 단계
+ * 더 또렷하게(점 8px, 선 1.5px) 만들었다. Goal/Record 종류는 여전히
+ * rail 색으로 구분하지 않고 중립/Soft Green 톤으로 통일한다 — 종류
+ * 구분은 카드 내부의 BaseBadge+아이콘에만 맡기고, rail은 "시간에 따라
+ * 기록이 이어진다"는 흐름만 보여준다.
  */
 .timeline__list {
   position: relative;
   list-style: none;
   margin: 0;
-  padding: 0 0 0 var(--space-4);
+  padding: 0 0 0 var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -165,9 +167,9 @@ onMounted(async () => {
   content: '';
   position: absolute;
   left: 3px;
-  top: 10px;
-  bottom: 10px;
-  width: 1px;
+  top: 12px;
+  bottom: 12px;
+  width: 1.5px;
   background: var(--color-primary-bg);
 }
 
@@ -178,12 +180,34 @@ onMounted(async () => {
 .timeline__node::before {
   content: '';
   position: absolute;
-  left: calc(-1 * var(--space-4));
-  top: 10px;
-  width: 7px;
-  height: 7px;
+  left: calc(-1 * var(--space-6) + 1px);
+  top: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--color-accent);
+  border: 2px solid var(--color-bg);
+}
+
+.timeline-item {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.timeline-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.timeline-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.timeline-item__date {
+  color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
 /* Day One — 콘텐츠(제목/본문) 자체가 중심이 되도록 줄간격을 넉넉하게 */

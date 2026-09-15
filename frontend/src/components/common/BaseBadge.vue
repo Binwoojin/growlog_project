@@ -19,6 +19,7 @@ withDefaults(
 .base-badge {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   padding: 3px var(--space-3);
   border-radius: 999px;
   font-size: var(--font-size-sm);

@@ -124,7 +124,8 @@ async function onSubmit() {
 }
 
 .goal-form__header h1 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-bold);
 }
 
 .goal-form__fields {

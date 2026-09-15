@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Calendar, Pencil, Trash2 } from '@lucide/vue'
 import type { Goal } from '../../types/goal'
 import BaseButton from '../common/BaseButton.vue'
 import BaseCard from '../common/BaseCard.vue'
@@ -33,12 +34,19 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
     <GoalProgress :progress="goal.goalProgress" />
 
     <p v-if="goal.startDate || goal.endDate" class="goal-card__dates">
+      <Calendar :size="13" :stroke-width="1.75" />
       {{ formatDateRange(goal.startDate, goal.endDate) }}
     </p>
 
     <div class="goal-card__actions">
-      <BaseButton variant="secondary" @click="emit('edit', goal)">수정</BaseButton>
-      <BaseButton variant="ghost" @click="emit('delete', goal)">삭제</BaseButton>
+      <BaseButton variant="secondary" @click="emit('edit', goal)">
+        <Pencil :size="14" :stroke-width="1.75" />
+        수정
+      </BaseButton>
+      <BaseButton variant="ghost" @click="emit('delete', goal)">
+        <Trash2 :size="14" :stroke-width="1.75" />
+        삭제
+      </BaseButton>
     </div>
   </BaseCard>
 </template>
@@ -48,6 +56,13 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.goal-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-bg);
+  box-shadow: var(--shadow-elevated);
 }
 
 .goal-card__header {
@@ -77,6 +92,9 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
 
 .goal-card__dates {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }

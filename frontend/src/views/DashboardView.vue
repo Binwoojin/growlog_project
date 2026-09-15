@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { Flame, NotebookPen, NotebookText, Target } from '@lucide/vue'
 import { useAuthStore } from '../stores/auth.store'
 import { fetchDashboard } from '../api/dashboard.api'
 import type { DashboardSummary } from '../types/dashboard'
+import { formatTimelineDate } from '../utils/date'
 import AppNav from '../components/common/AppNav.vue'
 import BaseBadge from '../components/common/BaseBadge.vue'
 import BaseButton from '../components/common/BaseButton.vue'
@@ -76,14 +78,23 @@ async function onLogout() {
           <p class="summary-card__hint">이번 주 목표를 이어가고 있어요.</p>
         </BaseCard>
         <BaseCard class="summary-card">
-          <p class="summary-card__value">🔥 {{ summary.streakDays }}일</p>
+          <p class="summary-card__value">
+            <Flame :size="20" :stroke-width="1.75" class="summary-card__icon" />
+            {{ summary.streakDays }}일
+          </p>
           <p class="summary-card__label">연속 기록</p>
         </BaseCard>
       </section>
 
       <section class="dashboard__quick-actions">
-        <BaseButton variant="primary" @click="router.push({ name: 'goal-new' })">목표 추가</BaseButton>
-        <BaseButton variant="secondary" disabled title="Day 13 이후 연결 예정">기록 남기기</BaseButton>
+        <BaseButton variant="primary" class="quick-action" @click="router.push({ name: 'goal-new' })">
+          <Target :size="16" :stroke-width="1.75" />
+          목표 추가
+        </BaseButton>
+        <BaseButton variant="secondary" class="quick-action" disabled title="Day 13 이후 연결 예정">
+          <NotebookPen :size="16" :stroke-width="1.75" />
+          기록 남기기
+        </BaseButton>
       </section>
 
       <section class="dashboard__timeline">
@@ -96,9 +107,13 @@ async function onLogout() {
         <ul v-if="summary.recentTimeline.length > 0" class="dashboard__timeline-rail">
           <li v-for="item in summary.recentTimeline" :key="`${item.type}-${item.itemNum}`" class="dashboard__timeline-node">
             <BaseCard class="timeline-item">
-              <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
-                {{ item.type === 'GOAL' ? '🌱 목표' : '📖 성장 기록' }}
-              </BaseBadge>
+              <div class="timeline-item__head">
+                <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
+                  <component :is="item.type === 'GOAL' ? Target : NotebookText" :size="12" :stroke-width="1.75" />
+                  {{ item.type === 'GOAL' ? '목표' : '성장 기록' }}
+                </BaseBadge>
+                <span class="timeline-item__date">{{ formatTimelineDate(item.createdAt) }}</span>
+              </div>
               <p class="timeline-item__title">{{ item.title }}</p>
               <p class="timeline-item__meta">{{ item.content }}</p>
             </BaseCard>
@@ -128,7 +143,8 @@ async function onLogout() {
 }
 
 .dashboard__greeting {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-bold);
 }
 
 .dashboard__subtitle {
@@ -164,29 +180,45 @@ async function onLogout() {
   text-align: center;
 }
 
+/* 숫자가 가장 강하게, label이 그 다음, hint가 가장 약하게 — Sunsama 정보 위계 */
 .summary-card__value {
   margin: 0;
-  font-size: var(--font-size-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: var(--font-size-display);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
+}
+
+.summary-card__icon {
+  color: var(--color-primary);
 }
 
 .summary-card__label {
   margin: var(--space-2) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .summary-card__hint {
   margin: var(--space-1) 0 0;
   color: var(--color-text-secondary);
   font-size: 12px;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 
 .dashboard__quick-actions {
   display: flex;
   gap: var(--space-4);
+}
+
+/* Summary Card보다 시각적으로 강해지지 않도록 크기를 작게 유지한다 */
+.quick-action {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
 }
 
 .dashboard__section-title {
@@ -239,6 +271,27 @@ async function onLogout() {
   height: 7px;
   border-radius: 50%;
   background: var(--color-accent);
+}
+
+.timeline-item {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.timeline-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.timeline-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.timeline-item__date {
+  color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
 .timeline-item__title {

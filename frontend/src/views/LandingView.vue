@@ -78,6 +78,11 @@ const whyGrowLogPoints = [
     <GrowthJourney />
 
     <section class="final-cta">
+      <div class="final-cta__motif" aria-hidden="true">
+        <span class="final-cta__motif-dot" />
+        <span class="final-cta__motif-line" />
+        <span class="final-cta__motif-dot final-cta__motif-dot--primary" />
+      </div>
       <h2 class="final-cta__title">당신의 성장은 이미 시작되고 있습니다.</h2>
       <p class="final-cta__text">
         오늘의 목표와 작은 변화를 GrowLog에 기록해보세요. 쌓인 기록은 시간이
@@ -94,6 +99,7 @@ const whyGrowLogPoints = [
   flex-direction: column;
 }
 
+/* 상단 네비게이션 바는 페이지 캔버스(Background)와 구분되는 Surface로 둔다 */
 .landing-header {
   display: flex;
   align-items: center;
@@ -101,6 +107,7 @@ const whyGrowLogPoints = [
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
   padding: var(--space-4) var(--space-6);
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -197,10 +204,17 @@ const whyGrowLogPoints = [
   background: var(--color-accent);
 }
 
+/*
+ * 리스트(문제 제기)와 결론(GrowLog의 역할)을 톤으로 구분한다. 점 크기를
+ * 키우거나 대비를 강하게 주면 infographic처럼 보일 수 있어서(요청사항)
+ * rail 자체는 손대지 않고, 결론 문단만 아주 옅은 Soft Green 배경으로
+ * "도착 지점"임을 표시하는 정도로 절제했다.
+ */
 .intro-card__conclusion {
   margin: 0;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
+  padding: var(--space-4);
+  background: var(--color-primary-bg);
+  border-radius: var(--radius-sm);
   font-weight: var(--font-weight-medium);
 }
 
@@ -218,9 +232,34 @@ const whyGrowLogPoints = [
   text-align: center;
 }
 
+.final-cta__motif {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.final-cta__motif-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.final-cta__motif-dot--primary {
+  width: 7px;
+  height: 7px;
+  background: var(--color-primary);
+}
+
+.final-cta__motif-line {
+  width: var(--space-8);
+  height: 1px;
+  background: var(--color-border);
+}
+
 .final-cta__title {
   margin: 0;
-  font-size: 28px;
+  font-size: var(--font-size-page-title);
   font-weight: var(--font-weight-bold);
 }
 
