@@ -62,7 +62,7 @@ onMounted(() => {
             <p class="hero__dashboard-stat-value">3</p>
             <p class="hero__dashboard-stat-label">진행 중 목표</p>
           </div>
-          <div class="hero__dashboard-stat">
+          <div class="hero__dashboard-stat hero__dashboard-stat--highlight">
             <p class="hero__dashboard-stat-value">
               <Flame :size="14" :stroke-width="1.75" />
               7일
@@ -95,7 +95,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/*
+ * Hero는 Landing에서 시각적 임팩트가 가장 강해야 하는 영역이라, 아주
+ * 낮은 대비의 asymmetric radial wash를 배경에 얹는다(구조는 그대로
+ * 두고 배경값만 확장) — 새 wrapper element 없이 `.hero::before`를
+ * viewport 전체로 bleed시키는 CSS 트릭을 쓴다(`left:50%` +
+ * `margin-left:-50vw` + `width:100vw`). Product Scene(우상단) 쪽에서
+ * 옅게 번지고 Copy 쪽으로 갈수록 --color-bg로 자연스럽게 사라진다.
+ * 색 자체는 기존 --color-primary를 아주 낮은 alpha로만 쓴다(새 토큰
+ * 없이 rgba 하나로 충분해서 별도 Landing 토큰을 만들지 않았다).
+ */
 .hero {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(480px, 1.1fr);
   align-items: center;
@@ -103,6 +114,18 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: calc(var(--space-12) * 1.5) var(--space-8);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100vw;
+  height: 100%;
+  margin-left: -50vw;
+  z-index: -1;
+  background: radial-gradient(ellipse 900px 560px at 78% 10%, rgba(63, 125, 99, 0.08), transparent 65%);
 }
 
 .hero__copy {
@@ -157,7 +180,7 @@ onMounted(() => {
   gap: var(--space-4);
   padding: var(--space-6);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-primary-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevated);
 }
@@ -182,6 +205,23 @@ onMounted(() => {
   text-align: center;
 }
 
+/*
+ * Product Scene에 Primary/Accent를 더 적극적으로 쓰기 — 3칸을 전부
+ * 초록으로 만들지 않고, "연속 기록"(가장 생동감 있는 지표) 한 칸만
+ * Deep Green 강조 타일로 둔다. 나머지 두 칸은 그대로 중립 --color-bg.
+ */
+.hero__dashboard-stat--highlight {
+  background: var(--color-primary-hover);
+}
+
+.hero__dashboard-stat--highlight .hero__dashboard-stat-value {
+  color: var(--color-text-inverse);
+}
+
+.hero__dashboard-stat--highlight .hero__dashboard-stat-label {
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .hero__dashboard-stat-value {
   margin: 0;
   display: flex;
@@ -202,12 +242,14 @@ onMounted(() => {
 /*
  * Goal Progress — 별도 floating card가 아니라 Dashboard Frame 내부의
  * nested surface(한 단계 낮은 --color-bg)로 둬서 "Dashboard 정보에서
- * 파생된 세부"라는 관계를 구조 자체로 표현한다.
+ * 파생된 세부"라는 관계를 구조 자체로 표현한다. 왼쪽에 Primary Green
+ * accent bar를 둬서 진행 중인 목표라는 활성 상태를 강조한다.
  */
 .hero__dashboard-goal {
   box-sizing: border-box;
   padding: var(--space-4);
   background: var(--color-bg);
+  border-left: 3px solid var(--color-primary);
   border-radius: var(--radius-md);
 }
 
@@ -263,6 +305,7 @@ onMounted(() => {
   padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-accent);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   z-index: 1;

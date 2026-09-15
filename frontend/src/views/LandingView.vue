@@ -136,10 +136,10 @@ const {
             <span class="intro__statement-text">{{ point.text }}</span>
           </div>
 
-          <!-- 01 — 흐릿해지는 목표: goal line 3개, 아래로 갈수록 옅어진다 -->
+          <!-- 01 — 흐릿해지는 목표: 처음엔 체크된 목표 하나가 선명했지만, 아래로 갈수록 미확인 상태로 옅어진다 -->
           <div v-if="index === 0" class="intro__visual intro__visual--fade" aria-hidden="true">
             <span class="intro__fade-row intro__fade-row--1">
-              <span class="intro__fade-check" />
+              <span class="intro__fade-check intro__fade-check--done" />
               <span class="intro__fade-bar" />
             </span>
             <span class="intro__fade-row intro__fade-row--2">
@@ -172,6 +172,7 @@ const {
         </div>
       </div>
 
+      <span class="intro__conclusion-rule" aria-hidden="true" />
       <p class="intro__conclusion">
         GrowLog는 흘려보내기 쉬운 작은 변화들을 기록으로 남기고, 그 안에서
         나의 성장을 발견할 수 있도록 돕습니다.
@@ -205,6 +206,24 @@ const {
 </template>
 
 <style scoped>
+/*
+ * Landing 전용 컬러 토큰 — 전역 tokens.css는 건드리지 않는다(Application
+ * UI는 계속 Calm하게 유지). `.landing`(실제 DOM 트리 최상위)에 커스텀
+ * 프로퍼티로 선언하면 Hero/FeatureSection/GrowthJourney 등 자식
+ * 컴포넌트에서도(별도 Vue SFC라도 실제 렌더링된 DOM은 `.landing`의
+ * 자손이므로) 그대로 상속되어 쓸 수 있다.
+ *
+ * --landing-green-deep — 기존 --color-primary-hover(#35694F)보다 한
+ * 단계 더 짙은 Green. Final CTA를 Landing의 color climax로 만들 때,
+ * 배경 자체를 --color-primary로 쓰면 그 위에 얹는 --color-primary
+ * 버튼(BaseButton variant="primary")이 배경과 거의 같은 색이 되어
+ * 묻혀버린다. 버튼은 전역 컴포넌트라 여기서 손대지 않고, 대신 배경만
+ * 한 단계 더 짙게 둬서 버튼이 뚜렷하게 떠 보이게 한다.
+ */
+.landing {
+  --landing-green-deep: #142c22;
+}
+
 /*
  * `.landing`은 원래 `display:flex; flex-direction:column`이었는데,
  * 여기 직접 자식인 `.hero`/`.intro`/`.journey`(GrowthJourney 루트)는
@@ -291,8 +310,20 @@ const {
  * CTA는 기존 final-cta-band의 Soft Green 배경 자체로 충분해 별도
  * divider를 추가하지 않았다.
  */
+/*
+ * Color Rhythm — Landing이 스크롤될수록 색 온도가 아주 조금씩 짙어지는
+ * 흐름을 band 배경 자체에 얹는다(새 decorative shape가 아니라 배경
+ * gradient 하나). Why GrowLog는 white surface로 시작해 결론 쪽으로
+ * 갈수록 --color-primary-bg 쪽으로 미세하게 기울고(01 흐릿함→03 짙은
+ * Green으로 가는 story arc와 같은 방향), Growth Journey는 --color-bg
+ * 에서 시작해 Final CTA로 이어지기 직전 같은 --color-primary-bg 쪽으로
+ * 다시 한번 기운다 — "Soft Green/Accent가 자연스럽게 축적되는 영역".
+ * 두 번째 stop을 100%를 넘겨 잡아서(130~140%) 실제로는 각 section
+ * 안에서 절반도 못 가서 전환이 끝나고, 눈에 띄는 색 블록이 아니라
+ * 아주 미세한 tonal drift로만 느껴지게 했다.
+ */
 .intro-band {
-  background: var(--color-surface);
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-surface) 55%, var(--color-primary-bg) 130%);
   border-top: 1px solid var(--color-border);
 }
 
@@ -301,6 +332,7 @@ const {
 }
 
 .journey-band {
+  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg) 40%, var(--color-primary-bg) 140%);
   border-top: 1px solid var(--color-border);
 }
 
@@ -426,7 +458,12 @@ const {
   height: 140px;
 }
 
-/* 01 — 흐릿해지는 목표: goal line(체크박스+라벨) 3개, 아래로 갈수록 옅어진다 */
+/*
+ * 01 — 흐릿해지는 목표: 첫 줄은 체크된(선명한 Primary Green) 목표,
+ * 아래로 갈수록 미확인 상태(빈 체크박스)로 옅어진다 — "처음엔
+ * 명확했던 하나의 Goal이 점점 흐려지는" 것이 체크 여부로도 읽히게
+ * 했다.
+ */
 .intro__visual--fade {
   display: flex;
   flex-direction: column;
@@ -454,6 +491,24 @@ const {
   flex-shrink: 0;
   border: 1.5px solid var(--color-border);
   border-radius: 4px;
+}
+
+.intro__fade-check--done {
+  position: relative;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.intro__fade-check--done::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 8px;
+  border: solid var(--color-text-inverse);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
 }
 
 .intro__fade-bar {
@@ -573,6 +628,7 @@ const {
 }
 
 .intro__stack-card--3 {
+  position: absolute;
   top: 0;
   left: 28px;
   width: 230px;
@@ -580,6 +636,18 @@ const {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-card);
+}
+
+/* "변화가 보임" — 가장 선명한 맨 위 카드에만 작은 Primary Green 표식을 둔다 */
+.intro__stack-card--3::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
 }
 
 @media (max-width: 900px) {
@@ -620,25 +688,77 @@ const {
 }
 
 /*
- * 결론 — 카드/배경 박스 없이 충분한 상단 여백만으로 "도착 지점"임을
- * 표시한다. 색은 Primary Green으로 톤만 구분한다.
+ * Story timing — "01 등장 → visual 변화 → 02 등장 → visual 변화 → 03
+ * 등장"처럼 느껴지도록, visual은 문장(row) 자체보다 한 박자 늦게
+ * 나타나는 자신만의 opacity transition을 하나 더 얹는다(observer는
+ * 여전히 statement 하나당 1개 — 새 관찰자를 추가하지 않는다). 03의
+ * stack card 3장은 짧게 stagger돼서 "정돈되는" 느낌을 준다.
  */
-.intro__conclusion {
-  margin: calc(var(--space-12) * 1.1) 0 0;
-  max-width: 700px;
-  color: var(--color-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.7;
+.intro__statement.points--motion .intro__visual {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  transition-delay: 200ms;
+}
+
+.intro__statement.points--motion.is-visible .intro__visual {
+  opacity: 1;
+}
+
+.intro__statement--2.points--motion .intro__stack-card {
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.intro__statement--2.points--motion.is-visible .intro__stack-card {
+  transform: translateY(0);
+}
+
+.intro__statement--2.points--motion.is-visible .intro__stack-card--1 {
+  transition-delay: 220ms;
+}
+
+.intro__statement--2.points--motion.is-visible .intro__stack-card--2 {
+  transition-delay: 300ms;
+}
+
+.intro__statement--2.points--motion.is-visible .intro__stack-card--3 {
+  transition-delay: 380ms;
 }
 
 /*
- * Final CTA — 그라데이션/모티프 없이 단색 Soft Green 블록 + headline /
- * context / button / 충분한 whitespace로만 페이지를 닫는다. 배경은
- * 계속 화면 끝까지 full-bleed로 채우되(section 자체에는 max-width를
- * 주지 않는다), 안쪽 콘텐츠 폭만 다른 섹션과 같은 스케일(~1180px)로
- * 넓혀서 좌우 padding 리듬을 맞춘다. 내용 자체는 계속 중앙 정렬된 좁은
- * 텍스트로 읽힌다(각 요소의 max-width로 제한).
+ * 결론 — Story의 Resolution. 카드/배경 박스는 여전히 만들지 않는다.
+ * 대신 충분한 상단 여백 + 조금 더 강한 weight/색 + 짧은 accent rule
+ * 하나로 "그래서 GrowLog가 필요하다"는 지점임을 분명히 한다.
+ */
+.intro__conclusion-rule {
+  display: block;
+  width: 40px;
+  height: 3px;
+  margin: calc(var(--space-12) * 1.3) 0 var(--space-4);
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.intro__conclusion {
+  margin: 0;
+  max-width: 700px;
+  color: var(--color-primary-hover);
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.6;
+}
+
+/*
+ * Final CTA — Landing의 color climax. 이전엔 Soft Green(--color-
+ * primary-bg)만 써서 Growth Journey의 마지막 톤과 강도 차이가 거의
+ * 없었다. 지금은 --landing-green-deep(진한 Green) 배경 + inverse
+ * text로 바꿔서 페이지에서 가장 강한 색 블록이 되게 했다 — 배경을
+ * --color-primary로 바로 쓰지 않은 이유는 그 위에 얹는 CTA 버튼
+ * (BaseButton variant="primary")도 같은 --color-primary라서 배경과
+ * 버튼이 거의 같은 색으로 묻히기 때문이다. 한 단계 더 짙은 배경 위에서
+ * 버튼이 확실히 밝게 떠 보인다(WCAG 검증: 버튼/배경, 텍스트/배경 모두
+ * 확인 완료 — 아래 검증 로그 참고). 그라데이션/모티프는 여전히 쓰지
+ * 않는다 — 단색 블록 하나로 마무리한다.
  */
 .final-cta {
   display: flex;
@@ -652,7 +772,7 @@ const {
 }
 
 .final-cta-band {
-  background: var(--color-primary-bg);
+  background: var(--landing-green-deep);
 }
 
 @media (max-width: 1199px) {
@@ -671,6 +791,7 @@ const {
 
 .final-cta__title {
   margin: 0;
+  color: var(--color-text-inverse);
   font-size: var(--font-size-page-title);
   font-weight: var(--font-weight-bold);
 }
@@ -678,7 +799,7 @@ const {
 .final-cta__text {
   margin: 0 0 var(--space-2);
   max-width: 480px;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.82);
   font-size: var(--font-size-base);
 }
 

@@ -1311,3 +1311,87 @@ row)의 실제 DOM 자식 순서가 `story__text` → `story__preview`임을
 확인해 "Mobile은 항상 텍스트 먼저" 요구사항이 마크업 순서 자체로
 보장됨을 검증했다. Dashboard/Timeline/Goal/Login 등 다른 화면은
 이번 라운드에서 전혀 건드리지 않았다.
+
+## Landing Storytelling + Color Impact Polish (2026-09-15)
+
+Landing의 레이아웃/section separation은 그대로 두고 두 가지만
+고도화했다: Why GrowLog가 하나의 Story Arc로 읽히도록 강화하는 것,
+그리고 "Calm Application UI + Expressive Landing" 원칙에 따라
+Landing에만 브랜드 컬러의 명암/면적 대비를 더 적극적으로 쓰는 것.
+Dashboard/Goal/Timeline/Login 등 Application UI는 전혀 건드리지
+않았다.
+
+### 새로 추가한 Landing 전용 컬러 토큰
+
+`--landing-green-deep: #142c22` 하나만 추가했다(`LandingView.vue`의
+`.landing` 셀렉터에 선언 — 전역 `tokens.css`는 건드리지 않았고, Vue
+scoped 컴포넌트 경계와 무관하게 실제 DOM 트리 최상위에 있어 Hero/
+FeatureSection/GrowthJourney 어디서든 상속받아 쓸 수 있다).
+
+**왜 필요했나**: Final CTA를 Landing의 color climax로 만들려고
+배경을 `--color-primary`로 바로 쓰면, 그 위에 얹는 CTA 버튼
+(`BaseButton variant="primary"`도 동일하게 `--color-primary` 배경)이
+배경과 거의 같은 색이 되어 묻힌다. 버튼은 Application UI에서도 쓰는
+전역 공용 컴포넌트라 여기서 손댈 수 없었다. 그래서 배경만 한 단계 더
+짙게 둬서 버튼이 뚜렷하게 떠 보이게 했다. 값은 WCAG 대비를 실제로
+계산해서 골랐다(button-bg vs band-bg 3.06:1 — WCAG 1.4.11 non-text
+3:1 기준 통과, title/text vs band 14.86:1 — 텍스트 AA 4.5:1 기준을
+크게 상회).
+
+그 외 "Deep Green"이 필요한 곳(Feature Dashboard preview의 streak
+stat, Hero의 streak stat)은 새 토큰을 만들지 않고 기존
+`--color-primary-hover`를 재사용했다 — 이미 충분히 짙어서 별도
+토큰이 필요 없었다.
+
+### Why GrowLog — Story Arc
+
+- 01(목표 흐려짐): 첫 줄 체크박스만 Primary Green으로 채워 체크
+  표시를 넣고(`✓`, 순수 CSS pseudo-element), 아래 두 줄은 기존처럼
+  빈 체크박스+opacity 하락 — "처음엔 선명했던 목표 하나가 점점
+  미확인 상태로 흐려진다"가 체크 여부로도 읽히게 했다.
+- 03(축적): 가장 위(가장 선명한) 카드에 작은 Primary Green dot을
+  하나 얹어 "변화가 보이는 지점"을 표시했다.
+- Motion: 기존 문장별 IntersectionObserver는 그대로 두고(새 observer
+  추가 없음), `.intro__visual`에 문장보다 200ms 늦게 나타나는 별도
+  opacity transition을 하나 얹어 "문장 등장 → visual 변화"라는 순서가
+  느껴지게 했다. 03의 stack card 3장은 220/300/380ms로 짧게
+  stagger해서 "정돈되는" 느낌을 줬다.
+- Conclusion: Story의 resolution이라는 걸 표시하려고 상단 여백을
+  키우고(1.1x→1.3x), font-size/weight를 올리고(18px medium→20px
+  semibold), 색을 `--color-primary`→`--color-primary-hover`로,
+  그리고 위에 40×3px Primary Green accent rule 하나를 추가했다. 별도
+  카드/배경 박스는 여전히 쓰지 않았다.
+- Section band: `.intro-band`/`.journey-band`의 배경을 단색에서
+  `linear-gradient`로 바꿔서, 각 섹션 안에서 아래로 갈수록
+  `--color-primary-bg` 쪽으로 아주 미세하게 기우는 색 흐름을 만들었다
+  (두 번째 stop을 130~140%로 잡아 실제 전환은 섹션 절반도 못 가서
+  끝난다 — 눈에 띄는 색 블록이 아니라 tonal drift 수준).
+
+### Hero / Feature / Growth Journey 컬러
+
+- Hero: `.hero::before`로 viewport 전체에 걸치는 아주 옅은
+  radial-gradient(`rgba(63,125,99,0.08)`, Product Scene 쪽에서
+  번짐)를 새 wrapper 없이 추가했다. Dashboard Frame 테두리를 중립
+  회색→`--color-primary-bg`로, streak stat 한 칸만
+  `--color-primary-hover` 배경의 강조 타일로, Goal 블록에 Primary
+  Green 왼쪽 accent bar, Record 카드에 Accent 색 상단 테두리를 각각
+  추가했다 — 3개 카드를 전부 초록으로 만들지 않았다.
+- Feature: Goal(Primary Green 상단 accent bar) / Record(Accent 색
+  날짜 배지) / Timeline(테두리를 Soft Green으로) / Dashboard(streak
+  stat을 Hero와 같은 Deep Green 강조 타일로) — Green family 안에서
+  기능마다 다른 강조를 줬다.
+- Growth Journey: rail의 단색 배경을 `--color-primary-bg → --color-
+  accent → --color-primary → --color-primary-hover` 4-stop
+  gradient로 바꿨다. `scaleY` 애니메이션/observer 로직/node
+  구조는 전혀 손대지 않았다.
+
+### 검증
+
+`npm run build` 통과. Playwright로 1440/1200/1024/768/390에서
+`.hero`/`.intro`/`.feature-section`/`.journey`/`.final-cta`의
+bounding box가 색상 작업 전후로 픽셀 단위까지 동일함을 확인해(레이아웃
+무영향), horizontal overflow가 전 구간에서 없음을 확인했다.
+`reducedMotion:'reduce'` 컨텍스트의 전체 페이지 스크린샷으로 모든 색
+강조(체크마크, streak highlight, accent rule, gradient rail, deep
+green CTA)가 스크롤/애니메이션 없이 로드 즉시 최종 상태로 보이는 것도
+확인했다.

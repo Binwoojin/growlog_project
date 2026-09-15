@@ -172,7 +172,7 @@ const {
               <p class="story__dashboard-value">3</p>
               <p class="story__dashboard-label">진행 중 목표</p>
             </div>
-            <div class="story__dashboard-stat">
+            <div class="story__dashboard-stat story__dashboard-stat--highlight">
               <p class="story__dashboard-value">
                 <Flame :size="13" :stroke-width="1.75" />
                 7일
@@ -314,11 +314,18 @@ const {
   width: 100%;
 }
 
-/* ===== 01 Goal preview — Progress family ===== */
+/*
+ * ===== 01 Goal preview — Progress family =====
+ * Color Rhythm: Goal은 Primary Green emphasis — 상단에 Primary Green
+ * accent bar를 둬서 "진행 중" 상태를 색으로도 드러낸다(4개 preview가
+ * 전부 같은 흰 카드로 보이지 않도록 Green family 안에서 조금씩 다른
+ * 강조를 준다).
+ */
 .story__goal-card {
   padding: var(--space-6);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
 }
@@ -404,10 +411,19 @@ const {
   box-shadow: var(--shadow-card);
 }
 
+/*
+ * Color Rhythm: Record는 Warm neutral / Accent emphasis — 날짜를
+ * 옅은 Accent 배지로 둬서 "매일 조금씩 쌓인다"는 톤을 Goal의 Primary
+ * Green과는 다른 결로 표현한다.
+ */
 .story__record-date {
+  display: inline-block;
+  padding: 1px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-text-primary);
   font-size: 11px;
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
 }
 
 .story__record-body {
@@ -437,10 +453,11 @@ const {
  * 감싸서 column 전체 폭을 안정적으로 차지하게 했다(line을 억지로
  * 가운데에 두지는 않는다 — 카드 자체가 폭을 채운다).
  */
+/* Color Rhythm: Timeline은 Primary + Soft Green — 테두리를 중립 회색 대신 Soft Green으로 */
 .story__timeline-card {
   padding: var(--space-6);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-primary-bg);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
 }
@@ -531,6 +548,19 @@ const {
   background: var(--color-bg);
   border-radius: var(--radius-sm);
   text-align: center;
+}
+
+/* Color Rhythm: Dashboard는 Deep Green highlight — Hero 미니어처의 "연속 기록" 강조와 같은 언어 */
+.story__dashboard-stat--highlight {
+  background: var(--color-primary-hover);
+}
+
+.story__dashboard-stat--highlight .story__dashboard-value {
+  color: var(--color-text-inverse);
+}
+
+.story__dashboard-stat--highlight .story__dashboard-label {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .story__dashboard-value {

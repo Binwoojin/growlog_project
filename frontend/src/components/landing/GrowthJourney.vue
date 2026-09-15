@@ -160,14 +160,25 @@ onBeforeUnmount(() => {
   gap: 56px;
 }
 
+/*
+ * rail 자체를 단색이 아니라 노드와 같은 light→accent→primary→deep
+ * progression을 담은 gradient로 둬서 "짙어지는 흐름"이 line에서도
+ * 느껴지게 한다 — scaleY 애니메이션/observer 로직은 그대로다.
+ */
 .journey__rail::before {
   content: '';
   position: absolute;
   top: 6px;
   bottom: 6px;
   left: 19px;
-  width: 1.5px;
-  background: var(--color-border);
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    var(--color-primary-bg) 0%,
+    var(--color-accent) 38%,
+    var(--color-primary) 68%,
+    var(--color-primary-hover) 100%
+  );
 }
 
 .journey--motion .journey__rail::before {
