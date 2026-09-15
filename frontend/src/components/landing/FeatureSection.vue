@@ -128,20 +128,22 @@ const {
         </div>
 
         <div class="story__preview" aria-hidden="true">
-          <ol class="story__timeline">
-            <li class="story__timeline-node story__timeline-node--goal">
-              <span class="story__timeline-dot" />
-              <span class="story__timeline-label">포트폴리오 완성하기 목표 등록</span>
-            </li>
-            <li class="story__timeline-node">
-              <span class="story__timeline-dot" />
-              <span class="story__timeline-label">배포 환경 설정 기록 추가</span>
-            </li>
-            <li class="story__timeline-node">
-              <span class="story__timeline-dot" />
-              <span class="story__timeline-label">진행률 72%로 갱신</span>
-            </li>
-          </ol>
+          <div class="story__timeline-card">
+            <ol class="story__timeline">
+              <li class="story__timeline-node story__timeline-node--goal">
+                <span class="story__timeline-dot" />
+                <span class="story__timeline-label">포트폴리오 완성하기 목표 등록</span>
+              </li>
+              <li class="story__timeline-node">
+                <span class="story__timeline-dot" />
+                <span class="story__timeline-label">배포 환경 설정 기록 추가</span>
+              </li>
+              <li class="story__timeline-node">
+                <span class="story__timeline-dot" />
+                <span class="story__timeline-label">진행률 72%로 갱신</span>
+              </li>
+            </ol>
+          </div>
         </div>
       </div>
 
@@ -225,22 +227,31 @@ const {
 }
 
 /*
- * row마다 column 폭이 달라지지 않도록 고정 2-column grid를 쓴다.
- * 시각 순서 반전은 `flex-direction: row-reverse` 대신 `order`로
- * 처리한다 — DOM은 항상 text가 먼저이므로(마크업 순서 유지), Mobile
- * media query에서 order만 초기화하면 모든 row가 자동으로 text →
- * preview 순서가 된다.
+ * 2-column grid — text 40% / preview 60% 역할 비율을 row 방향과
+ * 무관하게 항상 유지한다. 이전엔 `order`만 바꿔서 시각 순서를
+ * 뒤집었는데, grid-template-columns 자체는 그대로였기 때문에(항상
+ * "좁은 col1 + 넓은 col2"), reverse row(02/04)에서는 물리적으로 왼쪽
+ * col1에 온 preview가 좁아지고 오른쪽 col2에 온 text가 넓어져 버렸다
+ * (역할과 실제 폭이 뒤바뀜). 지금은 `.story--reverse`에서
+ * grid-template-columns 자체를 "넓은 col1 + 좁은 col2"로 다시 정의해서
+ * order로 물리적 위치를 옮기더라도 preview는 항상 60%, text는 항상
+ * 40%를 쓰게 했다.
  */
 .story {
   display: grid;
-  grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(260px, 0.4fr) minmax(340px, 0.6fr);
   align-items: center;
   gap: var(--space-8);
+}
+
+.story--reverse {
+  grid-template-columns: minmax(340px, 0.6fr) minmax(260px, 0.4fr);
 }
 
 .story__text {
   order: 1;
   min-width: 0;
+  max-width: 420px;
 }
 
 .story__preview {
@@ -372,15 +383,21 @@ const {
   width: 72%;
 }
 
-/* ===== 02 Record preview — Accumulation/Connection family ===== */
+/*
+ * ===== 02 Record preview — Accumulation/Connection family =====
+ * record-list 자체는 폭 제한을 두지 않는다 — preview column(60%)을
+ * 그대로 채운다. 넓은 column 안에서 카드 2장만 있으면 비어 보이기
+ * 쉬워서, 카드 padding/gap을 다른 preview보다 조금 더 넉넉하게 줘서
+ * 공간감을 만들었다.
+ */
 .story__record-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .story__record-item {
-  padding: var(--space-4);
+  padding: var(--space-6);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -412,7 +429,22 @@ const {
   transform: translateY(0);
 }
 
-/* ===== 03 Timeline preview — Record와 같은 Accumulation/Connection 계열 ===== */
+/*
+ * ===== 03 Timeline preview — Record와 같은 Accumulation/Connection 계열 =====
+ * 다른 세 preview(Goal/Record/Dashboard)는 전부 surface 카드 안에
+ * 들어있는데 Timeline만 배경 없이 맨 리스트였다 — 그래서 넓은 preview
+ * column 안에서 왼쪽에 붙은 좁은 내용처럼 보였다. 같은 surface 카드로
+ * 감싸서 column 전체 폭을 안정적으로 차지하게 했다(line을 억지로
+ * 가운데에 두지는 않는다 — 카드 자체가 폭을 채운다).
+ */
+.story__timeline-card {
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
 .story__timeline {
   position: relative;
   margin: 0;

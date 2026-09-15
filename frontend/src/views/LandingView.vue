@@ -34,12 +34,16 @@ function goToCtaTarget() {
 /*
  * "Why GrowLog" — 문제 제기 3개 + GrowLog의 역할을 설명하는 결론 문장을
  * 카드/불릿 리스트가 아니라 번호가 붙은 editorial statement로 보여준다.
- * 01→03 번호는 장식이 아니라 읽는 순서를 지정하는 역할이라, 문장마다
- * 정렬/여백을 조금씩 다르게 줘서(01 왼쪽 끝 → 03으로 갈수록 오른쪽으로
- * 밀림) 시선이 자연스럽게 아래로 내려가며 계단처럼 읽히게 했다. 번호
- * 색은 --color-accent → --color-primary → --color-primary-hover 순으로
- * 짙어진다(Growth Journey의 노드 색 진행과 같은 언어) — 크기는 카피보다
- * 강해 보이지 않도록 작게 제한한다.
+ * 번호 색은 --color-accent → --color-primary → --color-primary-hover
+ * 순으로 짙어진다(Growth Journey의 노드 색 진행과 같은 언어) — 크기는
+ * 카피보다 강해 보이지 않도록 작게 제한한다.
+ *
+ * 이전엔 문장마다 margin-left(0/48/96px)로 계단처럼 들여썼는데, 그
+ * 결과 Desktop(1200px)에서 오른쪽 절반이 통째로 비고 "tab 들여쓰기"
+ * 처럼만 보였다. 지금은 각 statement를 2-column editorial row(text|
+ * visual, 01/03은 text-left, 02는 order로 좌우를 뒤집어 visual-left)
+ * 로 바꿔서 좌우 공간을 실제로 다 쓴다 — text 자체의 들여쓰기는 없고,
+ * row 전체의 좌우 배치로만 비대칭을 만든다.
  */
 const whyGrowLogPoints = [
   { number: '01', text: '계획은 세웠지만, 시간이 지나면 왜 시작했는지 잊기 쉽습니다.' },
@@ -131,30 +135,38 @@ const {
             <span class="intro__statement-text">{{ point.text }}</span>
           </div>
 
-          <!-- 01 — 흐릿해지는 목표: 체크박스+라벨이 아래로 갈수록 옅어진다 -->
+          <!-- 01 — 흐릿해지는 목표: goal line 3개, 아래로 갈수록 옅어진다 -->
           <div v-if="index === 0" class="intro__visual intro__visual--fade" aria-hidden="true">
-            <span class="intro__fade-row">
+            <span class="intro__fade-row intro__fade-row--1">
               <span class="intro__fade-check" />
-              <span class="intro__fade-bar intro__fade-bar--full" />
+              <span class="intro__fade-bar" />
             </span>
-            <span class="intro__fade-bar intro__fade-bar--mid" />
-            <span class="intro__fade-bar intro__fade-bar--faint" />
+            <span class="intro__fade-row intro__fade-row--2">
+              <span class="intro__fade-check" />
+              <span class="intro__fade-bar" />
+            </span>
+            <span class="intro__fade-row intro__fade-row--3">
+              <span class="intro__fade-check" />
+              <span class="intro__fade-bar" />
+            </span>
           </div>
 
-          <!-- 02 — 기록되지 않은 작은 변화: 연결선 없이 흩어진 옅은 점들 -->
+          <!-- 02 — 기록되지 않은 작은 변화: 연결선 없이 흩어진 옅은 조각들 -->
           <div v-else-if="index === 1" class="intro__visual intro__visual--scatter" aria-hidden="true">
             <span class="intro__scatter-dot intro__scatter-dot--1" />
             <span class="intro__scatter-dot intro__scatter-dot--2" />
             <span class="intro__scatter-dot intro__scatter-dot--3" />
             <span class="intro__scatter-dot intro__scatter-dot--4" />
             <span class="intro__scatter-dot intro__scatter-dot--5" />
+            <span class="intro__scatter-bar intro__scatter-bar--1" />
+            <span class="intro__scatter-bar intro__scatter-bar--2" />
           </div>
 
-          <!-- 03 — 축적: 기록 카드가 쌓이며 위로 갈수록 진해진다 -->
+          <!-- 03 — 축적: record surface 3장이 겹쳐 쌓이고, 맨 위가 가장 선명하다 -->
           <div v-else class="intro__visual intro__visual--stack" aria-hidden="true">
-            <span class="intro__stack-bar intro__stack-bar--1" />
-            <span class="intro__stack-bar intro__stack-bar--2" />
-            <span class="intro__stack-bar intro__stack-bar--3" />
+            <span class="intro__stack-card intro__stack-card--1" />
+            <span class="intro__stack-card intro__stack-card--2" />
+            <span class="intro__stack-card intro__stack-card--3" />
           </div>
         </div>
       </div>
@@ -301,41 +313,45 @@ const {
 .intro__statements {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: calc(var(--space-12) * 1.2);
 }
 
 /*
- * 01 → 03으로 갈수록 왼쪽에서 오른쪽으로 조금씩 밀려서, 세 문장이 계단
- * 처럼 아래로 읽히게 한다. 고정 px 값만 써서(vw 기반 clamp 제거) 뷰포트
- * 폭에 따라 오프셋이 계속 달라져 보이는 걸 막았다 — 좁은 화면(900px
- * 이하)에서는 이 오프셋을 0으로 되돌린다.
+ * 각 statement를 2-column editorial row(text | visual, 거의 50/50)로
+ * 구성해서 1200px 컨테이너의 좌우를 실제로 다 쓴다. 비대칭은 row마다
+ * text/visual의 좌우 위치를 바꾸는 것만으로 만든다(order 기반 —
+ * Feature Product Story와 같은 패턴) — statement 내부 text 자체는
+ * 어느 row든 항상 같은 정렬(들여쓰기 없음)을 쓴다.
  */
 .intro__statement {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-6);
+  gap: var(--space-8);
   margin: 0;
-  max-width: 700px;
 }
 
 .intro__statement-copy {
+  order: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
+  max-width: 460px;
 }
 
-.intro__statement--0 {
-  margin-left: 0;
+.intro__visual {
+  order: 2;
+  justify-self: center;
 }
 
-.intro__statement--1 {
-  margin-left: 48px;
+/* 02는 visual-left / text-right로 좌우를 뒤집는다(01/03은 text-left 기본값) */
+.intro__statement--1 .intro__statement-copy {
+  order: 2;
 }
 
-.intro__statement--2 {
-  margin-left: 96px;
+.intro__statement--1 .intro__visual {
+  order: 1;
 }
 
 .intro__statement-number {
@@ -363,63 +379,70 @@ const {
 }
 
 /*
- * 문장 옆의 작은 visual — 아이콘/일러스트가 아니라 CSS 도형만으로 각
+ * 문장 옆의 visual — 아이콘/일러스트가 아니라 CSS 도형만으로 각
  * statement의 의미를 보조한다(주인공은 여전히 텍스트). 3개 모두 서로
  * 다른 형태를 쓴다 — 동일한 아이콘/카드 3개 반복이나 또 다른 dot-line
- * timeline이 되지 않도록.
+ * timeline이 되지 않도록. 260x140 정도로 둬서 Desktop의 넓은 visual
+ * column 안에서도 장식처럼 작게 묻히지 않게 했다.
  */
 .intro__visual {
   flex-shrink: 0;
-  width: 88px;
+  width: 260px;
+  max-width: 100%;
+  height: 140px;
 }
 
-/* 01 — 흐릿해지는 목표: 체크박스+라벨 한 줄, 그 아래로 갈수록 옅어지는 바 */
+/* 01 — 흐릿해지는 목표: goal line(체크박스+라벨) 3개, 아래로 갈수록 옅어진다 */
 .intro__visual--fade {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  gap: 16px;
 }
 
 .intro__fade-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
 }
 
-.intro__fade-check {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-  border: 1.5px solid var(--color-border);
-  border-radius: 3px;
-}
-
-.intro__fade-bar {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--color-border);
-}
-
-.intro__fade-bar--full {
-  width: 56px;
-}
-
-.intro__fade-bar--mid {
-  width: 44px;
-  margin-left: 19px;
+.intro__fade-row--2 {
   opacity: 0.55;
 }
 
-.intro__fade-bar--faint {
-  width: 30px;
-  margin-left: 19px;
-  opacity: 0.25;
+.intro__fade-row--3 {
+  opacity: 0.28;
 }
 
-/* 02 — 기록되지 않은 작은 변화: 연결선 없이 흩어진 옅은 점들(timeline과 구분) */
+.intro__fade-check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.intro__fade-bar {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--color-border);
+}
+
+.intro__fade-row--1 .intro__fade-bar {
+  width: 170px;
+}
+
+.intro__fade-row--2 .intro__fade-bar {
+  width: 140px;
+}
+
+.intro__fade-row--3 .intro__fade-bar {
+  width: 105px;
+}
+
+/* 02 — 기록되지 않은 작은 변화: 연결선 없이 흩어진 옅은 점/조각들(timeline과 구분) */
 .intro__visual--scatter {
   position: relative;
-  height: 40px;
 }
 
 .intro__scatter-dot {
@@ -429,75 +452,118 @@ const {
 }
 
 .intro__scatter-dot--1 {
-  top: 2px;
-  left: 4px;
-  width: 5px;
-  height: 5px;
+  top: 10px;
+  left: 10px;
+  width: 7px;
+  height: 7px;
   opacity: 0.35;
 }
 
 .intro__scatter-dot--2 {
-  top: 14px;
-  left: 30px;
-  width: 7px;
-  height: 7px;
-  opacity: 0.25;
+  top: 46px;
+  left: 70px;
+  width: 9px;
+  height: 9px;
+  opacity: 0.22;
 }
 
 .intro__scatter-dot--3 {
-  top: 26px;
-  left: 8px;
-  width: 4px;
-  height: 4px;
+  top: 90px;
+  left: 20px;
+  width: 6px;
+  height: 6px;
   opacity: 0.4;
 }
 
 .intro__scatter-dot--4 {
-  top: 4px;
-  left: 58px;
-  width: 6px;
-  height: 6px;
+  top: 18px;
+  left: 160px;
+  width: 8px;
+  height: 8px;
   opacity: 0.2;
 }
 
 .intro__scatter-dot--5 {
-  top: 24px;
-  left: 66px;
-  width: 5px;
-  height: 5px;
+  top: 96px;
+  left: 190px;
+  width: 6px;
+  height: 6px;
   opacity: 0.3;
 }
 
-/* 03 — 축적: 기록 카드가 쌓이며 위로 갈수록 짙어진다(Primary Green으로 도착) */
-.intro__visual--stack {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 5px;
-}
-
-.intro__stack-bar {
-  height: 9px;
+.intro__scatter-bar {
+  position: absolute;
+  height: 5px;
   border-radius: 3px;
+  background: var(--color-text-secondary);
 }
 
-.intro__stack-bar--1 {
-  width: 60px;
+.intro__scatter-bar--1 {
+  top: 64px;
+  left: 130px;
+  width: 26px;
+  opacity: 0.18;
+}
+
+.intro__scatter-bar--2 {
+  top: 24px;
+  left: 55px;
+  width: 20px;
+  opacity: 0.25;
+}
+
+/* 03 — 축적: record surface 3장이 살짝 어긋나게 겹쳐 쌓인다(맨 위가 가장 선명) */
+.intro__visual--stack {
+  position: relative;
+}
+
+.intro__stack-card {
+  position: absolute;
+  left: 0;
+  border-radius: var(--radius-md);
+}
+
+.intro__stack-card--1 {
+  top: 48px;
+  width: 210px;
+  height: 56px;
   background: var(--color-primary-bg);
 }
 
-.intro__stack-bar--2 {
-  width: 74px;
+.intro__stack-card--2 {
+  top: 26px;
+  left: 14px;
+  width: 220px;
+  height: 56px;
   background: var(--color-accent);
 }
 
-.intro__stack-bar--3 {
-  width: 88px;
-  background: var(--color-primary);
+.intro__stack-card--3 {
+  top: 0;
+  left: 28px;
+  width: 230px;
+  height: 60px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
 }
 
-@media (max-width: 480px) {
-  .intro__visual {
-    display: none;
+@media (max-width: 900px) {
+  .intro__statement {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .intro__statement-copy,
+  .intro__statement--1 .intro__statement-copy {
+    order: 1;
+    max-width: none;
+  }
+
+  .intro__visual,
+  .intro__statement--1 .intro__visual {
+    order: 2;
+    justify-self: start;
   }
 }
 
@@ -525,19 +591,11 @@ const {
  */
 .intro__conclusion {
   margin: calc(var(--space-12) * 1.1) 0 0;
-  max-width: 620px;
+  max-width: 700px;
   color: var(--color-primary);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   line-height: 1.7;
-}
-
-@media (max-width: 900px) {
-  .intro__statement--0,
-  .intro__statement--1,
-  .intro__statement--2 {
-    margin-left: 0;
-  }
 }
 
 /*

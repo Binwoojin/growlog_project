@@ -23,10 +23,16 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
  * 01→04로 갈수록 노드 dot이 아주 조금씩 커지고(32→38px), 색이
  * --color-primary-bg → --color-accent → --color-primary → --color-
  * primary-hover 순으로 짙어진다 — "작은 기록이 점점 쌓여 성장한다"는
- * 걸 은유한다(이전 라운드와 동일한 언어를 유지). 좌우 zig-zag 대신
- * 각 step의 text body에만 아주 작은 수평 오프셋을 줘서(0→28→10→0px)
- * 단조로운 "왼쪽 선 + 오른쪽 카드 반복" 느낌을 덜면서도, line/dot은
- * 항상 같은 수직선 위에 있어 reading order가 위→아래로 명확하다.
+ * 걸 은유한다(이전 라운드와 동일한 언어를 유지).
+ *
+ * dot은 폭이 고정된 `.journey__marker`(38px, 가장 큰 dot 기준) 안에
+ * 중앙 정렬로 담는다 — dot 자체의 지름이 단계마다 달라도(32~38px)
+ * "슬롯" 폭은 항상 같아서, 그다음에 오는 text body의 시작 X좌표가 01
+ * ~04 전부 정확히 동일하다(이전엔 dot을 곧바로 flex item으로 써서
+ * dot이 커질수록 body가 밀리는 문제가 있었다). step별 text body
+ * 오프셋도 전부 제거했다 — editorial variation보다 4단계 모두 같은
+ * 수직 grid(같은 dot 기준선/같은 label·description 시작 X좌표/같은
+ * dot→text gap)를 쓰는 정확한 정렬이 이 섹션에서는 더 중요하다.
  */
 const steps = [
   { label: '방향을 정합니다', description: '지금 이루고 싶은 목표를 정합니다.' },
@@ -92,7 +98,9 @@ onBeforeUnmount(() => {
         class="journey__node"
         :class="[`journey__node--${index}`, { 'is-active': activatedSteps[index] }]"
       >
-        <span class="journey__dot" aria-hidden="true">{{ index + 1 }}</span>
+        <span class="journey__marker" aria-hidden="true">
+          <span class="journey__dot">{{ index + 1 }}</span>
+        </span>
         <div class="journey__body">
           <p class="journey__label">{{ step.label }}</p>
           <p class="journey__description">{{ step.description }}</p>
@@ -175,10 +183,23 @@ onBeforeUnmount(() => {
   gap: var(--space-4);
 }
 
-.journey__dot {
+/*
+ * 고정 폭 슬롯(가장 큰 dot 기준 38px) — dot 지름이 01~04마다 달라도
+ * 이 슬롯 폭은 항상 같아서, line 기준선과 body 시작 X좌표가 단계마다
+ * 절대 어긋나지 않는다.
+ */
+.journey__marker {
   position: relative;
   z-index: 1;
   flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.journey__dot {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,19 +241,6 @@ onBeforeUnmount(() => {
   flex: 1;
   min-width: 0;
   padding-top: 6px;
-}
-
-/*
- * Step마다 text body에만 아주 작은 수평 오프셋을 줘서(line/dot은 그대로
- * 고정) 전형적인 "왼쪽 선 + 오른쪽 카드 반복" 느낌을 완화한다. 04는
- * 도착 지점이라 다시 기준선으로 돌아온다.
- */
-.journey__node--1 .journey__body {
-  margin-left: 28px;
-}
-
-.journey__node--2 .journey__body {
-  margin-left: 10px;
 }
 
 .journey__label {
@@ -286,12 +294,5 @@ onBeforeUnmount(() => {
 /* 마지막 단계는 motion 활성화 상태에서도 계속 primary 톤을 유지한다 */
 .journey--motion .journey__node--3.is-active .journey__label {
   color: var(--color-primary);
-}
-
-@media (max-width: 480px) {
-  .journey__node--1 .journey__body,
-  .journey__node--2 .journey__body {
-    margin-left: 0;
-  }
 }
 </style>
