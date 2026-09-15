@@ -142,6 +142,11 @@ onBeforeUnmount(() => {
   text-align: center;
   font-size: var(--font-size-section-title);
   font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 /*
@@ -258,6 +263,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-weight: var(--font-weight-medium);
   transition: color 0.4s ease;
+  word-break: keep-all;
 }
 
 /*
@@ -274,6 +280,11 @@ onBeforeUnmount(() => {
   margin: var(--space-1) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: 1.55;
+  letter-spacing: -0.003em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /*

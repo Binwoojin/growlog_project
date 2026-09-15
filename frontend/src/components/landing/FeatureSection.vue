@@ -215,7 +215,12 @@ const {
   margin: 0 0 calc(var(--space-12) * 1.2);
   font-size: var(--font-size-section-title);
   font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
   text-align: left;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 /* 기존 4-card grid의 gap(var(--space-6)=24px)보다 넓되, 늘어져 보이지
@@ -282,6 +287,8 @@ const {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  word-break: keep-all;
 }
 
 .story__title svg {
@@ -294,6 +301,10 @@ const {
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);
   line-height: 1.7;
+  letter-spacing: -0.003em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /*

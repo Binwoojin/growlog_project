@@ -96,17 +96,24 @@ onMounted(() => {
 
 <style scoped>
 /*
- * Hero는 Landing에서 시각적 임팩트가 가장 강해야 하는 영역이라, 아주
- * 낮은 대비의 asymmetric radial wash를 배경에 얹는다(구조는 그대로
- * 두고 배경값만 확장) — 새 wrapper element 없이 `.hero::before`를
- * viewport 전체로 bleed시키는 CSS 트릭을 쓴다(`left:50%` +
- * `margin-left:-50vw` + `width:100vw`). Product Scene(우상단) 쪽에서
- * 옅게 번지고 Copy 쪽으로 갈수록 --color-bg로 자연스럽게 사라진다.
- * 색 자체는 기존 --color-primary를 아주 낮은 alpha로만 쓴다(새 토큰
- * 없이 rgba 하나로 충분해서 별도 Landing 토큰을 만들지 않았다).
+ * Hero의 radial wash 배경은 원래 `.hero::before`를 `left:50% +
+ * margin-left:-50vw + width:100vw`로 viewport 전체까지 bleed시키는
+ * 방식이었다. `100vw`는 CSS 스펙상 scrollbar를 뺀 실제 보이는 폭이
+ * 아니라 initial containing block 전체 폭으로 계산되는데, overlay
+ * scrollbar를 쓰는 환경(대부분의 자동화 테스트 브라우저, macOS 기본
+ * 설정 등)에서는 둘이 같지만, scrollbar가 레이아웃 공간을 차지하는
+ * 환경(Windows 기본 Chrome 등 — Landing처럼 세로로 긴 페이지는 항상
+ * 세로 스크롤바가 생긴다)에서는 `100vw`가 실제 보이는 폭보다
+ * scrollbar 폭(보통 15~17px)만큼 넓어져서, `margin-left:-50vw`로
+ * 왼쪽을 맞춰도 오른쪽이 그만큼 뷰포트 밖으로 넘쳐 horizontal
+ * overflow가 생긴다. `.landing`의 다른 section들(Why GrowLog/주요
+ * 기능/Growth Journey/Final CTA)은 전부 이미 "배경 전담 wrapper
+ * div"(`.intro-band` 등, LandingView.vue) 패턴을 쓰고 있어서 이
+ * 문제가 없었다 — 그 패턴을 Hero에도 그대로 적용했다(`.hero-band`,
+ * LandingView.vue). wrapper는 그냥 block이라 자기 부모(`.landing`,
+ * 곧 body) 폭을 100% 채울 뿐이라 vw 단위 계산이 전혀 필요 없다.
  */
 .hero {
-  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(480px, 1.1fr);
   align-items: center;
@@ -114,18 +121,6 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: calc(var(--space-12) * 1.5) var(--space-8);
-}
-
-.hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 100vw;
-  height: 100%;
-  margin-left: -50vw;
-  z-index: -1;
-  background: radial-gradient(ellipse 900px 560px at 78% 10%, rgba(63, 125, 99, 0.08), transparent 65%);
 }
 
 .hero__copy {
@@ -136,11 +131,24 @@ onMounted(() => {
   align-items: flex-start;
 }
 
+/*
+ * Typography QA — 한글 Large Headline. `word-break:keep-all`로 단어(어절)
+ * 단위 줄바꿈만 허용하고(음절 중간에서 끊기지 않음), `text-wrap:balance`
+ * 는 지원 브라우저에서만 두 줄의 길이를 자동으로 맞춰준다(progressive
+ * enhancement — 미지원 브라우저는 그냥 기본 줄바꿈으로 보여도 깨지지
+ * 않는다. `<br>`로 줄바꿈을 강제하지 않는 이유이기도 하다). letter-
+ * spacing은 큰 한글 제목 기준 권장 범위(-0.02~-0.03em) 안에서 뭉치지
+ * 않을 만큼만 좁혔다.
+ */
 .hero__headline {
   margin: 0;
   font-size: var(--font-size-hero);
   line-height: 1.2;
   font-weight: var(--font-weight-bold);
+  letter-spacing: -0.025em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .hero__subcopy {
@@ -148,6 +156,10 @@ onMounted(() => {
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);
   line-height: 1.7;
+  letter-spacing: -0.003em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /*

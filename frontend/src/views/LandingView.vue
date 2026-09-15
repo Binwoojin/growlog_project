@@ -117,7 +117,9 @@ const {
       </div>
     </header>
 
-    <HeroSection :cta-label="ctaLabel" @cta="goToCtaTarget" />
+    <div class="hero-band">
+      <HeroSection :cta-label="ctaLabel" @cta="goToCtaTarget" />
+    </div>
 
     <div class="intro-band">
       <section id="intro" class="intro">
@@ -311,6 +313,24 @@ const {
  * divider를 추가하지 않았다.
  */
 /*
+ * Hero 배경의 radial wash — 예전엔 HeroSection.vue의 `.hero::before`가
+ * `width:100vw` + `margin-left:-50vw`로 직접 viewport까지 번지는
+ * 방식이었는데, scrollbar가 레이아웃 공간을 차지하는 환경에서 `100vw`
+ * 가 실제 보이는 폭보다 넓게 계산되어 horizontal overflow를 만들었다
+ * (원인 상세는 HeroSection.vue 주석 참고). 다른 section들과 똑같은
+ * "배경 전담 full-bleed wrapper" 패턴으로 옮겨서 vw 단위 자체를 아예
+ * 쓰지 않게 했다 — 이 div는 평범한 block이라 부모(`.landing`) 폭을
+ * 100% 채울 뿐이다. gradient의 중심 X좌표는 Hero 콘텐츠가 아니라 이
+ * wrapper(전체 뷰포트 폭) 기준이 되므로, `calc(50% + 340px)`처럼
+ * "뷰포트 중앙에서 오른쪽으로 고정 픽셀만큼" 앵커링해서 뷰포트가
+ * 넓어져도 Product Scene 근처에서 계속 은은하게 번지게 했다(퍼센트
+ * 앵커였다면 뷰포트가 넓어질수록 중심이 실제 콘텐츠 밖으로 밀려난다).
+ */
+.hero-band {
+  background: radial-gradient(ellipse 900px 560px at calc(50% + 340px) 10%, rgba(63, 125, 99, 0.08), transparent 65%);
+}
+
+/*
  * Color Rhythm — Landing이 스크롤될수록 색 온도가 아주 조금씩 짙어지는
  * 흐름을 band 배경 자체에 얹는다(새 decorative shape가 아니라 배경
  * gradient 하나). Why GrowLog는 white surface로 시작해 결론 쪽으로
@@ -373,7 +393,12 @@ const {
   max-width: 640px;
   font-size: 24px;
   font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
   text-align: left;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .intro__statements {
@@ -441,7 +466,11 @@ const {
 .intro__statement-text {
   color: var(--color-text-primary);
   font-size: var(--font-size-lg);
-  line-height: 1.7;
+  line-height: 1.6;
+  letter-spacing: -0.003em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /*
@@ -746,6 +775,10 @@ const {
   font-size: 20px;
   font-weight: var(--font-weight-semibold);
   line-height: 1.6;
+  letter-spacing: -0.005em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /*
@@ -794,12 +827,22 @@ const {
   color: var(--color-text-inverse);
   font-size: var(--font-size-page-title);
   font-weight: var(--font-weight-bold);
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .final-cta__text {
   margin: 0 0 var(--space-2);
   max-width: 480px;
   color: rgba(255, 255, 255, 0.82);
+  line-height: 1.7;
+  letter-spacing: -0.003em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
   font-size: var(--font-size-base);
 }
 
