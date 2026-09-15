@@ -2,6 +2,13 @@
 
 ### 2~3주 집중 리뉴얼 / 프론트엔드 신입 취업 포트폴리오 최적화
 
+> **Day 11 이후 계획은 [`renewal-roadmap-final.md`](./renewal-roadmap-final.md)로
+> 대체되었다.** Day 1~10(이 문서의 Week 1 + Week 2 Day 8~10에 해당하는
+> 인증/CORS/CSRF, Landing, Dashboard, Timeline, Goal List/Create/
+> Update/Delete)은 완료된 상태를 전제로, 이후 작업은 반드시
+> `renewal-roadmap-final.md`를 기준으로 진행한다. 이 문서(v3)는
+> Day 1~10까지의 배경/전략 기록으로만 참고한다.
+
 ## 0. v3 개정 목적
 
 v3는 기존 v2의 장점이었던 **UI/UX 강화, Dashboard + Timeline 중심의 시그니처 화면 전략, TypeScript 타입 설계, 컴포넌트 재사용, 상태관리 원칙**을 유지하면서, 다음 3가지 구조적 리스크를 수정한 실행용 로드맵이다.
