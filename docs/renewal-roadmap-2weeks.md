@@ -84,10 +84,16 @@
       상태 추가, `computed`로 클라이언트 필터링(서버 재요청 없음).
       Playwright로 목표 필터 클릭 시 성장 기록이 실제로 숨겨지는 것까지 확인.
 
-### Day 7 — Responsive + Buffer
-- [ ] Desktop / Tablet / Mobile 대응
-- [ ] Card Width / Grid / Spacing / Typography / Navigation / Overflow 점검
-- [ ] 밀린 작업 버퍼로 사용
+### Day 7 — Responsive + Buffer ✅ (2026-09-15)
+- [x] Desktop(1280) / Tablet(768) / Mobile(390) 대응 — Login/Dashboard/Timeline
+      3개 화면 전부 Playwright로 3단계 스크린샷 점검
+- [x] Card Width / Grid / Spacing / Typography / Navigation / Overflow 점검 —
+      가로 스크롤(overflow) 없음 확인. **버그 1건 발견 후 수정**:
+      Dashboard 헤더의 "타임라인"/"로그아웃"이 모바일 폭에서 글자 중간에
+      줄바꿈되던 문제 → `BaseButton`에 `white-space: nowrap` 전역 추가 +
+      헤더에 `flex-wrap`을 줘서 좁은 화면에서는 액션 영역이 아예 다음 줄로
+      내려가도록 수정 (버튼 컴포넌트 레벨에서 고쳐서 이후 모든 화면에 적용됨)
+- 이번 로드맵엔 없지만 자연스럽게 밀린 작업은 없어서 버퍼 시간 소진 없음
 
 ---
 

@@ -122,7 +122,8 @@ async function onLogout() {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
 }
 
 .dashboard__greeting {
@@ -138,6 +139,7 @@ async function onLogout() {
 .dashboard__actions {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: var(--space-4);
 }
 
@@ -145,6 +147,7 @@ async function onLogout() {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .dashboard__nav-link:hover {

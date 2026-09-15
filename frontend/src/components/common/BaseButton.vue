@@ -30,6 +30,7 @@ withDefaults(
   border: 1px solid transparent;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
 }
