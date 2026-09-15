@@ -4,23 +4,25 @@ import { Flame, NotebookText, Target } from '@lucide/vue'
 import BaseButton from '../common/BaseButton.vue'
 
 /*
- * Hero Product Preview — 실제 API에 연결하지 않고 정적 프레젠테이션
- * 데이터만 사용한다. GrowLog Dashboard가 실제로 보여주는 정보(이번 달
- * 기록 수 / 진행 중 목표 수 / 연속 기록 / Goal Progress / 최근 타임라인)만
- * 축약해서 보여주고, 존재하지 않는 기능을 새로 지어내지 않는다.
+ * Hero — "카드 하나"가 아니라 GrowLog의 여러 기록 요소가 한 장면을
+ * 이루는 layered composition. 세 레이어 사이에 의미 관계가 있다:
  *
- * Entrance sequence — Progressive Enhancement: 기본 CSS는 모든 요소가
- * 이미 보이는 상태(opacity:1)다. `animate`가 true일 때만(.hero--animate)
- * 각 요소에 fade-up 애니메이션을 거는 선택자가 걸리고, `animation-fill-
- * mode: both`가 시작 프레임(opacity:0)을 즉시 적용했다가 끝나면 최종
- * 상태(opacity:1)에 고정한다. prefers-reduced-motion이면 animate를 계속
- * false로 둬서 관찰자/애니메이션 없이 바로 최종 상태로 보인다.
+ *   Dashboard Main Panel   — 현재 성장 상태를 보여주는 중심(가장 크고,
+ *                            가장 위 z-index, --shadow-elevated)
+ *   Goal Progress Panel    — 그 목표 정보에서 파생된 세부 상태(main
+ *                            panel 왼쪽 아래에 걸쳐 겹침, --shadow-card)
+ *   Record Card            — 최근 기록이 Dashboard/Timeline과 연결되는
+ *                            요소(더 아래, main panel 하단에 걸쳐 겹침)
  *
- * hero__motif: "점 → 선" Visual Language를 표현하는 보조 그래픽. 진입
- * 애니메이션이 끝난 뒤에도 이것만 아주 느린 ambient 루프(opacity)를
- * 유지한다 — "기록이 연결된다"는 느낌의 보조 요소일 뿐, 헤드라인/CTA/
- * Preview 같은 콘텐츠는 진입 후 다시 움직이지 않는다. 모바일에서는
- * ambient 루프를 끈다(CSS media query).
+ * 세 레이어 모두 2D 위치 오프셋 + 겹침으로만 관계를 표현한다 — rotate/
+ * perspective/3D/계속 움직이는 floating은 쓰지 않는다. 점/선 장식
+ * 모티프는 Hero에서 완전히 제거했다(Growth Journey/Timeline Preview로
+ * 대표 사용처를 좁힘). Hero의 정체성은 이 레이어드 구성과 typography로
+ * 전달한다.
+ *
+ * 실제 API에는 연결하지 않고 정적 프레젠테이션 데이터만 쓰되, GrowLog가
+ * 실제로 보여주는 정보(이번 달 기록 수/진행 중 목표 수/연속 기록, Goal
+ * Progress, 최근 타임라인 1개)만 축약해서 보여준다.
  */
 defineProps<{
   ctaLabel: string
@@ -43,14 +45,6 @@ onMounted(() => {
 <template>
   <section class="hero" :class="{ 'hero--animate': animate }">
     <div class="hero__copy">
-      <div class="hero__motif" aria-hidden="true">
-        <span class="hero__motif-dot hero__motif-dot--sm" />
-        <span class="hero__motif-line" />
-        <span class="hero__motif-dot hero__motif-dot--md" />
-        <span class="hero__motif-line" />
-        <span class="hero__motif-dot hero__motif-dot--lg" />
-      </div>
-
       <p class="hero__label">PERSONAL GROWTH ARCHIVE</p>
       <h1 class="hero__headline">오늘의 기록이 내일의 성장이 됩니다.</h1>
       <p class="hero__subcopy">
@@ -60,10 +54,8 @@ onMounted(() => {
       <BaseButton variant="primary" class="hero__cta" @click="emit('cta')">{{ ctaLabel }}</BaseButton>
     </div>
 
-    <div class="hero__preview-wrap" aria-hidden="true">
-      <div class="hero__preview-backdrop" />
-
-      <div class="hero__preview">
+    <div class="hero__scene" aria-hidden="true">
+      <div class="hero__scene-main">
         <div class="hero__preview-header">
           <p class="hero__preview-greeting">안녕하세요, 성장러님 👋</p>
           <span class="hero__preview-tag">Dashboard</span>
@@ -86,26 +78,25 @@ onMounted(() => {
             <p class="hero__preview-stat-label">연속 기록</p>
           </div>
         </div>
+      </div>
 
-        <div class="hero__preview-goal">
-          <div class="hero__preview-goal-head">
-            <Target :size="14" :stroke-width="1.75" />
-            <span class="hero__preview-goal-title">포트폴리오 완성하기</span>
-            <span class="hero__preview-goal-percent">72%</span>
-          </div>
-          <div class="hero__preview-goal-track">
-            <div class="hero__preview-goal-fill" />
-          </div>
+      <div class="hero__scene-goal">
+        <div class="hero__scene-goal-head">
+          <Target :size="13" :stroke-width="1.75" />
+          <span>포트폴리오 완성하기</span>
         </div>
+        <div class="hero__preview-goal-track">
+          <div class="hero__preview-goal-fill" />
+        </div>
+        <span class="hero__scene-goal-percent">72%</span>
+      </div>
 
-        <div class="hero__preview-timeline">
-          <span class="hero__preview-timeline-dot" />
-          <NotebookText :size="14" :stroke-width="1.75" class="hero__preview-timeline-icon" />
-          <div>
-            <p class="hero__preview-timeline-title">오늘의 기록</p>
-            <p class="hero__preview-timeline-meta">작은 진전도 기록으로 남겼어요</p>
-          </div>
+      <div class="hero__scene-record">
+        <div class="hero__scene-record-head">
+          <NotebookText :size="13" :stroke-width="1.75" />
+          <span>오늘의 기록</span>
         </div>
+        <p class="hero__scene-record-body">작은 진전도 기록으로 남겼어요</p>
       </div>
     </div>
   </section>
@@ -116,57 +107,20 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-12);
-  padding: calc(var(--space-12) * 1.5) var(--space-4);
-  max-width: 960px;
+  max-width: 1220px;
   margin: 0 auto;
+  padding: calc(var(--space-12) * 1.5) var(--space-6);
 }
 
 .hero__copy {
   flex: 1;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
   align-items: flex-start;
 }
 
-.hero__motif {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.hero__motif-dot {
-  display: block;
-  border-radius: 50%;
-  background: var(--color-accent);
-}
-
-.hero__motif-dot--sm {
-  width: 4px;
-  height: 4px;
-}
-
-.hero__motif-dot--md {
-  width: 6px;
-  height: 6px;
-}
-
-.hero__motif-dot--lg {
-  width: 9px;
-  height: 9px;
-  background: var(--color-primary);
-}
-
-.hero__motif-line {
-  width: var(--space-6);
-  height: 1px;
-  background: var(--color-border);
-}
-
-/*
- * 서비스 카테고리를 알려주는 아주 작은 eyebrow 라벨 — headline보다
- * 절대 강조되면 안 되므로 크기를 최소로, 색은 Secondary Text로 낮췄다.
- */
 .hero__label {
   margin: 0;
   font-size: 11px;
@@ -190,26 +144,22 @@ onMounted(() => {
 }
 
 /*
- * Product Preview — 실제 Dashboard와 같은 디자인 언어(색/타이포/카드)를
- * 쓰되, 여기서만 쓰는 축소된 정적 프레젠테이션이다. 뒤에 Soft Green
- * backdrop 카드를 살짝 어긋나게 겹쳐서(layered surface) depth를 준다.
- * elevation은 --shadow-elevated 한 단계만 쓴다.
+ * Scene — 세 레이어가 겹치는 고정 캔버스. 폭은 Hero 전체가 넓어진 만큼
+ * copy(560px 상한)보다 훨씬 넉넉하게 쓴다.
  */
-.hero__preview-wrap {
+.hero__scene {
   position: relative;
-  flex: 1;
-  max-width: 360px;
+  flex: 1.15;
+  min-width: 0;
+  height: 460px;
 }
 
-.hero__preview-backdrop {
+.hero__scene-main {
   position: absolute;
-  inset: var(--space-4) calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) var(--space-4);
-  background: var(--color-primary-bg);
-  border-radius: var(--radius-lg);
-}
-
-.hero__preview {
-  position: relative;
+  top: 0;
+  right: 0;
+  width: 360px;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -218,6 +168,7 @@ onMounted(() => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevated);
+  z-index: 3;
 }
 
 .hero__preview-header {
@@ -271,31 +222,38 @@ onMounted(() => {
   color: var(--color-text-secondary);
 }
 
-.hero__preview-goal {
-  padding: var(--space-3);
+/*
+ * Goal Progress Panel — Dashboard의 목표 정보에서 파생된 세부라는 관계가
+ * 느껴지도록 main panel의 왼쪽-아래 모서리에 걸쳐 겹친다. depth를
+ * --shadow-card로 한 단계 낮춰서 main panel보다 뒤/아래에 있다는 걸
+ * 표현한다.
+ */
+.hero__scene-goal {
+  position: absolute;
+  left: 0;
+  top: 170px;
+  width: 230px;
+  max-width: 62%;
+  padding: var(--space-4);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  z-index: 2;
 }
 
-.hero__preview-goal-head {
+.hero__scene-goal-head {
   display: flex;
   align-items: center;
   gap: var(--space-1);
   margin-bottom: var(--space-2);
   color: var(--color-text-secondary);
-}
-
-.hero__preview-goal-title {
-  flex: 1;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
 }
 
-.hero__preview-goal-percent {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-primary);
+.hero__scene-goal-head span {
+  color: var(--color-text-primary);
 }
 
 .hero__preview-goal-track {
@@ -312,44 +270,55 @@ onMounted(() => {
   background: var(--color-primary);
 }
 
-.hero__preview-timeline {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
+.hero__scene-goal-percent {
+  display: block;
+  margin-top: var(--space-1);
+  text-align: right;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
 }
 
-.hero__preview-timeline-dot {
+/*
+ * Record Card — "최근 기록이 Dashboard/Timeline과 연결된다"는 관계를
+ * main panel 하단에 걸쳐 겹치는 위치로 표현한다. Goal panel과는 다른
+ * 코너(오른쪽)에 둬서 세 레이어가 한 대각선 흐름(위→아래, 요약→세부→
+ * 최근 활동)으로 읽히게 했다.
+ */
+.hero__scene-record {
   position: absolute;
-  left: 0;
-  top: calc(var(--space-3) + 2px);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--color-accent);
+  right: 24px;
+  bottom: 0;
+  width: 250px;
+  max-width: 66%;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  z-index: 2;
 }
 
-.hero__preview-timeline-icon {
-  flex-shrink: 0;
-  margin-top: 2px;
+.hero__scene-record-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--color-text-secondary);
-}
-
-.hero__preview-timeline-title {
-  margin: 0;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }
 
-.hero__preview-timeline-meta {
-  margin: 2px 0 0;
-  font-size: 11px;
+.hero__scene-record-head span {
+  color: var(--color-text-primary);
+}
+
+.hero__scene-record-body {
+  margin: var(--space-1) 0 0;
+  font-size: 12px;
   color: var(--color-text-secondary);
 }
 
-/* ===== Entrance sequence (opacity/translateY, 필요한 곳만 scale) ===== */
+/* ===== Entrance sequence (opacity/translateY, scene 레이어만 scale 추가) ===== */
 @keyframes hero-fade-up {
   from {
     opacity: 0;
@@ -372,84 +341,47 @@ onMounted(() => {
   }
 }
 
-.hero--animate .hero__motif {
-  animation: hero-fade-up 0.4s ease-out both;
-}
-
 .hero--animate .hero__label {
   animation: hero-fade-up 0.4s ease-out both;
-  animation-delay: 50ms;
 }
 
 .hero--animate .hero__headline {
   animation: hero-fade-up 0.45s ease-out both;
-  animation-delay: 110ms;
+  animation-delay: 70ms;
 }
 
 .hero--animate .hero__subcopy {
   animation: hero-fade-up 0.45s ease-out both;
-  animation-delay: 170ms;
+  animation-delay: 140ms;
 }
 
 .hero--animate .hero__cta {
   animation: hero-fade-up 0.4s ease-out both;
-  animation-delay: 230ms;
+  animation-delay: 210ms;
 }
 
-.hero--animate .hero__preview-wrap {
+.hero--animate .hero__scene-main {
   animation: hero-fade-scale 0.45s ease-out both;
-  animation-delay: 200ms;
+  animation-delay: 180ms;
 }
 
-.hero--animate .hero__preview-header {
-  animation: hero-fade-up 0.35s ease-out both;
-  animation-delay: 280ms;
-}
-
-.hero--animate .hero__preview-stat:nth-child(1) {
-  animation: hero-fade-up 0.35s ease-out both;
+.hero--animate .hero__scene-goal {
+  animation: hero-fade-scale 0.4s ease-out both;
   animation-delay: 320ms;
 }
 
-.hero--animate .hero__preview-stat:nth-child(2) {
-  animation: hero-fade-up 0.35s ease-out both;
-  animation-delay: 360ms;
+.hero--animate .hero__scene-record {
+  animation: hero-fade-scale 0.4s ease-out both;
+  animation-delay: 420ms;
 }
 
-.hero--animate .hero__preview-stat:nth-child(3) {
-  animation: hero-fade-up 0.35s ease-out both;
-  animation-delay: 400ms;
-}
-
-.hero--animate .hero__preview-goal {
-  animation: hero-fade-up 0.35s ease-out both;
-  animation-delay: 450ms;
-}
-
-.hero--animate .hero__preview-timeline {
-  animation: hero-fade-up 0.35s ease-out both;
-  animation-delay: 500ms;
-}
-
-/* ===== Ambient motif motion — 진입 시퀀스가 끝난 뒤(850ms) 시작, 콘텐츠보다 약하게 ===== */
-@keyframes hero-ambient-pulse {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@media (min-width: 721px) {
-  .hero--animate .hero__motif-line {
-    animation: hero-ambient-pulse 5s ease-in-out infinite;
-    animation-delay: 1s;
+@media (max-width: 900px) {
+  .hero__scene {
+    height: 420px;
   }
 
-  .hero--animate .hero__motif-line:last-of-type {
-    animation-delay: 1.6s;
+  .hero__scene-main {
+    width: 320px;
   }
 }
 
@@ -460,33 +392,28 @@ onMounted(() => {
     padding: var(--space-8) var(--space-4);
   }
 
-  .hero__preview-wrap {
+  .hero__copy {
     max-width: none;
   }
 
-  /* Mobile — 전체 진입 시간을 더 짧게, ambient 루프는 비활성 */
-  .hero--animate .hero__preview-header {
-    animation-delay: 240ms;
+  /*
+   * Mobile — absolute 겹침 구성은 좁은 화면에서 깨지기 쉬워서, 세
+   * 레이어를 자연스러운 세로 stack으로 전환한다(main → goal → record
+   * 순서, 겹침 없이).
+   */
+  .hero__scene {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
   }
 
-  .hero--animate .hero__preview-stat:nth-child(1) {
-    animation-delay: 270ms;
-  }
-
-  .hero--animate .hero__preview-stat:nth-child(2) {
-    animation-delay: 300ms;
-  }
-
-  .hero--animate .hero__preview-stat:nth-child(3) {
-    animation-delay: 330ms;
-  }
-
-  .hero--animate .hero__preview-goal {
-    animation-delay: 370ms;
-  }
-
-  .hero--animate .hero__preview-timeline {
-    animation-delay: 410ms;
+  .hero__scene-main,
+  .hero__scene-goal,
+  .hero__scene-record {
+    position: static;
+    width: auto;
+    max-width: none;
   }
 }
 </style>

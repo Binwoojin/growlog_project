@@ -1165,3 +1165,149 @@ Hero, `(hover:hover) and (pointer:fine)`가 실제 터치 기기 에뮬레이션
 크기만 바꾼 컨텍스트에서는 여전히 true로 나와 테스트 방법 자체를
 수정해 재확인), Login 화면과 Goal 카드 hover-guard 이후에도 수정
 모달이 정상 동작하는지까지 확인했다.
+
+## Landing Page Composition/Visual Design 재구성 — Editorial Product Storytelling (2026-09-15)
+
+이전 라운드까지 Landing은 기능적으로는 완성됐지만, "가운데 정렬
+제목 → 카드 그리드"가 섹션마다 반복되고(Why GrowLog/Feature Section
+모두 이 패턴), Feature Section의 카드 4장이 아이콘만 다를 뿐 완전히
+동일한 형태였고, 점/선 모티프가 Hero/Why GrowLog/Growth Journey/
+Final CTA 네 곳에 기계적으로 반복돼서 "AI가 만든 전형적인 SaaS
+템플릿"처럼 읽힌다는 지적을 받았다. 이번 라운드의 목표는 애니메이션을
+더 넣는 게 아니라 **Composition 자체를 GrowLog만의 것으로 바꾸는
+것**이었다 — 기준은 "animation을 모두 꺼도 좋은 디자인"(정지 화면만
+봐도 layout이 잘 설계돼 있어야 한다)이었다.
+
+### 변경 파일
+
+`HeroSection.vue`, `LandingView.vue`(Why GrowLog/Final CTA),
+`FeatureSection.vue`(전체 재작성), `GrowthJourney.vue`(CSS만, 스크립트
+로직은 100% 유지)까지 총 4개 컴포넌트. API/Router/Pinia/Auth나
+Dashboard/Goal/Timeline의 실제 기능 로직은 전혀 건드리지 않았다.
+
+### 폭 — 섹션마다 ~960px → ~1180~1220px
+
+Hero는 `max-width: 1220px`(copy 자체는 여전히 520~560px 상한 유지),
+Why GrowLog/Feature Section/Growth Journey는 `max-width: 1180px`로
+넓혔다. Final CTA는 배경을 여전히 화면 끝까지 full-bleed로 채워야
+해서(`.final-cta-band` 래퍼) 안쪽 콘텐츠에만 `max-width: 1180px`를
+줘서 좌우 padding 리듬만 다른 섹션과 맞췄다.
+
+### Hero — "카드 하나"가 아니라 3-레이어 layered composition
+
+기존엔 Dashboard 미니어처를 담은 카드 1장 + 점/선 장식 모티프였다.
+지금은 그 모티프를 완전히 제거하고, 대신 세 개의 실제 화면 요소가
+겹치는 장면으로 바꿨다: **Dashboard Main Panel**(현재 성장 상태 —
+가장 크고 `--shadow-elevated`, z-index 최상단, 우상단) / **Goal
+Progress Panel**(그 목표 정보에서 파생된 세부 — main panel 좌하단에
+걸쳐 겹침, `--shadow-card`) / **Record Card**(최근 기록이 Dashboard/
+Timeline과 이어진다는 관계 — main panel 우하단에 걸쳐 겹침,
+`--shadow-card`). 세 레이어는 2D 절대 위치 오프셋 + 겹침 + 2단계
+shadow depth만으로 위계를 표현하고, rotate/perspective/3D transform/
+계속 움직이는 floating은 전혀 쓰지 않았다. `≤720px`에서는 세 레이어가
+`position: static`으로 풀리며 자연스러운 세로 stack(main → goal →
+record)으로 전환된다.
+
+### Why GrowLog — BaseCard 제거, 번호가 읽는 순서인 editorial statement
+
+카드+점선 rail 구조를 없애고, 01/02/03 번호가 붙은 문장을 세로로
+나열하되 01은 왼쪽 끝, 02/03은 `clamp()`로 점점 오른쪽으로 밀려서
+계단처럼 읽히게 했다(`≤720px`에서는 오프셋을 0으로 되돌린다). 번호는
+`--color-accent`(01) → `--color-primary`(02) → `--color-primary-
+hover`(03) 순으로 짙어지는데, 이는 Growth Journey 노드가 진행에 따라
+짙어지는 것과 같은 컬러 언어를 재사용한 것이다. 번호 폰트 크기는
+13px로 제한해서 본문(18px)보다 항상 작게 뒀다 — "번호가 장식처럼
+비대해져서 카피보다 강해 보이면 안 된다"는 요청 때문이다. 결론 문장은
+Soft Green 배경 박스를 없애고, 충분한 상단 여백(`space-12 * 1.1`)과
+Primary Green 텍스트 컬러만으로 "도착 지점"임을 표시한다. 점/선 rail도
+이 섹션에서 완전히 제거했다(대표 사용처를 Growth Journey/Timeline
+Preview로 좁힘).
+
+### Feature Section — 4-card grid 제거, alternating Product Story row
+
+동일한 카드 4장을 없애고, 각 기능마다 완전히 다른 내부 구성을 가진
+row 4개로 바꿨다: **01 목표 관리**(텍스트\|Goal 미니 카드 — 카테고리/
+상태 배지/제목/진행바), **02 성장 기록**(Record 미니 카드 2개\|텍스트),
+**03 성장 타임라인**(텍스트\|점+선으로 이어진 Goal/Record 노드 2~3개),
+**04 성장 대시보드**(요약 통계 카드\|텍스트). Desktop은 `.story--
+reverse`(02/04에만 적용)로 시각적 좌우만 바꾸고, 마크업은 4개 row
+모두 항상 "텍스트 먼저" 순서를 유지한다 — 그래서 `≤900px`에서
+`flex-direction: column`으로 강제 전환될 때 row-reverse가 같이
+꺼지기만 해도 4개 row 전부 자동으로 텍스트 → 프리뷰 순서가 된다(별도
+DOM 재정렬 없이 CSS 한 줄로 해결). row 사이 간격은 기존 grid gap
+(`space-6`)보다 훨씬 넓은 `space-12 * 1.8`로 뒀다. Preview에 쓰인
+정보는 전부 GrowLog가 실제로 보여주는 값(이번 달 기록 12/진행 중
+목표 3/연속 기록 7일, Goal 진행률 72%, Timeline 항목명)의 축약이고,
+Record는 아직 Create/Detail 화면이 없어서 Timeline의 Record 항목
+형태까지만 표현했다(입력 폼처럼 보이는 UI는 만들지 않음).
+
+row마다 `useInViewOnce()`를 독립적으로 하나씩(총 4개) 붙였다 — 그리드
+전체를 하나의 observer로 묶으면 row마다 다른 시점에 트리거할 수 없기
+때문이다. reduced-motion이면 애초에 observer 자체가 안 만들어지므로
+인스턴스 4개가 늘어나는 비용은 실질적으로 "motion이 켜진 경우에만"
+발생한다.
+
+### Motion Language — 4개가 아니라 3개 계열로 통합
+
+모든 row가 서로 다른 애니메이션 시스템이 되는 걸 피하려고, 공통
+베이스(텍스트/프리뷰가 opacity+translateY로 나타남) 위에 family당
+한 가지 요소만 얹는 구조로 통일했다:
+
+- **A. Progress**(Goal row 전용) — 진행바 `width`가 0%에서 72%로
+  채워진다.
+- **B. Accumulation/Connection**(Record + Timeline row가 공유) —
+  Record는 두 번째 기록 카드가 살짝 늦게(220ms) 나타나 "방금 추가된
+  기록"처럼 읽히고, Timeline은 connector 선이 `scaleY(0→1)`로 자라며
+  노드가 순서대로(140ms/280ms 간격) 나타난다 — 둘 다 "무언가 더해지고
+  이어진다"는 같은 언어를 공유한다.
+- **C. Reveal/Highlight**(Dashboard row 전용) — 요약 통계 항목들이
+  순서대로(90ms/180ms/270ms 간격) opacity로 나타난다. count-up은
+  쓰지 않았다(요청사항).
+
+### Growth Journey — 로직은 그대로, 폭/여백/마지막 단계 강조만
+
+`computeProgressStep`/`activateUpTo`/observer attach-detach 로직은
+한 글자도 건드리지 않았다. `max-width`만 960→1180px로 넓혀서 4개
+flex:1 노드가 자연스럽게 더 넓게 벌어지게 했다 — `gap`을 추가하는
+방식은 시도하지 않았다: connector 3개가 "노드 사이 gap 없음"을
+전제로 12.5%/37.5%/62.5% 고정 비율로 그려지기 때문에, gap을 주면
+connector와 노드 중심이 어긋난다. 마지막 단계("변화를 발견합니다")는
+별도 카드/배경 없이 라벨만 `font-weight: bold` + `color: var(--
+color-primary)`로 강조했고, motion이 켜진 상태에서 active가 될 때도
+이 강조가 유지되도록 `.journey--motion .journey__node--3.is-active
+.journey__label` 규칙을 기존 active 규칙 뒤에 추가했다(같은
+specificity에서 source order로 승리). 섹션 제목은 `margin: 0 auto`로
+가운데 정렬된 640px 박스 안에서 `text-align: left`를 써서, Hero/Why
+GrowLog/Feature의 완전한 left 정렬과 Final CTA의 완전한 center 정렬
+사이 "slightly offset center"로 뒀다 — 요청된 heading 정렬 리듬
+(억지로 전부 다르게 만들 필요는 없지만 "가운데 제목 → 콘텐츠" 패턴이
+기계적으로 반복되진 않게)을 따른 것이다.
+
+### Final CTA — motif/stagger 제거, headline/context/button/whitespace만
+
+점 2개+선 모티프 마크업을 제거하고, 4단계 nth-child stagger(0/100/
+200/300ms)도 없앴다. 지금은 섹션 전체가 한 번의 subtle fade-up
+(opacity+translateY, 500ms)으로만 나타난다.
+
+### 검증
+
+`npm run build`(vue-tsc + vite) 통과. Playwright로 Desktop(1440px)/
+Tablet(820px)/Mobile(390px) 전 구간을 스크린샷과 computed style로
+확인했다: Hero 3-레이어 겹침이 데스크톱에서 의도한 위치에 렌더링되고
+`≤720px`에서 세로 stack으로 정상 전환되는지, Goal 진행바가
+`width: 0% → 72%`로 실제 채워지는지, Record 두 번째 카드/Timeline
+connector+노드/Dashboard 통계가 각각 의도한 지연으로 나타나는지(단,
+Playwright의 `scrollIntoViewIfNeeded()`가 요소를 뷰포트 최하단
+경계에 최소한으로만 걸치게 스크롤할 경우 `rootMargin: -10%`
+때문에 관찰자가 아직 안 뜨는 케이스가 있어, 약간 더 스크롤하면
+정상적으로 트리거됨을 별도로 재확인 — 실제 사용자 스크롤에서는
+발생하지 않는 테스트 스크롤 방식의 한계였다), Growth Journey가
+기존과 동일하게 스크롤에 따라 순차 누적 활성화되고 뒤로 스크롤해도
+유지되는지 6단계로 재확인, `reducedMotion:'reduce'` 컨텍스트에서
+스크롤 없이 로드 직후 Hero/Why GrowLog/Feature 4-row/Journey/Final
+CTA가 전부 최종 상태로 보이는지(Goal 진행바도 스크롤 없이 이미
+72%), Mobile에서 `.story--record`(desktop에서 프리뷰가 왼쪽인
+row)의 실제 DOM 자식 순서가 `story__text` → `story__preview`임을
+확인해 "Mobile은 항상 텍스트 먼저" 요구사항이 마크업 순서 자체로
+보장됨을 검증했다. Dashboard/Timeline/Goal/Login 등 다른 화면은
+이번 라운드에서 전혀 건드리지 않았다.

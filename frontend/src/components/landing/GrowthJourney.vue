@@ -178,18 +178,32 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .journey {
-  max-width: 960px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-4);
+  padding: calc(var(--space-12) * 1.2) var(--space-6);
 }
 
+/*
+ * 이 섹션은 slightly-offset center로 둔다 — Hero/Why GrowLog/Feature의
+ * left 정렬과, Final CTA의 정확한 center 사이에서 "중앙 제목 → 콘텐츠"
+ * 패턴이 기계적으로 반복되지 않게 하는 중간 지점.
+ */
 .journey__title {
-  margin: 0 0 var(--space-8);
+  margin: 0 auto var(--space-10);
+  max-width: 640px;
+  padding-left: var(--space-4);
   font-size: var(--font-size-section-title);
   font-weight: var(--font-weight-semibold);
-  text-align: center;
+  text-align: left;
 }
 
+/*
+ * gap은 주지 않는다 — connector(아래)가 4개 flex:1 노드를 12.5/37.5/
+ * 62.5% 고정 비율로 잇는 계산이 "노드 사이에 gap 없음"을 전제로 하기
+ * 때문이다(gap을 주면 노드 중심과 connector 위치가 어긋난다). 노드
+ * 사이 여백은 대신 .journey 자체의 max-width를 960→1180px로 넓혀서
+ * 4개 flex:1 노드가 자연스럽게 더 넓게 벌어지게 하는 방식으로 늘렸다.
+ */
 .journey__rail {
   position: relative;
   list-style: none;
@@ -281,6 +295,16 @@ onBeforeUnmount(() => {
   transition: color 0.4s ease;
 }
 
+/*
+ * 마지막 단계("변화를 발견합니다")는 Journey의 도착 지점이라는 느낌을
+ * 주기 위해 라벨만 살짝 더 강조한다 — 별도 카드/배경 없이 굵기와 색만
+ * primary로 올린다.
+ */
+.journey__node--3 .journey__label {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
 .journey__description {
   margin: var(--space-1) var(--space-2) 0;
   color: var(--color-text-secondary);
@@ -320,6 +344,11 @@ onBeforeUnmount(() => {
 
 .journey--motion .journey__node.is-active .journey__label {
   color: var(--color-text-primary);
+}
+
+/* 마지막 단계는 motion 활성화 상태에서도 계속 primary 톤을 유지한다 */
+.journey--motion .journey__node--3.is-active .journey__label {
+  color: var(--color-primary);
 }
 
 @media (max-width: 720px) {
