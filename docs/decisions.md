@@ -673,3 +673,110 @@ CTA는 "성장 기록을 시작하라"는 클로징 메시지이기 때문이다
 메시지를 보여주는지(주요 기능/Growth Journey가 더 이상 같은 문구를
 반복하지 않는지), Header/Hero의 CTA와 Final CTA의 버튼 문구가
 로그인 상태에 따라 각각 올바르게(그리고 서로 다르게) 바뀌는지.
+
+---
+
+## Visual Design 1차 적용 — Growth Archive 브랜드 토큰 (2026-09-15)
+
+목표는 "완성된 화려한 Landing"이 아니라 GrowLog 브랜드 아이덴티티가
+처음 화면에 드러나는 디자인 시스템 골격(Color/Typography/Spacing/
+Surface/Dot·Line Visual Language)이다. SVG 아이콘 시스템, 고급
+interaction, 애니메이션, Badge 디자인, 일러스트는 이번 범위에서
+의도적으로 제외했다.
+
+### Typography 전역 변경을 최소화한 이유
+
+`--font-size-xl`(22px)/`--font-size-2xl`(28px)을 Section/Page Title
+스케일(24px/30px)로 올리는 방안을 처음 제안했지만, 이 두 토큰은
+Dashboard/Timeline/Goal/Login 전체가 그대로 참조하고 있어서 전역
+값을 바꾸면 Landing 작업 때문에 Application UI 타이포 계층까지
+의도치 않게 바뀐다. 그래서 전역 값은 그대로 두고 `--font-size-hero`
+(44px, Landing Hero 전용)만 새로 추가했고, Landing의 Section
+Title(24px/semibold)·Final CTA 제목(28px)은 각 컴포넌트 scoped
+style 안에 로컬 값으로만 넣었다. Application UI 타이포 스케일은
+다음 단계에서 다시 검토한다.
+
+### Brand Color와 Semantic Color 분리
+
+`BaseBadge.vue`의 `variant-success`가 `background: var(--color-
+primary-bg)`를 그대로 재사용하고 있었다 — Primary Green이 브랜드
+색으로 바뀌면 "완료" 배지 색도 함께 바뀌는 구조였다. 그래서 예전
+`--color-primary-bg`(`#e9f7f0`) 값을 그대로 얼려서 `--color-
+success-bg`라는 독립 토큰으로 분리하고, `variant-success`가 이
+토큰을 쓰도록 고쳤다 — 시각적으로는 완전히 동일하게 유지되면서
+구조적으로는 브랜드 토큰과 완전히 분리됐다. `variant-warning`의
+하드코딩된 `#fef3e2`도 같은 이유로 `--color-warning-bg` 토큰으로
+승격했다(값은 동일, 향후 상태색만 따로 조정할 수 있게). `error`는
+원래부터 `--color-error`/`--color-error-bg`로 독립돼 있어서 손대지
+않았다. `BaseInput`의 focus(브랜드 primary)/에러(semantic error)
+테두리 색도 이미 분리돼 있어 그대로 유지했다. `GoalStatusBadge`가
+"진행중"→primary, "완료"→success로 매핑하는 것은 "진행중"이
+성장 관련 강조(브랜드)이고 "완료"가 상태 의미(semantic)라 원래도
+올바른 분리였다.
+
+### Landing Visual Language 적용
+
+- **Hero**: 헤드라인만 `--font-size-hero`로 승격. 헤드라인 위에
+  커지는 점 3개("점→선")를 아주 작게 추가했다(accent 2개 + primary
+  1개, 순수 CSS, 정적). Dashboard Preview 박스는 점선 테두리 대신
+  `--shadow-card` + Soft Green 톤(`--color-primary-bg`) placeholder
+  블록으로 다듬었다.
+- **Why GrowLog**: 3줄 리스트 왼쪽에 점(accent) + 세로 연결선
+  (`::before` pseudo-element, border 톤)을 넣어 "기록이 쌓인다"는
+  rail을 표현했다. 결론 문장은 구분선 아래 별도 문단으로 유지.
+- **주요 기능**: emoji는 배경/테두리 없는 고정 크기(32px) 슬롯에만
+  넣어서, 최종 SVG 아이콘(목표 관리→target/flag, 성장 기록→
+  notebook/pen, 성장 타임라인→nodes/path, 성장 대시보드→chart/grid)
+  이 들어올 자리만 확보했다. 원형 chip 같은 강한 장식은 넣지 않았다
+  — emoji 자체가 최종 디자인처럼 보이지 않도록.
+- **Growth Journey**: 박스+화살표 구조를 완전히 버리고 번호
+  (1→2→3→4)가 들어간 점(primary green 채움) + 가로 연결선으로
+  다시 만들었다 — GrowLog Visual Language "점→선→흐름→축적→성장"을
+  가장 직접적으로 대표하는 섹션으로 재설계했다. 모바일에서는 세로
+  스택 + 왼쪽 세로 연결선으로 전환된다. 정적 레이아웃만 쓰고
+  애니메이션은 넣지 않았다.
+- **Final CTA**: 단색 `--color-primary-bg`(Soft Green) 배경 블록으로
+  섹션 전체를 감싸 페이지를 닫는 톤 차이를 줬다. 그라데이션은 쓰지
+  않았다.
+
+### BaseButton / BaseCard
+
+두 컴포넌트 모두 이미 토큰만 참조하고 있어서 컴포넌트 코드 자체는
+바뀌지 않았다(props/API 변화 없음) — `tokens.css`의 색/그림자 값이
+바뀌면서 자동으로 새 브랜드가 반영된다. `--shadow-card`는 `none`에서
+`0 1px 2px rgba(34,40,36,.04), 0 2px 8px rgba(34,40,36,.05)`로
+복원하되, 카드가 "떠 있는" 느낌이 아니라 Surface(#fff)와
+Background(#f7f8f5)를 미세하게만 구분하는 수준으로 낮은 강도만
+썼다.
+
+### Application UI(Dashboard/Timeline/Goal/Login)에 생긴 변화
+
+토큰이 전역 공유이므로 구조/레이아웃은 그대로지만 아래는 함께
+바뀐다: 전체 폰트가 Pretendard로 교체, Primary Green 색상 변경(버튼/
+활성 네비게이션/GoalProgress 바/BaseBadge primary), `--shadow-card`
+복원으로 Summary/Timeline/Goal 카드가 다시 옅은 그림자를 가짐. 위에
+정리한 success/warning 토큰 분리 덕분에 "완료" 배지 등 상태 색은
+바뀌지 않는다. `--font-size-xl`/`--font-size-2xl`은 이번에 보류했으므로
+Dashboard 인사말, GoalList/Timeline 제목, Login 타이틀 크기는
+그대로다.
+
+### Pretendard
+
+`pretendard`(static build) npm 패키지를 설치해 `main.ts`에서
+`pretendard/dist/web/static/pretendard.css`를 import하는 self-host
+방식으로 적용했다(CDN 의존 없음). static 빌드가 선언하는 폰트
+패밀리명이 `'Pretendard Variable'`이 아니라 `'Pretendard'`라는 걸
+빌드 결과로 확인하고 `--font-sans`도 그에 맞게 `Pretendard, system-
+ui, ...`로 맞췄다. 기존 system font fallback 스택은 그대로 뒤에
+남겨뒀다.
+
+### 검증
+
+`npm run build`로 오류 없음을 확인한 뒤, Playwright로 다음을
+스크린샷 확인했다: Landing 1280px/390px(브랜드 컬러·Pretendard·
+Hero 모티프·Why GrowLog rail·Growth Journey 번호-점-선·Final CTA
+Soft Green 블록이 데스크톱/모바일 모두 정상), Dashboard(요약 카드
+그림자 복원, 배지/버튼 브랜드 컬러 반영), Goal List(진행중/완료/중단
+세 상태 배지가 서로 다른 톤으로 정상 구분되는지 — success가 primary
+와 섞이지 않았는지 육안 확인), Login(에러 색 미변경, 카드 그림자
+반영).

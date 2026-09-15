@@ -32,12 +32,12 @@ withDefaults(
 }
 
 .variant-success {
-  background: var(--color-primary-bg);
+  background: var(--color-success-bg);
   color: var(--color-success);
 }
 
 .variant-warning {
-  background: #fef3e2;
+  background: var(--color-warning-bg);
   color: var(--color-warning);
 }
 

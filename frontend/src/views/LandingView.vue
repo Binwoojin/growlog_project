@@ -130,9 +130,19 @@ const whyGrowLogPoints = [
   padding: var(--space-8) var(--space-4);
 }
 
+/*
+ * intro__title / feature-section__title(FeatureSection.vue) /
+ * journey__title(GrowthJourney.vue) — Landing의 Section Title은 24px/600을
+ * 쓰고 싶지만, 이 값을 --font-size-xl 전역 토큰에 반영하면 Dashboard/
+ * Timeline/Goal/Login의 기존 제목 크기까지 함께 바뀐다. Application UI
+ * 타이포 계층은 다음 단계에서 별도로 재검토하기로 했으므로, 지금은
+ * 전역 토큰을 건드리지 않고 Landing 컴포넌트 스코프 안에서만 로컬 값으로
+ * 적용한다.
+ */
 .intro__title {
   margin: 0 0 var(--space-6);
-  font-size: var(--font-size-xl);
+  font-size: 24px;
+  font-weight: var(--font-weight-semibold);
   text-align: center;
 }
 
@@ -144,14 +154,46 @@ const whyGrowLogPoints = [
   margin: 0 auto;
 }
 
+/*
+ * "기록이 쌓인다"를 표현하는 rail — 각 항목 왼쪽에 점을 두고, 점들을
+ * 세로선으로 이어서 Visual Language의 "점 → 선 → 축적"을 리스트
+ * 형태로 옮겼다. 아이콘/이미지 없이 border/pseudo-element만 사용한다.
+ */
 .intro-card__points {
+  position: relative;
   margin: 0;
   padding-left: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-4);
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);
+  list-style: none;
+}
+
+.intro-card__points::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0.5em;
+  bottom: 0.5em;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.intro-card__points li {
+  position: relative;
+}
+
+.intro-card__points li::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-6));
+  top: 0.5em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
 }
 
 .intro-card__conclusion {
@@ -161,18 +203,23 @@ const whyGrowLogPoints = [
   font-weight: var(--font-weight-medium);
 }
 
+/*
+ * Final CTA — 그라데이션 없이 단색 Soft Green 블록으로 섹션을 감싸서
+ * 페이지의 "닫는 지점"을 다른 톤으로 구분한다.
+ */
 .final-cta {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-12) var(--space-4);
+  background: var(--color-primary-bg);
   text-align: center;
 }
 
 .final-cta__title {
   margin: 0;
-  font-size: var(--font-size-xl);
+  font-size: 28px;
   font-weight: var(--font-weight-bold);
 }
 

@@ -1,8 +1,13 @@
 /*
  * GrowLog Design System — 디자인 토큰
  *
- * 방향성: "Calm Productivity + Personal Growth Dashboard"
- * (넓은 여백, 부드러운 카드, 명확한 정보 계층, 낮은 대비의 보조 텍스트, 명확한 CTA)
+ * 브랜드 컨셉: "Growth Archive" — 목표와 하루의 기록이 시간에 따라
+ * 쌓이고, 그 축적을 통해 성장 과정을 발견하는 개인 성장 아카이브.
+ * 컬러는 Muted Green(Primary) + Warm Neutral(Background/Surface) 조합을
+ * 쓰고, 채도가 높은 색은 쓰지 않는다. Primary Green은 CTA/활성 상태/
+ * 성장 관련 강조에만 쓰고, success/warning/error 같은 상태 의미 색은
+ * 브랜드 컬러와 분리된 별도 토큰을 쓴다(브랜드 컬러가 바뀌어도 상태
+ * 의미가 함께 바뀌지 않도록).
  *
  * 화면마다 개별 CSS 값을 하드코딩하지 않고, 아래 변수를 통해서만
  * 색/타이포/여백을 사용한다 — 나중에 색 하나만 바꿔도 전체 화면에
@@ -10,35 +15,61 @@
  */
 
 :root {
-  /* ===== Color ===== */
-  --color-primary: #16a06b;
-  --color-primary-hover: #12874f;
-  --color-primary-bg: #e9f7f0;
+  /* ===== Color — Brand (Primary Green / Warm Neutral) ===== */
+  --color-primary: #3f7d63;
+  --color-primary-hover: #35694f;
+  --color-primary-bg: #ddebe3;
+  --color-accent: #c9d7a8;
 
+  --color-bg: #f7f8f5;
+  --color-surface: #ffffff;
+  --color-border: #e5e9e1;
+
+  --color-text-primary: #222824;
+  --color-text-secondary: #727872;
+  --color-text-inverse: #ffffff;
+
+  /*
+   * ===== Color — Semantic (상태 의미 전용) =====
+   * success/warning/error는 브랜드 그린과 독립적으로 유지한다.
+   * --color-success-bg는 예전 --color-primary-bg 값을 그대로 얼려서
+   * 만든 토큰이라, Primary Green이 바뀌어도 "완료" 같은 success 배지의
+   * 색은 바뀌지 않는다.
+   */
   --color-success: #16a34a;
+  --color-success-bg: #e9f7f0;
   --color-warning: #d97706;
+  --color-warning-bg: #fef3e2;
   --color-error: #dc2626;
   --color-error-bg: #fdecea;
 
-  --color-bg: #f7f8f6;
-  --color-surface: #ffffff;
-  --color-border: #e4e7e5;
-
-  --color-text-primary: #1f2933;
-  --color-text-secondary: #6b7280;
-  --color-text-inverse: #ffffff;
-
   /* ===== Typography ===== */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
+  /*
+   * Pretendard를 self-host(main.ts에서 pretendard 패키지 import)로
+   * 적용하고, 로드 전/실패 시를 대비해 기존 system font fallback을
+   * 그대로 남겨둔다 — CDN 의존 없음.
+   */
+  --font-sans: Pretendard, system-ui, -apple-system, 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
 
+  /*
+   * Application UI(Dashboard/Timeline/Goal/Login)가 이 값들을 그대로
+   * 참조하고 있어서, 이번 Landing 작업에서는 기존 값을 그대로 유지한다.
+   * Landing에서 더 큰 Section/Page Title이 필요한 곳은 각 컴포넌트
+   * 스코프 안에서 로컬 값으로 처리했다(전역 계층 변경은 Application UI
+   * 전체를 다룰 다음 단계에서 다시 검토).
+   */
   --font-size-sm: 13px;
   --font-size-base: 15px;
   --font-size-lg: 18px;
   --font-size-xl: 22px;
   --font-size-2xl: 28px;
 
+  /* Landing Hero 전용 — Application UI에서는 쓰지 않는다 */
+  --font-size-hero: 44px;
+
   --font-weight-regular: 400;
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
   --line-height-base: 1.5;
@@ -58,8 +89,9 @@
   --radius-lg: 16px;
 
   /*
-   * 와이어프레임 단계 — 카드에 그림자를 주지 않고 테두리(border)만으로
-   * 구획을 구분한다. 최종 Visual Design 단계에서 다시 값을 채워 넣는다.
+   * 와이어프레임 단계에서 뺐던 그림자를 낮은 강도로 복원한다. 카드가
+   * "떠 있는" 느낌이 아니라 Surface(#fff)와 Background(#f7f8f5)를
+   * 아주 미세하게만 구분하는 수준으로 제한했다.
    */
-  --shadow-card: none;
+  --shadow-card: 0 1px 2px rgba(34, 40, 36, 0.04), 0 2px 8px rgba(34, 40, 36, 0.05);
 }
