@@ -75,9 +75,14 @@
 - `TimelineView.vue` 신규 (라우트 `/timeline`), Dashboard 헤더에 이동 링크 추가.
       Loading/Error/Empty는 최소 텍스트로만, 필터는 아직 없음 (Day 6에서 완성)
 
-### Day 6 — Timeline UX 완성
-- [ ] Loading / Error / Empty / Success / Skeleton
-- [ ] 필터 (전체 / 목표 / 기록)
+### Day 6 — Timeline UX 완성 ✅ (2026-09-15)
+- [x] Loading / Error / Empty / Success / Skeleton — 새 공통 컴포넌트
+      `components/common/LoadingSkeleton.vue` 추가, Timeline·Dashboard
+      둘 다 이 컴포넌트로 Loading 상태 통일. Error/Empty는 기존 텍스트
+      유지(문구는 필터별로 분기), Success는 카드 목록 렌더링 그 자체.
+- [x] 필터 (전체 / 목표 / 기록) — `TimelineView.vue`에 `TimelineFilter`
+      상태 추가, `computed`로 클라이언트 필터링(서버 재요청 없음).
+      Playwright로 목표 필터 클릭 시 성장 기록이 실제로 숨겨지는 것까지 확인.
 
 ### Day 7 — Responsive + Buffer
 - [ ] Desktop / Tablet / Mobile 대응

@@ -7,11 +7,11 @@ import type { DashboardSummary } from '../types/dashboard'
 import BaseBadge from '../components/common/BaseBadge.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
+import LoadingSkeleton from '../components/common/LoadingSkeleton.vue'
 
 /*
  * Day 4 — GET /api/dashboard로 실제 로그인 사용자 데이터를 가져와 표시한다.
- * Loading/Error/Empty 상태를 제대로 갖춘 UX는 Day 6에서 Timeline과 함께
- * 다듬는다. 지금은 화면이 깨지지 않을 정도의 최소 상태만 둔다.
+ * Day 6 — Loading 상태를 Timeline과 같은 LoadingSkeleton으로 통일했다.
  */
 const authStore = useAuthStore()
 const router = useRouter()
@@ -49,7 +49,8 @@ async function onLogout() {
       </div>
     </header>
 
-    <p v-if="status === 'loading'" class="dashboard__status">불러오는 중...</p>
+    <LoadingSkeleton v-if="status === 'loading'" :count="3" />
+
     <p v-else-if="status === 'error'" class="dashboard__status dashboard__status--error">
       데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.
     </p>
