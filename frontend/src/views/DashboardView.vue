@@ -43,7 +43,10 @@ async function onLogout() {
         </h1>
         <p class="dashboard__subtitle">이번 달에도 꾸준히 성장하고 있어요.</p>
       </div>
-      <BaseButton variant="ghost" @click="onLogout">로그아웃</BaseButton>
+      <div class="dashboard__actions">
+        <RouterLink to="/timeline" class="dashboard__nav-link">타임라인</RouterLink>
+        <BaseButton variant="ghost" @click="onLogout">로그아웃</BaseButton>
+      </div>
     </header>
 
     <p v-if="status === 'loading'" class="dashboard__status">불러오는 중...</p>
@@ -129,6 +132,22 @@ async function onLogout() {
   margin: var(--space-1) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.dashboard__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.dashboard__nav-link {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.dashboard__nav-link:hover {
+  color: var(--color-primary);
 }
 
 .dashboard__status {

@@ -310,3 +310,45 @@ countThisWeekInProgressGoals()`를 재사용한 값이라 "전체 진행중 목�
 "연속 기록" 카드는 JSP가 `attendedToday` 여부에 따라 다른 문구를
 보여주는데, 이 값은 아직 `DashboardResponse`에 없어서(순수 라벨 수정
 범위를 벗어나므로) 이번엔 손대지 않았다 — 필요해지면 별도로 검토.
+
+---
+
+## Day 5 (2026-09-15) — Timeline + TypeScript 설계
+
+### normalizeTimeline()을 프론트에서 새로 만들지 않았다
+
+로드맵 원안은 "Goal/Record를 각각 조회 → 프론트에서 normalizeTimeline()으로
+병합"하는 흐름을 가정하고 있었다. 그런데 백엔드 `TimelineService.
+getTimeline(memberNo, yearMonth)`가 이미 정확히 그 일을 하고 있었다
+(Goal/Record를 `TimelineItem` DTO로 변환 후 `createdAt` 기준 병합·정렬).
+JSP `PageController.timeline()`이 이미 이 Service를 그대로 쓰고 있어서,
+새 `GET /api/timeline`도 같은 Service를 재사용해 JSON으로만 다시
+포장했다 — 월 선택/보정 로직(미래 달 요청 시 이번 달로 clamp 등)까지
+JSP와 동일하게 맞췄다.
+
+결과적으로 "Goal/Record → TimelineItem[]" 변환은 프론트가 아니라
+**백엔드에서 이미 끝난 상태로 내려온다.** 프론트의 `TimelineItem`
+Discriminated Union 타입(`frontend/src/types/timeline.ts`)은 그 JSON을
+그대로 받아서 타입 안전하게 `type` 필드로 분기하는 역할만 한다. 병합
+로직을 새로 만들지 않고 기존 Service를 재사용한다는 이번 리뉴얼의
+원칙과도 맞는 선택이라고 판단했다.
+
+### Discriminated Union을 실제로 쓰는 이유
+
+지금은 `GoalTimelineItem`과 `RecordTimelineItem`의 필드가 완전히
+동일하다(둘 다 title/content/createdAt/detailUrl). 그래서 얼핏 Union을
+쓸 이유가 없어 보일 수 있는데, 굳이 유지한 이유는:
+1. 백엔드 `TimelineItem` DTO 자체가 두 도메인을 하나의 구조로 뭉뚱그린
+   것이라, 이후 목표에만 `progress`, 기록에만 `mood` 같은 필드가 추가될
+   가능성이 높다(로드맵 12번 항목의 원래 예시가 그렇다). 그때 Union이면
+   `item.type === 'GOAL'`로 분기한 블록 안에서 TS가 자동으로
+   `GoalTimelineItem`으로 좁혀줘서 안전하게 확장할 수 있다.
+2. `types/dashboard.ts`의 `DashboardSummary.recentTimeline`도 이 타입을
+   그대로 재사용하도록 정리해서, Dashboard 미리보기와 Timeline 전체
+   화면이 같은 타입을 공유한다.
+
+### Day 6로 미룬 것
+
+Loading/Error/Empty 상태는 Day 4 Dashboard와 동일하게 최소 텍스트로만
+처리했고, 필터(전체/목표/기록)는 아직 없다. 로드맵상 Day 6이 "Timeline
+UX 완성" 담당이라 그쪽에서 함께 다듬을 계획이다.

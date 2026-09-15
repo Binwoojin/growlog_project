@@ -63,9 +63,17 @@
       이번 주/이번 달 데이터가 없어서 전부 0/빈 상태로 확인됐고, Empty State
       문구("아직 이번 달 기록이 없어요...")도 정상 표시됨을 확인.
 
-### Day 5 — Timeline + TypeScript 설계
-- [ ] `TimelineItem` Discriminated Union 타입 정의 (Goal / Record)
-- [ ] `normalizeTimeline()` 로 Goal/Record → `TimelineItem[]` 변환
+### Day 5 — Timeline + TypeScript 설계 ✅ (2026-09-15)
+- [x] `TimelineItem` Discriminated Union 타입 정의 (Goal / Record) —
+      `frontend/src/types/timeline.ts` (`GoalTimelineItem | RecordTimelineItem`,
+      `type` 필드로 분기). `types/dashboard.ts`도 이 타입을 재사용하도록 정리.
+- [x] `normalizeTimeline()` 로 Goal/Record → `TimelineItem[]` 변환 — 백엔드
+      `TimelineService.getTimeline()`이 이미 두 도메인을 병합·정렬해서
+      내려주므로, 새 `GET /api/timeline`(기존 JSP `PageController.timeline()`과
+      동일한 월 선택 로직 재사용, Service/Repository 변경 없음)으로 노출하고
+      프론트는 그대로 렌더링만 함 — 별도 JS 병합 로직 불필요.
+- `TimelineView.vue` 신규 (라우트 `/timeline`), Dashboard 헤더에 이동 링크 추가.
+      Loading/Error/Empty는 최소 텍스트로만, 필터는 아직 없음 (Day 6에서 완성)
 
 ### Day 6 — Timeline UX 완성
 - [ ] Loading / Error / Empty / Success / Skeleton

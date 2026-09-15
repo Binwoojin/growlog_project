@@ -13,6 +13,11 @@ const routes = [
     name: 'dashboard',
     component: () => import('../views/DashboardView.vue'),
   },
+  {
+    path: '/timeline',
+    name: 'timeline',
+    component: () => import('../views/TimelineView.vue'),
+  },
 ]
 
 const router = createRouter({
