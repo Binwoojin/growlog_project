@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { LayoutDashboard, NotebookPen, Route, Target } from '@lucide/vue'
+import { useInViewOnce } from '../../composables/useInViewOnce'
 import BaseCard from '../common/BaseCard.vue'
 
 /*
@@ -16,13 +17,23 @@ const features = [
   { icon: Route, title: '성장 타임라인', description: '목표와 기록이 시간에 따라 어떻게 이어졌는지 확인합니다.' },
   { icon: LayoutDashboard, title: '성장 대시보드', description: '쌓인 기록과 목표 진행 상황을 한눈에 돌아봅니다.' },
 ]
+
+/*
+ * 섹션 진입 시 1회만 트리거하고, 실제 stagger(카드별 시간차)는 CSS
+ * nth-child delay로 처리한다 — 카드마다 개별 관찰자를 두지 않는다.
+ */
+const { target: gridTarget, isVisible: gridVisible, motionEnabled: gridMotion } = useInViewOnce()
 </script>
 
 <template>
   <section class="feature-section">
     <h2 class="feature-section__title">주요 기능</h2>
 
-    <div class="feature-section__grid">
+    <div
+      :ref="(el) => (gridTarget = el as HTMLElement | null)"
+      class="feature-section__grid"
+      :class="{ 'will-reveal': gridMotion, 'is-visible': gridVisible }"
+    >
       <BaseCard v-for="feature in features" :key="feature.title" class="feature-card">
         <span class="feature-card__icon">
           <component :is="feature.icon" :size="22" :stroke-width="1.75" />
@@ -57,6 +68,8 @@ const features = [
 /*
  * 낮은 shadow(기본) → hover 시 --shadow-elevated 한 단계만 더한다.
  * translateY도 1~2px 수준으로만 움직여서 뜨는 느낌이 과하지 않게 한다.
+ * 터치 기기는 hover가 "눌어붙는" 문제가 있어서 포인터가 실제로 있는
+ * 환경(마우스 등)에서만 활성화한다.
  */
 .feature-card {
   display: flex;
@@ -66,10 +79,12 @@ const features = [
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.feature-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-primary-bg);
-  box-shadow: var(--shadow-elevated);
+@media (hover: hover) and (pointer: fine) {
+  .feature-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-primary-bg);
+    box-shadow: var(--shadow-elevated);
+  }
 }
 
 .feature-card__icon {
@@ -104,6 +119,56 @@ const features = [
 @media (max-width: 420px) {
   .feature-section__grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/*
+ * Progressive Enhancement — 기본 상태는 4장 모두 보인다. `.will-reveal`
+ * (JS가 motion을 켰을 때만)이 붙어야 카드가 숨어서 reveal을 기다리고,
+ * `.is-visible`(섹션 진입 1회)이 붙으면 카드 순서대로 stagger된다.
+ */
+.feature-section__grid.will-reveal .feature-card {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.feature-section__grid.will-reveal.is-visible .feature-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.feature-section__grid.will-reveal .feature-card:nth-child(1) {
+  transition-delay: 0ms;
+}
+
+.feature-section__grid.will-reveal .feature-card:nth-child(2) {
+  transition-delay: 80ms;
+}
+
+.feature-section__grid.will-reveal .feature-card:nth-child(3) {
+  transition-delay: 160ms;
+}
+
+.feature-section__grid.will-reveal .feature-card:nth-child(4) {
+  transition-delay: 240ms;
+}
+
+@media (max-width: 720px) {
+  .feature-section__grid.will-reveal .feature-card:nth-child(1) {
+    transition-delay: 0ms;
+  }
+
+  .feature-section__grid.will-reveal .feature-card:nth-child(2) {
+    transition-delay: 40ms;
+  }
+
+  .feature-section__grid.will-reveal .feature-card:nth-child(3) {
+    transition-delay: 80ms;
+  }
+
+  .feature-section__grid.will-reveal .feature-card:nth-child(4) {
+    transition-delay: 120ms;
   }
 }
 </style>

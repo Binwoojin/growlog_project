@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { Flame, NotebookText, Target } from '@lucide/vue'
 import BaseButton from '../common/BaseButton.vue'
 
@@ -8,11 +9,18 @@ import BaseButton from '../common/BaseButton.vue'
  * 기록 수 / 진행 중 목표 수 / 연속 기록 / Goal Progress / 최근 타임라인)만
  * 축약해서 보여주고, 존재하지 않는 기능을 새로 지어내지 않는다.
  *
- * hero__motif: GrowLog Visual Language "점 → 선"을 아주 작게 표현한
- * 브랜드 보조 그래픽. 순수 CSS, 정적(애니메이션 없음), 커지는 점
- * 3개 + 연결선만으로 구성해 큰 일러스트처럼 보이지 않게 했다.
- * 헤드라인/설명이 여전히 Hero의 중심이고, 이 모티프는 그 위에 놓인
- * 작은 보조 요소일 뿐이다.
+ * Entrance sequence — Progressive Enhancement: 기본 CSS는 모든 요소가
+ * 이미 보이는 상태(opacity:1)다. `animate`가 true일 때만(.hero--animate)
+ * 각 요소에 fade-up 애니메이션을 거는 선택자가 걸리고, `animation-fill-
+ * mode: both`가 시작 프레임(opacity:0)을 즉시 적용했다가 끝나면 최종
+ * 상태(opacity:1)에 고정한다. prefers-reduced-motion이면 animate를 계속
+ * false로 둬서 관찰자/애니메이션 없이 바로 최종 상태로 보인다.
+ *
+ * hero__motif: "점 → 선" Visual Language를 표현하는 보조 그래픽. 진입
+ * 애니메이션이 끝난 뒤에도 이것만 아주 느린 ambient 루프(opacity)를
+ * 유지한다 — "기록이 연결된다"는 느낌의 보조 요소일 뿐, 헤드라인/CTA/
+ * Preview 같은 콘텐츠는 진입 후 다시 움직이지 않는다. 모바일에서는
+ * ambient 루프를 끈다(CSS media query).
  */
 defineProps<{
   ctaLabel: string
@@ -21,10 +29,19 @@ defineProps<{
 const emit = defineEmits<{
   cta: []
 }>()
+
+const animate = ref(false)
+
+onMounted(() => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!prefersReducedMotion) {
+    animate.value = true
+  }
+})
 </script>
 
 <template>
-  <section class="hero">
+  <section class="hero" :class="{ 'hero--animate': animate }">
     <div class="hero__copy">
       <div class="hero__motif" aria-hidden="true">
         <span class="hero__motif-dot hero__motif-dot--sm" />
@@ -34,12 +51,13 @@ const emit = defineEmits<{
         <span class="hero__motif-dot hero__motif-dot--lg" />
       </div>
 
+      <p class="hero__label">PERSONAL GROWTH ARCHIVE</p>
       <h1 class="hero__headline">오늘의 기록이 내일의 성장이 됩니다.</h1>
       <p class="hero__subcopy">
         GrowLog는 목표를 세우고, 매일의 과정과 변화를 기록하며, 쌓인 기록
         속에서 나의 성장을 발견하는 개인 성장 아카이브입니다.
       </p>
-      <BaseButton variant="primary" @click="emit('cta')">{{ ctaLabel }}</BaseButton>
+      <BaseButton variant="primary" class="hero__cta" @click="emit('cta')">{{ ctaLabel }}</BaseButton>
     </div>
 
     <div class="hero__preview-wrap" aria-hidden="true">
@@ -143,6 +161,18 @@ const emit = defineEmits<{
   width: var(--space-6);
   height: 1px;
   background: var(--color-border);
+}
+
+/*
+ * 서비스 카테고리를 알려주는 아주 작은 eyebrow 라벨 — headline보다
+ * 절대 강조되면 안 되므로 크기를 최소로, 색은 Secondary Text로 낮췄다.
+ */
+.hero__label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
 }
 
 .hero__headline {
@@ -319,6 +349,110 @@ const emit = defineEmits<{
   color: var(--color-text-secondary);
 }
 
+/* ===== Entrance sequence (opacity/translateY, 필요한 곳만 scale) ===== */
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-fade-scale {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.hero--animate .hero__motif {
+  animation: hero-fade-up 0.4s ease-out both;
+}
+
+.hero--animate .hero__label {
+  animation: hero-fade-up 0.4s ease-out both;
+  animation-delay: 50ms;
+}
+
+.hero--animate .hero__headline {
+  animation: hero-fade-up 0.45s ease-out both;
+  animation-delay: 110ms;
+}
+
+.hero--animate .hero__subcopy {
+  animation: hero-fade-up 0.45s ease-out both;
+  animation-delay: 170ms;
+}
+
+.hero--animate .hero__cta {
+  animation: hero-fade-up 0.4s ease-out both;
+  animation-delay: 230ms;
+}
+
+.hero--animate .hero__preview-wrap {
+  animation: hero-fade-scale 0.45s ease-out both;
+  animation-delay: 200ms;
+}
+
+.hero--animate .hero__preview-header {
+  animation: hero-fade-up 0.35s ease-out both;
+  animation-delay: 280ms;
+}
+
+.hero--animate .hero__preview-stat:nth-child(1) {
+  animation: hero-fade-up 0.35s ease-out both;
+  animation-delay: 320ms;
+}
+
+.hero--animate .hero__preview-stat:nth-child(2) {
+  animation: hero-fade-up 0.35s ease-out both;
+  animation-delay: 360ms;
+}
+
+.hero--animate .hero__preview-stat:nth-child(3) {
+  animation: hero-fade-up 0.35s ease-out both;
+  animation-delay: 400ms;
+}
+
+.hero--animate .hero__preview-goal {
+  animation: hero-fade-up 0.35s ease-out both;
+  animation-delay: 450ms;
+}
+
+.hero--animate .hero__preview-timeline {
+  animation: hero-fade-up 0.35s ease-out both;
+  animation-delay: 500ms;
+}
+
+/* ===== Ambient motif motion — 진입 시퀀스가 끝난 뒤(850ms) 시작, 콘텐츠보다 약하게 ===== */
+@keyframes hero-ambient-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 721px) {
+  .hero--animate .hero__motif-line {
+    animation: hero-ambient-pulse 5s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  .hero--animate .hero__motif-line:last-of-type {
+    animation-delay: 1.6s;
+  }
+}
+
 @media (max-width: 720px) {
   .hero {
     flex-direction: column;
@@ -328,6 +462,31 @@ const emit = defineEmits<{
 
   .hero__preview-wrap {
     max-width: none;
+  }
+
+  /* Mobile — 전체 진입 시간을 더 짧게, ambient 루프는 비활성 */
+  .hero--animate .hero__preview-header {
+    animation-delay: 240ms;
+  }
+
+  .hero--animate .hero__preview-stat:nth-child(1) {
+    animation-delay: 270ms;
+  }
+
+  .hero--animate .hero__preview-stat:nth-child(2) {
+    animation-delay: 300ms;
+  }
+
+  .hero--animate .hero__preview-stat:nth-child(3) {
+    animation-delay: 330ms;
+  }
+
+  .hero--animate .hero__preview-goal {
+    animation-delay: 370ms;
+  }
+
+  .hero--animate .hero__preview-timeline {
+    animation-delay: 410ms;
   }
 }
 </style>

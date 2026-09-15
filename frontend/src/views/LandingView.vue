@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store'
+import { useInViewOnce } from '../composables/useInViewOnce'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
 import HeroSection from '../components/landing/HeroSection.vue'
@@ -41,6 +42,60 @@ const whyGrowLogPoints = [
   '하루의 변화는 작아서, 기록하지 않으면 그 과정은 금방 사라집니다.',
   '기록이 쌓이면 내가 어떻게 달라졌는지 더 분명하게 볼 수 있습니다.',
 ]
+
+/*
+ * Why GrowLog reveal — "점+문장 → 연결선 → 다음 점" 순서를 표현한다.
+ * 항목마다 정확한 픽셀 위치까지 계산해 개별 선 segment를 긋는 대신
+ * (문장이 몇 줄로 줄바꿈될지 미리 알 수 없어 Growth Journey의 모바일
+ * rail과 같은 이유로 정확한 계산이 어렵다), 기존의 연속된 rail 선
+ * 하나를 reveal된 항목 수에 비례해 scaleY로 자라게 한다 — 항목이
+ * 스크롤에 따라 하나씩 나타날 때마다 선도 따라 자라 보이는 효과는
+ * 동일하게 유지된다. 한 번 본 항목은 다시 숨기지 않는다(unobserve).
+ */
+const pointRefs = ref<(Element | null)[]>([])
+const revealedPoints = ref<boolean[]>(whyGrowLogPoints.map(() => false))
+const whyMotionEnabled = ref(false)
+const revealedCount = computed(() => revealedPoints.value.filter(Boolean).length)
+
+function setPointRef(el: Element | null, index: number) {
+  pointRefs.value[index] = el
+}
+
+let whyObserver: IntersectionObserver | null = null
+
+onMounted(() => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion) {
+    revealedPoints.value = revealedPoints.value.map(() => true)
+    return
+  }
+
+  whyMotionEnabled.value = true
+  whyObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        const index = pointRefs.value.indexOf(entry.target)
+        if (index === -1) return
+        revealedPoints.value[index] = true
+        whyObserver?.unobserve(entry.target)
+      })
+    },
+    { threshold: 0.4, rootMargin: '0px 0px -10% 0px' },
+  )
+  pointRefs.value.forEach((el) => el && whyObserver?.observe(el))
+})
+
+onBeforeUnmount(() => {
+  whyObserver?.disconnect()
+  whyObserver = null
+})
+
+const {
+  target: finalCtaTarget,
+  isVisible: finalCtaVisible,
+  motionEnabled: finalCtaMotion,
+} = useInViewOnce()
 </script>
 
 <template>
@@ -61,8 +116,18 @@ const whyGrowLogPoints = [
     <section id="intro" class="intro">
       <h2 class="intro__title">성장은 눈에 잘 보이지 않습니다.</h2>
       <BaseCard class="intro-card">
-        <ul class="intro-card__points">
-          <li v-for="point in whyGrowLogPoints" :key="point">{{ point }}</li>
+        <ul
+          class="intro-card__points"
+          :class="[{ 'points--motion': whyMotionEnabled }, whyMotionEnabled ? `reveal-${revealedCount}` : '']"
+        >
+          <li
+            v-for="(point, index) in whyGrowLogPoints"
+            :key="point"
+            :ref="(el) => setPointRef(el as Element | null, index)"
+            :class="{ 'is-visible': revealedPoints[index] }"
+          >
+            {{ point }}
+          </li>
         </ul>
         <p class="intro-card__conclusion">
           GrowLog는 흘려보내기 쉬운 작은 변화들을 기록으로 남기고, 그 안에서
@@ -77,7 +142,11 @@ const whyGrowLogPoints = [
 
     <GrowthJourney />
 
-    <section class="final-cta">
+    <section
+      :ref="(el) => (finalCtaTarget = el as HTMLElement | null)"
+      class="final-cta"
+      :class="{ 'will-reveal': finalCtaMotion, 'is-visible': finalCtaVisible }"
+    >
       <div class="final-cta__motif" aria-hidden="true">
         <span class="final-cta__motif-dot" />
         <span class="final-cta__motif-line" />
@@ -205,6 +274,41 @@ const whyGrowLogPoints = [
 }
 
 /*
+ * Progressive Enhancement — 기본 상태(.points--motion 없음, 즉 JS
+ * 비활성/reduced-motion)는 전부 보이고 rail 선도 끝까지 이어진
+ * "최종 상태"다. `.points--motion`이 붙어야만(JS가 motion을 켤 때만)
+ * 항목이 숨어서 reveal을 기다리는 상태가 된다.
+ */
+.intro-card__points.points--motion li {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.intro-card__points.points--motion li.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.intro-card__points.points--motion::before {
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.5s ease;
+}
+
+.intro-card__points.points--motion.reveal-1::before {
+  transform: scaleY(0.34);
+}
+
+.intro-card__points.points--motion.reveal-2::before {
+  transform: scaleY(0.67);
+}
+
+.intro-card__points.points--motion.reveal-3::before {
+  transform: scaleY(1);
+}
+
+/*
  * 리스트(문제 제기)와 결론(GrowLog의 역할)을 톤으로 구분한다. 점 크기를
  * 키우거나 대비를 강하게 주면 infographic처럼 보일 수 있어서(요청사항)
  * rail 자체는 손대지 않고, 결론 문단만 아주 옅은 Soft Green 배경으로
@@ -268,5 +372,38 @@ const whyGrowLogPoints = [
   max-width: 480px;
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);
+}
+
+/*
+ * Progressive Enhancement — 기본 상태는 전부 보인다. `.will-reveal`이
+ * 붙어야만(JS가 motion을 켤 때만) 자식들이 숨어서 reveal을 기다리고,
+ * `.is-visible`이 붙으면(뷰포트 진입 1회) motif → headline → context →
+ * 버튼 순으로 100ms씩 차이 나게 나타난다.
+ */
+.final-cta.will-reveal > * {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.final-cta.will-reveal > *:nth-child(1) {
+  transition-delay: 0ms;
+}
+
+.final-cta.will-reveal > *:nth-child(2) {
+  transition-delay: 100ms;
+}
+
+.final-cta.will-reveal > *:nth-child(3) {
+  transition-delay: 200ms;
+}
+
+.final-cta.will-reveal > *:nth-child(4) {
+  transition-delay: 300ms;
+}
+
+.final-cta.will-reveal.is-visible > * {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>

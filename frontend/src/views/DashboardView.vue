@@ -277,9 +277,12 @@ async function onLogout() {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.timeline-item:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-elevated);
+/* 터치 기기에서 hover가 눌어붙지 않도록 포인터가 실제로 있는 환경에서만 */
+@media (hover: hover) and (pointer: fine) {
+  .timeline-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-elevated);
+  }
 }
 
 .timeline-item__head {

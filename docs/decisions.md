@@ -1026,3 +1026,142 @@ Timeline·Goal List(1280px/390px)·Goal 수정 모달·Login을 전부
 `.timeline__list`의 실제 bounding rect는 카드 3개 높이에 정확히
 맞았고 그 아래는 `#app`의 `min-height: 100vh`가 만드는 배경일
 뿐이었다 — 이미지 압축으로 인한 착시였고 실제 버그는 아니었다.
+
+---
+
+## Landing Dynamic Interaction — "기록 → 연결 → 축적 → 성장"을 동적으로 (2026-09-15)
+
+Day One(Product Preview) / Framer Sticky Scroll Reveal(Growth Journey) /
+SaaS Feature Reveal(주요 기능) / Dot Grid ambient motion(Hero/Why
+GrowLog/Final CTA) / Raycast(Final CTA 마무리)의 상호작용 원리만
+가져오고, 특정 사이트를 복제하지 않았다. GSAP 등 별도 motion
+library는 쓰지 않았다 — CSS transition/animation + 네이티브
+IntersectionObserver만으로 요청된 모든 효과를 구현할 수 있었다.
+
+### `useInViewOnce` — 단일 타깃 1회 reveal 전용
+
+Why GrowLog/Growth Journey처럼 "여러 타깃을 독립적으로 관찰"해야
+하는 경우는 이 composable을 쓰지 않고 해당 컴포넌트에서 직접
+IntersectionObserver를 구성했다(아래 참고). `useInViewOnce`는
+Feature Section(그리드 전체 1회 트리거, stagger는 CSS nth-child
+delay로 처리)과 Final CTA(섹션 전체 1회 트리거)에만 썼다 — "뷰포트
+진입 시 1회 reveal"이라는 좁은 범위를 넘어서 확장하지 않았다.
+
+### Progressive Enhancement — 모든 reveal의 공통 원칙
+
+전 구간에 걸쳐 같은 패턴을 썼다: **기본 CSS(모션용 클래스가 없는
+상태)는 항상 콘텐츠가 완전히 보이는 최종 모습**이다. `.will-reveal`
+/ `.points--motion` / `.journey--motion` 같은 클래스는 컴포넌트가
+`onMounted`에서 `prefers-reduced-motion`이 아닐 때만 스스로 붙인다.
+그 클래스가 붙어야만 요소가 "숨어서 대기하는" 상태가 되고,
+IntersectionObserver가 `is-visible`/`is-active`를 붙이면 원래
+모습으로 돌아온다. 즉 "JS가 있어야 콘텐츠가 보인다"가 아니라
+"JS가 있어야(그리고 motion이 허용돼야) 콘텐츠가 숨었다가 나타난다"
+구조로 뒤집었다. reduced-motion이면 이 클래스 자체가 안 붙으므로
+관찰자 없이 즉시 최종 상태다 — Playwright로 `reducedMotion:'reduce'`
+컨텍스트에서 스크롤 없이 로드 직후 모든 opacity가 1임을 확인했다.
+
+### Hero — mount 트리거 진입 시퀀스 (850ms) + ambient motif
+
+Hero는 뷰포트 진입이 아니라 마운트 즉시 재생된다(첫 화면이라
+IntersectionObserver가 필요 없음). `PERSONAL GROWTH ARCHIVE` supporting
+label을 헤드라인 위에 새로 추가했다(11px/semibold/letter-spacing,
+Secondary Text 색 — headline보다 항상 약하게). 모티프(0ms)→
+label(50ms)→headline(110ms)→subcopy(170ms)→CTA(230ms)/Preview(200ms)→
+Preview 내부(header 280ms~timeline 500ms, 각 350ms 재생)까지 총
+850ms로 끝난다. `animation-fill-mode: both`를 써서 각 요소가 자기
+delay 전까지는 `from` 프레임(opacity:0)을 유지하다가 애니메이션이
+끝나면 `to` 프레임(opacity:1)에 고정되므로 별도 "끝난 뒤 정적으로
+고정" 처리가 필요 없다. 진입 애니메이션 도중에도 CTA는 `pointer-
+events`를 막지 않아서 150ms 시점에 클릭 가능함을 Playwright로 확인
+(실제 클릭 → `/login` 이동까지 성공). Ambient motif(점 opacity 펄스,
+4~6초 루프)는 진입 시퀀스가 끝난 뒤(1~1.6초 delay)부터 시작하고,
+`@media (min-width:721px)`로 묶어서 모바일에서는 비활성화했다.
+
+### Why GrowLog — 항목별 reveal + rail 비례 성장
+
+각 `<li>`를 개별 IntersectionObserver로 관찰해서 뷰포트 진입 시
+순서대로 reveal하고, 본 항목은 `unobserve`해서 다시 숨기지 않는다.
+rail 선은 원래 있던 연속된 `::before` 하나를 유지하되, reveal된
+항목 수에 비례해 `scaleY(0.34/0.67/1)`로 자라게 했다 — 항목마다
+정확한 픽셀 위치에 맞춰 개별 선 segment를 긋는 것은 문장이 몇 줄로
+줄바꿈될지 미리 알 수 없어 어렵기 때문에(Growth Journey 모바일과
+같은 이유) 택한 단순화다.
+
+### Feature Section — 그리드 1회 트리거 + CSS stagger + hover guard
+
+`useInViewOnce`로 그리드 전체가 진입할 때 1회 트리거하고, 카드별
+시간차는 `nth-child` `transition-delay`(Desktop 0/80/160/240ms,
+Mobile 0/40/80/120ms)로만 처리해서 카드마다 관찰자를 따로 두지
+않았다. hover(translateY -2px + shadow/border)는 `@media (hover:
+hover) and (pointer: fine)`로 감쌌다.
+
+### Growth Journey — 가장 크게 헤맨 부분
+
+처음에는 Why GrowLog와 같은 방식으로 노드 4개를 각각
+IntersectionObserver로 관찰했는데, **Desktop에서는 노드 4개가 가로로
+나란히 배치돼 있어 뷰포트 진입 Y좌표가 사실상 동일**해서 스크롤
+아주 조금만 해도 4개가 동시에 활성화되는 문제를 Playwright 테스트로
+발견했다. 그래서 개별 노드 관찰을 버리고, **rail 전체의 스크롤
+진행률을 계산**해서 4단계에 매핑하는 방식으로 바꿨다: rail이
+IntersectionObserver로 뷰포트에 들어와 있는 동안에만(전역 상시
+리스너 아님) `requestAnimationFrame`로 스로틀된 `scroll` 리스너를
+붙이고, `progress = (뷰포트높이*0.85 - rect.top) / (뷰포트높이*0.85 -
+뷰포트높이*0.45)`로 0~1 진행률을 계산해 `Math.floor(progress*4)`를
+활성화한다(`activateUpTo`가 단방향으로만 누적 — 뒤로 스크롤해도
+비활성화하지 않음). 이 두 번째 버전도 처음엔 계수(뷰포트 중간까지 +
+rail 자기 높이만큼 더)가 잘못돼서, Growth Journey 바로 다음이
+페이지의 마지막 섹션(Final CTA)이라 **문서 맨 아래에 도달해도 진행률
+100%에 못 미쳐 마지막 단계가 영영 활성화되지 않는 버그**가
+Playwright 스크롤 시뮬레이션에서 나왔다 — 뷰포트 비율 기반 구간(85%→
+45%)으로 다시 조정해서 해결했고, 실제로 처음/끝(step0→step3)까지
+`[true,false,false,false]→[true,true,false,false]→[true,true,true,false]
+→[true,true,true,true]`로 정확히 순차 누적되는 것과 다 활성화된
+뒤 위로 스크롤해도 비활성화되지 않는 것까지 확인했다. connector
+3구간(flex 컬럼 폭 기준이라 텍스트 길이와 무관하게 항상 정확한 desktop
+전용) 색은 이전 단계 그대로(`--color-primary-bg`→`--color-accent`→
+`--color-primary`) 유지하고 `scaleX`로, 노드는 `opacity 0.5→1 / scale
+0.85→1`로 활성화된다. Mobile 세로 rail은 (항목별 실제 렌더링 높이를
+CSS만으로 알 수 없어서) 활성화 개수 비례 `scaleY`로 단순화했다 —
+Why GrowLog와 동일한 이유.
+
+### Final CTA
+
+`useInViewOnce`로 섹션 진입 시 1회, 자식 4개(모티프/제목/본문/버튼)를
+`nth-child` `transition-delay`(0/100/200/300ms)로 순서대로 fade-up
+했다. Soft Green 배경 자체는 움직이지 않는다.
+
+### Application UI(Dashboard/Timeline/Goal) — hover pointer guard만
+
+실제 `transform` 기반 hover가 있는 3곳(`DashboardView`/`TimelineView`의
+`.timeline-item:hover`, `GoalCard`의 `.goal-card:hover`)에만
+`@media (hover: hover) and (pointer: fine)`를 추가했다. `AppNav`/
+`BaseButton`의 hover는 transform 없는 단순 색상 전환이고 앱 전역
+공용 컴포넌트라 범위(Dashboard/Timeline/Goal 실제 hover/transform)
+밖이라 건드리지 않았다. Landing처럼 stagger entrance나 scroll
+reveal을 Application 화면에 확장하지 않았다.
+
+### 전역 `prefers-reduced-motion` 안전망
+
+`style.css`에 `*`의 `animation-duration`/`transition-duration`을
+`0.01ms`로 강제하는 규칙을 추가했다 — 각 컴포넌트가 이미
+prefers-reduced-motion을 개별적으로 확인해서 모션용 클래스 자체를
+안 붙이지만(핵심 방어선), 실수로 그 체크를 빠뜨리는 경우까지 대비한
+2차 안전망이다.
+
+### 검증
+
+`npm run build` 통과 후 Playwright로: Hero 진입 애니메이션 도중
+(150ms) CTA가 클릭 가능하고 실제 클릭 시 `/login`으로 이동하는지,
+전체 시퀀스가 끝난 뒤(1050ms) 모든 요소 opacity가 1인지, Why
+GrowLog/Feature가 뷰포트 진입 전엔 숨어있다가(Feature는 opacity 0
+확인) 진입 후 보이는지, **Growth Journey가 스크롤에 따라 정확히
+순차적으로(동시에 아님) 누적 활성화되고 뒤로 스크롤해도 유지되는지
+6단계 스크롤 시뮬레이션으로 확인**, Final CTA reveal, reduced-motion
+컨텍스트에서 스크롤 없이 즉시 전부 보이는지(`.journey--motion`
+클래스 자체가 안 붙는 것 포함), Mobile(390px) 세로 Growth Journey와
+Hero, `(hover:hover) and (pointer:fine)`가 실제 터치 기기 에뮬레이션
+(iPhone 13 디바이스 디스크립터)에서 정확히 false로 평가되는지(뷰포트
+크기만 바꾼 컨텍스트에서는 여전히 true로 나와 테스트 방법 자체를
+수정해 재확인), Login 화면과 Goal 카드 hover-guard 이후에도 수정
+모달이 정상 동작하는지까지 확인했다.
