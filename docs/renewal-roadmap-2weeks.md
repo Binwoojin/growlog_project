@@ -121,9 +121,22 @@
 - `GoalFormView.vue` 신규 (`/goals/new`), Dashboard "목표 추가" 버튼과
       Goal List 헤더 버튼을 실제로 연결함
 
-### Day 10 — Goal 수정 / 삭제
-- [ ] `BaseModal`
-- [ ] `ConfirmDialog`
+### Day 10 — Goal 수정 / 삭제 ✅ (2026-09-15)
+- [x] `BaseModal` — `GoalEditModal.vue`가 `BaseModal` 위에 수정 폼(제목/설명/
+      카테고리/상태/진행률 슬라이더/기간)을 얹어 목록 페이지에서 바로 연다.
+      기존 JSP의 "목록 위에서 모달로 수정" 패턴을 그대로 따름. 생성 폼과
+      달리 상태/진행률 입력이 있는 이유는 `GoalService.updateGoal()`이 이
+      두 값을 검증/반영하기 때문 (`saveGoal()`은 사용 안 함).
+- [x] `ConfirmDialog` — `BaseModal`을 감싼 얇은 확인 다이얼로그
+      (`frontend/src/components/common/ConfirmDialog.vue`) 신규 작성,
+      삭제 시 목표 제목을 메시지에 보간해서 확인받음. 삭제 중 상태(`busy`)로
+      버튼 비활성화 + "처리 중..." 표시, 실패 시 `extractErrorMessage()`로
+      서버 메시지 노출.
+- 백엔드 변경 없음 (`GoalApiController`의 `PUT/DELETE /api/goals/{goalNum}`은
+      Day 8에서 이미 구현·테스트 완료). `GoalCard`에 수정/삭제 버튼 추가,
+      `GoalListView`가 수정 모달 상태/삭제 확인 상태를 관리. Playwright로
+      수정 모달 사전 채움, 삭제 확인 메시지, 삭제 후 빈 상태 전환까지
+      3가지 시나리오 스크린샷 확인.
 
 ### Day 11 — Goal UI/UX 고도화
 - [ ] Progress 표현, Status Badge

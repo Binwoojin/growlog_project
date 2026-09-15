@@ -496,3 +496,53 @@ Day 10에서는 진행률/상태 입력이 필요하다.)
 
 Playwright로 4가지 상태(빈 폼, 클라이언트 검증 오류, 서버 오류 메시지
 노출, 저장 중 버튼 비활성화)를 전부 스크린샷으로 확인했다.
+
+---
+
+## Day 10 (2026-09-15) — Goal 수정/삭제
+
+### 수정은 Day 9와 반대로 모달을 썼다
+
+Day 9에서 정리한 것처럼 기존 JSP는 작성은 별도 페이지, 수정은
+`goal/list?openGoal=`로 목록 페이지 위에서 모달을 여는 방식이다. Day
+10은 딱 그 "수정" 쪽이라, 로드맵에도 명시된 대로 `BaseModal` 위에
+`GoalEditModal.vue`를 새로 만들어 목록 페이지(`GoalListView.vue`)에서
+바로 열고 닫히게 했다. 새 라우트를 만들지 않은 이유도 같다 — 기존
+UX 패턴을 그대로 따라간 것.
+
+### 수정 폼에만 상태/진행률 입력이 있다
+
+Day 9에서 미리 언급했던 대로, `GoalService.updateGoal()`은
+`goalProgress`/`goalStatus`를 검증하고 반영하므로 (`saveGoal()`과
+다름) `GoalEditModal`에는 상태 select와 진행률 range 슬라이더를
+추가했다. `watch(() => props.goal, ..., { immediate: true })`로 모달이
+열릴 때마다 선택된 Goal의 현재 값들로 폼을 채운다.
+
+### `ConfirmDialog`는 `BaseModal`의 얇은 래퍼로 만들었다
+
+로드맵에 `ConfirmDialog`가 별도 컴포넌트로 명시돼 있고, 삭제 확인은
+Goal뿐 아니라 앞으로 다른 도메인(Record 등)에서도 재사용할 여지가
+있어서 `goal/` 하위가 아니라 `components/common/`에 범용으로 뺐다.
+`open`/`title`/`message`/`confirmLabel`/`cancelLabel`/`confirmVariant`/
+`busy` props와 `confirm`/`cancel` emit만 갖는 얇은 래퍼로, 메시지에
+삭제 대상 목표 제목을 보간해서 어떤 목표를 지우는지 명확히 보여준다.
+삭제 처리 중에는 `busy`로 두 버튼을 모두 비활성화하고 "처리 중..."을
+표시해 중복 요청을 막았다.
+
+### 백엔드는 손대지 않았다
+
+`PUT/DELETE /api/goals/{goalNum}`은 Day 8에서 `GoalApiController`를
+만들 때 이미 같이 구현하고 MockMvc 테스트까지 끝내둔 상태였다(Day
+8~10 백엔드 재작업을 최소화하려는 의도였다고 Day 8에 적어뒀다). 그래서
+Day 10은 프론트엔드 4개 파일(`GoalCard.vue`, `GoalListView.vue`,
+`GoalEditModal.vue`, `ConfirmDialog.vue`)만 수정/신규 작성했다.
+
+### 검증
+
+`npm run build`로 타입/빌드 오류 없음을 확인한 뒤, Playwright로
+`/api/me`, `/api/goals`, `/api/categories`, `DELETE /api/goals/1`을
+모킹해서 세 가지 시나리오를 스크린샷으로 확인했다: 수정 모달이 선택한
+Goal의 값(제목/설명/카테고리/상태/진행률/기간)으로 정확히 채워지는지,
+삭제 확인 다이얼로그가 목표 제목을 포함한 올바른 메시지를 보여주는지,
+삭제 성공 후 목록에서 해당 Goal이 사라지고 헤더/네비게이션/추가 버튼은
+그대로 유지된 채 빈 상태 문구가 나타나는지.

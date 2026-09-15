@@ -1,30 +1,78 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchGoals } from '../api/goal.api'
-import type { Goal } from '../types/goal'
+import { deleteGoal, fetchCategories, fetchGoals } from '../api/goal.api'
+import type { Category, Goal } from '../types/goal'
+import { extractErrorMessage } from '../utils/errors'
 import AppNav from '../components/common/AppNav.vue'
 import BaseButton from '../components/common/BaseButton.vue'
+import ConfirmDialog from '../components/common/ConfirmDialog.vue'
 import GoalCard from '../components/goal/GoalCard.vue'
+import GoalEditModal from '../components/goal/GoalEditModal.vue'
 import LoadingSkeleton from '../components/common/LoadingSkeleton.vue'
 
 /*
  * Day 8 — Goal List. GoalCard/GoalProgress/GoalStatusBadge 컴포넌트로
  * 기존 GoalService.findGoalsByMember()를 그대로 노출한 GET /api/goals 결과를
- * 렌더링한다. 작성(Day 9), 수정/삭제(Day 10)는 다음 날 이어서 붙인다.
+ * 렌더링한다.
+ * Day 9 — Goal 작성(/goals/new)은 별도 페이지로 연결.
+ * Day 10 — Goal 수정은 이 목록 페이지 위의 모달(GoalEditModal)로, 삭제는
+ * ConfirmDialog로 확인 후 처리한다. 기존 JSP의 "목록 위에서 모달로 수정"
+ * 패턴을 그대로 따랐다.
  */
 const router = useRouter()
 const goals = ref<Goal[]>([])
+const categories = ref<Category[]>([])
 const status = ref<'loading' | 'success' | 'error'>('loading')
+
+const editingGoal = ref<Goal | null>(null)
+
+const deletingGoal = ref<Goal | null>(null)
+const deleteStatus = ref<'idle' | 'deleting' | 'error'>('idle')
+const deleteErrorMessage = ref('')
 
 onMounted(async () => {
   try {
-    goals.value = await fetchGoals()
+    const [goalList, categoryList] = await Promise.all([fetchGoals(), fetchCategories()])
+    goals.value = goalList
+    categories.value = categoryList
     status.value = 'success'
   } catch {
     status.value = 'error'
   }
 })
+
+function onEdit(goal: Goal) {
+  editingGoal.value = goal
+}
+
+function onGoalUpdated(updated: Goal) {
+  const index = goals.value.findIndex((goal) => goal.goalNum === updated.goalNum)
+  if (index !== -1) {
+    goals.value[index] = updated
+  }
+  editingGoal.value = null
+}
+
+function onDelete(goal: Goal) {
+  deletingGoal.value = goal
+  deleteStatus.value = 'idle'
+  deleteErrorMessage.value = ''
+}
+
+async function onConfirmDelete() {
+  if (!deletingGoal.value) return
+
+  deleteStatus.value = 'deleting'
+  try {
+    await deleteGoal(deletingGoal.value.goalNum)
+    goals.value = goals.value.filter((goal) => goal.goalNum !== deletingGoal.value?.goalNum)
+    deletingGoal.value = null
+  } catch (error) {
+    deleteStatus.value = 'error'
+    deleteErrorMessage.value = extractErrorMessage(error, '목표를 삭제하지 못했어요. 다시 시도해주세요.')
+  }
+}
 </script>
 
 <template>
@@ -50,10 +98,30 @@ onMounted(async () => {
 
       <ul v-else class="goal-list__grid">
         <li v-for="goal in goals" :key="goal.goalNum">
-          <GoalCard :goal="goal" />
+          <GoalCard :goal="goal" @edit="onEdit" @delete="onDelete" />
         </li>
       </ul>
     </template>
+
+    <GoalEditModal
+      :open="editingGoal !== null"
+      :goal="editingGoal"
+      :categories="categories"
+      @close="editingGoal = null"
+      @updated="onGoalUpdated"
+    />
+
+    <ConfirmDialog
+      :open="deletingGoal !== null"
+      title="목표 삭제"
+      :message="`'${deletingGoal?.goalTitle}' 목표를 삭제할까요? 이 작업은 되돌릴 수 없어요.`"
+      :busy="deleteStatus === 'deleting'"
+      @confirm="onConfirmDelete"
+      @cancel="deletingGoal = null"
+    />
+    <p v-if="deleteStatus === 'error'" class="goal-list__status goal-list__status--error">
+      {{ deleteErrorMessage }}
+    </p>
   </main>
 </template>
 

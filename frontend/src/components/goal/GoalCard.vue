@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import type { Goal } from '../../types/goal'
+import BaseButton from '../common/BaseButton.vue'
 import BaseCard from '../common/BaseCard.vue'
 import GoalProgress from './GoalProgress.vue'
 import GoalStatusBadge from './GoalStatusBadge.vue'
 
 defineProps<{
   goal: Goal
+}>()
+
+const emit = defineEmits<{
+  edit: [goal: Goal]
+  delete: [goal: Goal]
 }>()
 
 function formatDateRange(startDate: string | null, endDate: string | null): string {
@@ -29,6 +35,11 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
     <p v-if="goal.startDate || goal.endDate" class="goal-card__dates">
       {{ formatDateRange(goal.startDate, goal.endDate) }}
     </p>
+
+    <div class="goal-card__actions">
+      <BaseButton variant="secondary" @click="emit('edit', goal)">수정</BaseButton>
+      <BaseButton variant="ghost" @click="emit('delete', goal)">삭제</BaseButton>
+    </div>
   </BaseCard>
 </template>
 
@@ -67,5 +78,12 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.goal-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 </style>
