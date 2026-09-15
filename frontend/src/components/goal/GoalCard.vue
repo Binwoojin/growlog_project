@@ -47,7 +47,7 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
 .goal-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .goal-card__header {
@@ -64,8 +64,9 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
 
 .goal-card__title {
   margin: 0;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
 }
 
 .goal-card__content {
@@ -84,6 +85,8 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
 }
 </style>

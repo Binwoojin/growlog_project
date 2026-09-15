@@ -53,13 +53,13 @@ const features = [
 .feature-section__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
 .feature-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   text-align: center;
 }
 

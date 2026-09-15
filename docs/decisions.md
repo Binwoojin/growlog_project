@@ -780,3 +780,101 @@ Soft Green 블록이 데스크톱/모바일 모두 정상), Dashboard(요약 카
 세 상태 배지가 서로 다른 톤으로 정상 구분되는지 — success가 primary
 와 섞이지 않았는지 육안 확인), Login(에러 색 미변경, 카드 그림자
 반영).
+
+---
+
+## Landing + Dashboard + Timeline + Goal 디자인 시스템 정돈 (2026-09-15)
+
+Day One(여백/콘텐츠 중심) + Sunsama(Calm Productivity, 상태/숫자
+우선) + Reflect(점-선 연결, Timeline 흐름) + Linear(얇은 border/낮은
+shadow/일관된 spacing·typography)를 레퍼런스로 참고하되, 특정 UI를
+복제하지 않고 레이아웃 원리만 GrowLog 기존 토큰(`tokens.css`)으로
+재현했다. 새 컬러/아이콘/공용 컴포넌트를 들이지 않고 기존 컴포넌트를
+다듬는 방식으로만 진행했다.
+
+### `--font-size-xl`/`--font-size-2xl` 전역 변경은 이번에도 보류
+
+지난 Visual Design 1차 때 "Dashboard/Timeline/Goal을 다루는 다음
+단계에서 재검토"하기로 했던 걸 이번에 다시 검토했지만, 이 두 토큰이
+Login처럼 이번 검토 범위 밖 화면까지 동시에 참조하고 있어서 이번에도
+전역 값은 건드리지 않았다. 대신 각 화면에서 필요한 위계는 spacing/
+font-weight/색 대비(예: GoalCard 제목을 medium→semibold, summary
+card hint에 opacity 적용)로 만들었다. `page-title`/`section-title`
+같은 역할 기반 토큰은 필요하면 추가할 수 있지만, 이번 단계에서
+필수는 아니라고 판단해 추가하지 않았다.
+
+### AppNav — pill 대신 얇은 밑줄
+
+Linear의 "명확한 active state"만 참고하고, 강한 배경색/pill은 Calm
+Productivity 톤과 맞지 않아 피했다. active 링크에 `border-bottom:
+2px solid var(--color-primary)`만 추가해서 텍스트+얇은 밑줄로 표현
+했다. Dashboard/Timeline/Goal 3개 화면이 공용 컴포넌트라 동시에
+반영됨.
+
+### Timeline·Dashboard의 점-선 rail은 종류 구분에 쓰지 않는다
+
+Reflect 스타일 점-선 rail을 `TimelineView`와 Dashboard의 "최근
+타임라인"에 추가했다. rail의 점/선 색은 Goal/Record와 무관하게
+`--color-accent`(점)·`--color-primary-bg`(선)로 통일했고, Goal/
+Record 구분은 카드 내부 `BaseBadge`(🌱목표 vs 📖성장 기록)에만
+맡겼다. 목적을 "종류 구분"이 아니라 "시간에 따라 기록이 이어진다"는
+흐름 전달에 두었기 때문이다. `Dashboard`는 이전에 `BaseCard`를
+직접 나열하던 마크업을 `<ul><li>` 구조로 바꿔야 rail을 달 수 있어서
+그 부분만 구조가 바뀌었고, 데이터/로직은 그대로다.
+
+### Goal — 상태/진행률 대비만 높이고 순서는 그대로
+
+`GoalCard`는 카테고리→상태 배지→제목→설명→진행률→기간→액션 순서를
+그대로 유지했다. 대신 제목을 medium→semibold로, 진행률 바 두께를
+8px→10px + 테두리 추가, 진행률 라벨을 secondary→primary 색 + medium
+weight로 올려서 "상태와 진행률이 먼저 읽히도록" 대비만 높였다.
+액션 버튼 영역에 상단 구분선을 추가해 카드 본문과 시각적으로
+분리했다. `BaseBadge`의 padding도 살짝 키워서(2px→3px 수직) 배지
+텍스트가 더 또렷하게 보이도록 했다 — Goal 상태 배지와 Timeline의
+Goal/Record 타입 배지 양쪽에 공통 반영됨.
+
+### Dashboard — Sunsama 정보 계층
+
+Summary Card의 숫자→라벨→힌트 순서 자체는 이미 있었으므로 구조는
+바꾸지 않고, 카드 사이 gap을 4→6으로 넓히고 hint 텍스트에
+`opacity: 0.85`를 줘서 "숫자가 가장 먼저, 힌트는 가장 약하게"라는
+위계를 더 분명히 했다. Quick Action 버튼 gap도 3→4로 넓혔다. API
+연결과 상태 관리 로직은 전혀 건드리지 않았다.
+
+### BaseModal — 기능은 그대로, 정돈만
+
+`padding`/`border`/`box-shadow`만 정돈하고(헤더 아래 구분선 추가,
+헤더-바디 여백 확장), `open`/`title` props와 ESC/backdrop-click
+닫기 동작은 전혀 손대지 않았다. `GoalEditModal`/`ConfirmDialog`는
+이 변경을 그대로 물려받고, Playwright로 수정 모달이 여전히 정상
+동작(사전 채움, 저장/취소)하는 것까지 확인했다.
+
+### Landing — 재구축이 아니라 polish
+
+Hero의 copy 사이 gap(4→6)과 좌우 padding(12→12×1.5), subcopy
+line-height(1.7), Why GrowLog 리스트 gap(4→6) + line-height(1.7),
+Feature 카드 gap(4→6), Growth Journey 연결선 두께(1px→2px)와 색을
+`--color-border`에서 `--color-primary-bg`로, Final CTA padding
+(12→12×1.5)만 조정했다. 섹션 순서/카피/컴포넌트 구조는 전혀
+바꾸지 않았다.
+
+### Record 화면은 이번에도 유보
+
+Record Detail/Create 화면은 아직 구현돼 있지 않다(로드맵 Day 13
+예정, Record 작성/수정/삭제 자체는 2주 계획의 Cut 대상). 이번
+작업에서도 새 Record 화면이나 그 전용 컴포넌트를 만들지 않았고,
+Record의 유일한 현재 표현인 Timeline/Dashboard의 기록 카드에만
+Day One(콘텐츠 중심)·Reflect(연결) 톤을 입혔다. Record 상세 페이지가
+실제로 만들어질 때 이번에 정리한 토큰(색/타이포/rail 패턴/BaseModal
+정돈 원칙)을 그대로 이어서 적용하면 된다.
+
+### 검증
+
+`npm run build` 통과 확인 후, Playwright로 Landing/Dashboard/
+Timeline/Goal List 각각 1280px·390px 스크린샷과 Goal 수정 모달
+(BaseModal 정돈 + 기존 동작 확인)까지 캡처했다. Timeline 목 라우트를
+`**/api/timeline*`로 잡았다가 Vite dev 서버의 `/src/api/
+timeline.api.ts` 모듈 요청까지 가로채 앱이 깨지는 걸 발견 —
+백엔드 origin(`http://localhost:8080/...`)으로 패턴을 좁혀서 해결한
+것은 테스트 스크립트 버그였고 실제 앱 코드 문제는 아니었다. Login도
+별도로 캡처해서 이번 변경이 cascade되지 않았음을 확인했다.

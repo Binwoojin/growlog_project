@@ -165,9 +165,10 @@ const whyGrowLogPoints = [
   padding-left: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);
+  line-height: 1.7;
   list-style: none;
 }
 
@@ -211,8 +212,8 @@ const whyGrowLogPoints = [
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-12) var(--space-4);
+  gap: var(--space-4);
+  padding: calc(var(--space-12) * 1.5) var(--space-4);
   background: var(--color-primary-bg);
   text-align: center;
 }

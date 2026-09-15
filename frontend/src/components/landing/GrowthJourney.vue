@@ -55,15 +55,19 @@ const steps = [
   display: flex;
 }
 
-/* 점들을 잇는 연결선 — 첫 점과 마지막 점의 중심 사이만 지나가도록 좌우를 인셋한다 */
+/*
+ * 점들을 잇는 연결선 — 첫 점과 마지막 점의 중심 사이만 지나가도록 좌우를
+ * 인셋한다. Primary Green 점과 연결되는 선이라 중립 border보다 살짝
+ * 진한 Soft Green 톤(--color-primary-bg)을 써서 연결감을 또렷하게 했다.
+ */
 .journey__rail::before {
   content: '';
   position: absolute;
   top: 16px;
   left: 12.5%;
   right: 12.5%;
-  height: 1px;
-  background: var(--color-border);
+  height: 2px;
+  background: var(--color-primary-bg);
 }
 
 .journey__node {
@@ -112,7 +116,7 @@ const steps = [
     bottom: 0;
     left: 15px;
     right: auto;
-    width: 1px;
+    width: 2px;
     height: auto;
   }
 

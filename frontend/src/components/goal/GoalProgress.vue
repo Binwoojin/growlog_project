@@ -31,9 +31,10 @@ const clampedProgress = () => Math.min(100, Math.max(0, props.progress))
 
 .goal-progress__track {
   flex: 1;
-  height: 8px;
+  height: 10px;
   border-radius: 999px;
   background: var(--color-bg);
+  border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
@@ -48,6 +49,7 @@ const clampedProgress = () => Math.min(100, Math.max(0, props.progress))
   min-width: 36px;
   text-align: right;
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
 }
 </style>

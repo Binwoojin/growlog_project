@@ -88,7 +88,7 @@ onMounted(async () => {
       </p>
 
       <ul v-else class="timeline__list">
-        <li v-for="item in filteredItems" :key="`${item.type}-${item.itemNum}`">
+        <li v-for="item in filteredItems" :key="`${item.type}-${item.itemNum}`" class="timeline__node">
           <BaseCard class="timeline-item">
             <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
               {{ item.type === 'GOAL' ? '🌱 목표' : '📖 성장 기록' }}
@@ -145,23 +145,59 @@ onMounted(async () => {
   color: var(--color-error);
 }
 
+/*
+ * Reflect의 점-선 연결 구조 — Goal/Record 종류는 rail 색으로 구분하지
+ * 않고 중립/Soft Green 톤으로 통일한다. 종류 구분은 카드 내부의
+ * BaseBadge에만 맡기고, rail은 "시간에 따라 기록이 이어진다"는 흐름만
+ * 보여준다.
+ */
 .timeline__list {
+  position: relative;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
+.timeline__list::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: var(--color-primary-bg);
+}
+
+.timeline__node {
+  position: relative;
+}
+
+.timeline__node::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-4));
+  top: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+/* Day One — 콘텐츠(제목/본문) 자체가 중심이 되도록 줄간격을 넉넉하게 */
 .timeline-item__title {
-  margin: var(--space-2) 0 0;
+  margin: var(--space-3) 0 0;
   font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-lg);
+  line-height: 1.5;
 }
 
 .timeline-item__meta {
-  margin: var(--space-1) 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: 1.6;
 }
 </style>

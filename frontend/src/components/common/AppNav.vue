@@ -24,14 +24,18 @@
   font-size: var(--font-size-sm);
   text-decoration: none;
   white-space: nowrap;
+  padding-bottom: var(--space-1);
+  border-bottom: 2px solid transparent;
 }
 
 .app-nav__link:hover {
   color: var(--color-primary);
 }
 
+/* Linear의 "명확한 active state" 원칙만 참고 — pill/배경 없이 얇은 밑줄로 차분하게 */
 .app-nav__link.router-link-exact-active {
   color: var(--color-primary);
   font-weight: var(--font-weight-medium);
+  border-bottom-color: var(--color-primary);
 }
 </style>

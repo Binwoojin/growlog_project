@@ -56,8 +56,8 @@ const emit = defineEmits<{
 .hero {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-12) var(--space-4);
+  gap: var(--space-12);
+  padding: calc(var(--space-12) * 1.5) var(--space-4);
   max-width: 960px;
   margin: 0 auto;
 }
@@ -66,7 +66,7 @@ const emit = defineEmits<{
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
   align-items: flex-start;
 }
 
@@ -115,6 +115,7 @@ const emit = defineEmits<{
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);
+  line-height: 1.7;
 }
 
 .hero__preview {

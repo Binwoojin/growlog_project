@@ -93,17 +93,17 @@ async function onLogout() {
           아직 이번 달 기록이 없어요. 오늘의 성장을 기록해보세요.
         </p>
 
-        <BaseCard
-          v-for="item in summary.recentTimeline"
-          :key="`${item.type}-${item.itemNum}`"
-          class="timeline-item"
-        >
-          <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
-            {{ item.type === 'GOAL' ? '🌱 목표' : '📖 성장 기록' }}
-          </BaseBadge>
-          <p class="timeline-item__title">{{ item.title }}</p>
-          <p class="timeline-item__meta">{{ item.content }}</p>
-        </BaseCard>
+        <ul v-if="summary.recentTimeline.length > 0" class="dashboard__timeline-rail">
+          <li v-for="item in summary.recentTimeline" :key="`${item.type}-${item.itemNum}`" class="dashboard__timeline-node">
+            <BaseCard class="timeline-item">
+              <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
+                {{ item.type === 'GOAL' ? '🌱 목표' : '📖 성장 기록' }}
+              </BaseBadge>
+              <p class="timeline-item__title">{{ item.title }}</p>
+              <p class="timeline-item__meta">{{ item.content }}</p>
+            </BaseCard>
+          </li>
+        </ul>
       </section>
     </template>
   </main>
@@ -153,10 +153,11 @@ async function onLogout() {
   color: var(--color-error);
 }
 
+/* Sunsama 원칙 — 숫자가 가장 먼저 읽히도록 카드 사이 여백을 넉넉하게 */
 .dashboard__summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
 .summary-card {
@@ -167,10 +168,11 @@ async function onLogout() {
   margin: 0;
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .summary-card__label {
-  margin: var(--space-1) 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }
@@ -179,16 +181,18 @@ async function onLogout() {
   margin: var(--space-1) 0 0;
   color: var(--color-text-secondary);
   font-size: 12px;
+  opacity: 0.85;
 }
 
 .dashboard__quick-actions {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .dashboard__section-title {
   font-size: var(--font-size-lg);
-  margin: 0 0 var(--space-3);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-4);
 }
 
 .dashboard__timeline {
@@ -196,19 +200,58 @@ async function onLogout() {
   flex-direction: column;
 }
 
-.timeline-item + .timeline-item {
-  margin-top: var(--space-3);
+/*
+ * Reflect의 점-선 연결 느낌을 Recent Timeline에도 적용한다. Goal/Record
+ * 종류는 rail 색으로 구분하지 않고(중립/Soft Green 톤 통일) 카드 내부
+ * BaseBadge로만 구분한다 — 이 rail의 목적은 "종류 구분"이 아니라
+ * "시간에 따라 기록이 이어진다"는 흐름을 먼저 보여주는 것이다.
+ */
+.dashboard__timeline-rail {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dashboard__timeline-rail::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: var(--color-primary-bg);
+}
+
+.dashboard__timeline-node {
+  position: relative;
+}
+
+.dashboard__timeline-node::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-4));
+  top: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
 }
 
 .timeline-item__title {
   margin: var(--space-2) 0 0;
   font-weight: var(--font-weight-medium);
+  line-height: 1.5;
 }
 
 .timeline-item__meta {
   margin: var(--space-1) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: 1.6;
 }
 
 @media (max-width: 640px) {

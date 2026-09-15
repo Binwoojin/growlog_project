@@ -168,6 +168,6 @@ async function onConfirmDelete() {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 </style>

@@ -71,6 +71,7 @@ watch(
   width: 100%;
   max-width: 420px;
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--space-6);
@@ -80,7 +81,13 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.base-modal__header h2 {
+  font-size: var(--font-size-lg);
 }
 
 .base-modal__close {
