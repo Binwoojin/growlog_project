@@ -546,3 +546,75 @@ Goal의 값(제목/설명/카테고리/상태/진행률/기간)으로 정확히 
 삭제 확인 다이얼로그가 목표 제목을 포함한 올바른 메시지를 보여주는지,
 삭제 성공 후 목록에서 해당 Goal이 사라지고 헤더/네비게이션/추가 버튼은
 그대로 유지된 채 빈 상태 문구가 나타나는지.
+
+---
+
+## Landing Page + 와이어프레임 단계 디자인 초기화 (2026-09-15)
+
+Day 5~10과 별개로 진행한 작업. 목적은 최종 디자인이 아니라 "GrowLog가
+어떤 서비스인지 설명하는 진입 구조"와 "장식 요소를 걷어낸 구조 중심
+UI"를 먼저 세우는 것이었다.
+
+### `/`는 Landing, Dashboard는 `/dashboard`로 이동
+
+지금까지 `/`가 Dashboard였는데, 비로그인 사용자가 서비스 소개 없이
+곧장 Dashboard/Login만 보는 구조를 바꾸기 위해 `/`를 `LandingView`로,
+Dashboard는 `/dashboard`로 옮겼다. `AppNav.vue`의 대시보드 링크도
+`/dashboard`로 같이 고쳤다 — 안 고치면 Dashboard/Timeline/Goal 화면의
+공용 네비게이션이 Landing으로 되돌아가 버린다.
+
+### Landing 컴포넌트는 Hero/Feature/GrowthJourney만 분리
+
+`components/landing/HeroSection.vue`, `FeatureSection.vue`,
+`GrowthJourney.vue`만 별도 파일로 만들고, Header/GrowLog 소개/Final
+CTA는 로직 없는 마크업이라 `LandingView.vue`에 그대로 뒀다(사용자
+지시). 구조가 확정되면 필요할 때 분리한다.
+
+### 로그인 인터셉터의 숨어있던 버그를 같이 고쳤다
+
+Landing(`/`)을 공개 라우트로 만들고 나서 Playwright로 확인하는 중,
+비로그인 상태로 Landing에 들어가자마자 `/login`으로 튕기는 문제를
+발견했다. 원인은 `api/interceptors.ts`의 401 인터셉터가 요청 URL을
+구분하지 않고 모든 401에 대해 무조건 `/login`으로 리다이렉트하고
+있었기 때문이다 — `GET /api/me`는 로그인 여부를 "조용히" 확인하는
+용도라 `authStore.fetchCurrentUser()`가 이미 401을 정상 처리하는데도,
+인터셉터가 같은 401에 반응해 중복으로 리다이렉트를 걸고 있었다.
+지금까지는 Dashboard(보호된 라우트)가 `/`였고, Login 화면 자체도
+`/api/me`를 호출하지 않아서 이 버그가 드러나지 않았을 뿐이다.
+`error.config.url`이 `/api/me`를 포함하면 인터셉터가 아무 것도 하지
+않도록 고쳤다 — 인증/CORS/CSRF/Session 구조는 그대로 두고, 리다이렉트
+판단 로직만 수정했다.
+
+같은 파일에서 로그인 후 원래 화면으로 돌려보내는 `redirect` 쿼리 값도
+`router.currentRoute.value.fullPath` 대신 `window.location.pathname`
+기준으로 계산하도록 고쳤다. 앱 부팅 직후(첫 네비게이션이 끝나기 전)에는
+`router.currentRoute`가 실제 요청 경로가 아니라 Vue Router의 내부
+placeholder(`/`)를 가리켜서, `/dashboard`로 직접 들어온 비로그인
+사용자가 로그인 후에도 `/`(Landing)로 돌아가는 문제가 있었다. Dashboard가
+`/`였을 때는 이 값도 우연히 `/`와 같아서 문제가 안 보였던 것 — Landing
+분리로 두 버그가 같이 드러났다.
+
+### `--shadow-card`를 없애서 앱 전체를 구조 중심으로
+
+`BaseCard.vue`가 `--shadow-card` 변수 하나만 사용하므로,
+`tokens.css`에서 이 값을 `none`으로 바꾸는 것만으로 Dashboard/
+Timeline/Goal 카드를 포함한 앱 전체가 그림자 없이 테두리(border)만
+남는 와이어프레임 상태가 됐다. 기능/API/상태관리 로직은 전혀
+건드리지 않았다 — 순수 CSS 토큰 값 변경.
+
+### Growth Journey / Feature 아이콘은 임시 placeholder
+
+이모지(🎯📝🗓️📈)는 위치 구분용 placeholder이며 최종 디자인 요소가
+아니다. 최종 Visual Design 단계에서 실제 아이콘 세트로 교체될
+것을 전제로 넣었다.
+
+### 검증
+
+`npm run build`로 타입/빌드 오류 없음을 확인한 뒤, Playwright로
+다음을 스크린샷 확인했다: 비로그인 Landing(전체 섹션 구조),
+로그인 Landing(CTA가 "Dashboard로 이동"으로 바뀌는지), 390px
+모바일 Landing(섹션이 세로로 쌓이고 Growth Journey 화살표가
+90도 회전하는지), 비로그인 `/dashboard` 접근 시 `/login?redirect=
+/dashboard`로 정확히 리다이렉트되는지, 로그인 후 Dashboard가
+그림자 없는 카드로 정상 렌더링되는지, `/goals` 목록도 그림자 없이
+정상적으로 보이는지.

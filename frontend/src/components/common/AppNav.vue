@@ -7,7 +7,7 @@
 
 <template>
   <nav class="app-nav" aria-label="주요 화면 이동">
-    <RouterLink to="/" class="app-nav__link">대시보드</RouterLink>
+    <RouterLink to="/dashboard" class="app-nav__link">대시보드</RouterLink>
     <RouterLink to="/timeline" class="app-nav__link">타임라인</RouterLink>
     <RouterLink to="/goals" class="app-nav__link">목표</RouterLink>
   </nav>
