@@ -82,8 +82,8 @@ async function onLogout() {
       </section>
 
       <section class="dashboard__quick-actions">
-        <BaseButton variant="primary">목표 추가</BaseButton>
-        <BaseButton variant="secondary">기록 남기기</BaseButton>
+        <BaseButton variant="primary" @click="router.push({ name: 'goal-new' })">목표 추가</BaseButton>
+        <BaseButton variant="secondary" disabled title="Day 13 이후 연결 예정">기록 남기기</BaseButton>
       </section>
 
       <section class="dashboard__timeline">

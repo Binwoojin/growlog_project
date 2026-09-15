@@ -23,6 +23,11 @@ const routes = [
     name: 'goals',
     component: () => import('../views/GoalListView.vue'),
   },
+  {
+    path: '/goals/new',
+    name: 'goal-new',
+    component: () => import('../views/GoalFormView.vue'),
+  },
 ]
 
 const router = createRouter({

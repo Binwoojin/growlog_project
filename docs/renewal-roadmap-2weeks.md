@@ -109,9 +109,17 @@
       라우트 `/goals` 추가, 3개 화면(대시보드/타임라인/목표) 공용
       `AppNav.vue` 신설해서 헤더 네비게이션 통일.
 
-### Day 9 — Goal 작성
-- [ ] 입력 오류 처리
-- [ ] 저장 중 / 저장 성공 / 저장 실패 상태
+### Day 9 — Goal 작성 ✅ (2026-09-15)
+- [x] 입력 오류 처리 — 클라이언트 측(카테고리 미선택) + 서버 측
+      (`GoalService`의 날짜/제목 등 검증 실패, 400 응답의 `message`를
+      `extractErrorMessage()`로 꺼내 그대로 표시) 둘 다 처리
+- [x] 저장 중 / 저장 성공 / 저장 실패 상태 — `saveStatus`
+      (`idle`/`saving`/`error`)로 관리, 저장 중엔 버튼 비활성화 + "저장
+      중..." 표시, 성공하면 `/goals`로 이동(별도 성공 화면 없이 목록에서
+      확인). Playwright로 4가지 상태(빈 폼/검증 오류/서버 오류/저장 중)
+      전부 스크린샷 확인.
+- `GoalFormView.vue` 신규 (`/goals/new`), Dashboard "목표 추가" 버튼과
+      Goal List 헤더 버튼을 실제로 연결함
 
 ### Day 10 — Goal 수정 / 삭제
 - [ ] `BaseModal`
