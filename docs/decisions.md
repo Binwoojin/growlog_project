@@ -618,3 +618,58 @@ Timeline/Goal 카드를 포함한 앱 전체가 그림자 없이 테두리(borde
 /dashboard`로 정확히 리다이렉트되는지, 로그인 후 Dashboard가
 그림자 없는 카드로 정상 렌더링되는지, `/goals` 목록도 그림자 없이
 정상적으로 보이는지.
+
+---
+
+## Landing Page 콘텐츠/카피 재정리 (2026-09-15)
+
+구조(Header→Hero→Why GrowLog→Features→Growth Journey→Final CTA)는
+그대로 두고, 섹션별 역할이 겹치던 문제만 텍스트 레벨에서 정리했다.
+라우팅/컴포넌트 트리/인증/API는 무변경.
+
+### 무엇이 겹쳤나
+
+"주요 기능"(Goal Management/Growth Record/Timeline/Growth Dashboard
+카드)과 "Growth Journey"(Goal→Record→Timeline→Growth 스텝)가 같은
+4항목을 카드형/스텝형으로만 다르게 나열하고 있었고, 옛 `intro`
+섹션의 3-STEP("목표를 세운다→기록한다→성장을 확인한다")도 같은
+흐름을 또 반복해서, 정작 "왜 필요한가"와 "사용하면 어떤 변화가
+생기는가"를 설명하는 섹션이 없었다.
+
+### 섹션별 역할 재배정
+
+- Hero → GrowLog가 무엇인가 (헤드라인 유지, subcopy만 "목표+기록+
+  축적+성장"이 드러나도록 교체)
+- `intro`(id 유지, `#intro`) → **Why GrowLog**로 역할 전환. 3-STEP
+  카드 그리드를 없애고, 문제 제기 3줄 리스트 + 결론 문장 1개로
+  단순화했다(BaseCard 1장 안에 `<ul>` + 구분선 + 결론 문단). STEP
+  나열 구조 자체가 Growth Journey와 겹치는 원인이라 판단해서, 카드
+  개수를 늘리는 대신 리스트+결론이라는 다른 형태를 썼다.
+- 주요 기능 → 실제 기능 나열 그대로 유지하되, 영문 타이틀(Goal
+  Management 등)을 화면에서 없애고 한글 타이틀(목표 관리/성장 기록/
+  성장 타임라인/성장 대시보드)만 노출하도록 바꿨다. 영문은 UI에
+  아예 넣지 않았다(요청대로).
+- Growth Journey → 기능명 나열(Goal/Record/Timeline/Growth)을
+  버리고 사용자가 겪는 변화 과정(방향을 정합니다→오늘을 남깁니다→
+  시간이 쌓입니다→변화를 발견합니다)으로 라벨/설명을 전부 교체했다.
+  스텝 박스+화살표 UI 구조는 그대로 두고 텍스트만 바꿨다. 문장이
+  길어져서 박스 폭만 140px→180px로 조정했다(순수 레이아웃 조정,
+  새 디자인 효과 아님).
+- Final CTA → 한 줄 문구를 제목("당신의 성장은 이미 시작되고
+  있습니다.") + context 문단 + 버튼 구조로 확장했다.
+
+### CTA 문구를 두 개의 computed로 분리
+
+Header/Hero의 CTA(`ctaLabel`: "로그인"/"로그인하고 시작하기" ↔
+"Dashboard로 이동")와 Final CTA의 CTA(`finalCtaLabel`: "나의 성장
+기록 시작하기" ↔ "내 성장 대시보드 보기")는 역할이 달라서 하나의
+computed를 공유하지 않고 분리했다 — Header/Hero는 "바로 이동", Final
+CTA는 "성장 기록을 시작하라"는 클로징 메시지이기 때문이다.
+
+### 검증
+
+`npm run build`로 오류 없음을 확인한 뒤, Playwright로 비로그인/
+로그인 두 상태의 Landing을 스크린샷 확인했다: 5개 섹션이 각자 다른
+메시지를 보여주는지(주요 기능/Growth Journey가 더 이상 같은 문구를
+반복하지 않는지), Header/Hero의 CTA와 Final CTA의 버튼 문구가
+로그인 상태에 따라 각각 올바르게(그리고 서로 다르게) 바뀌는지.

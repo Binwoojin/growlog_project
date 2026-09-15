@@ -16,20 +16,30 @@ import GrowthJourney from '../components/landing/GrowthJourney.vue'
  *
  * Header/Intro/Final CTA는 로직 없는 마크업이라 별도 컴포넌트로 분리하지
  * 않고 이 파일에 그대로 둔다. Hero/Feature/GrowthJourney만 분리했다.
+ *
+ * Header/Hero의 CTA 문구(ctaLabel)와 Final CTA의 문구(finalCtaLabel)는
+ * 역할이 다르다 — Header/Hero는 "무엇인지 소개하고 바로 이동"이고, Final
+ * CTA는 "성장 기록을 시작하라"는 클로징 메시지라 별도 computed로 둔다.
  */
 const router = useRouter()
 const authStore = useAuthStore()
 
 const ctaLabel = computed(() => (authStore.isAuthenticated ? 'Dashboard로 이동' : '로그인하고 시작하기'))
+const finalCtaLabel = computed(() => (authStore.isAuthenticated ? '내 성장 대시보드 보기' : '나의 성장 기록 시작하기'))
 
 function goToCtaTarget() {
   router.push({ name: authStore.isAuthenticated ? 'dashboard' : 'login' })
 }
 
-const introSteps = [
-  { step: '1', title: '목표를 세운다', description: '이루고 싶은 목표를 정합니다.' },
-  { step: '2', title: '하루의 성장을 기록한다', description: '오늘의 과정을 짧게 남깁니다.' },
-  { step: '3', title: '변화와 성장을 확인한다', description: '쌓인 기록으로 나의 변화를 돌아봅니다.' },
+/*
+ * "Why GrowLog" — 문제 제기 3개 + GrowLog의 역할을 설명하는 결론 문장.
+ * 이 섹션의 목적은 "무엇을 하는가"가 아니라 "왜 필요한가"이므로,
+ * Growth Journey(사용자 경험 변화)와 겹치는 STEP 나열 구조는 쓰지 않는다.
+ */
+const whyGrowLogPoints = [
+  '계획은 세웠지만, 시간이 지나면 왜 시작했는지 잊기 쉽습니다.',
+  '하루의 변화는 작아서, 기록하지 않으면 그 과정은 금방 사라집니다.',
+  '기록이 쌓이면 내가 어떻게 달라졌는지 더 분명하게 볼 수 있습니다.',
 ]
 </script>
 
@@ -49,14 +59,16 @@ const introSteps = [
     <HeroSection :cta-label="ctaLabel" @cta="goToCtaTarget" />
 
     <section id="intro" class="intro">
-      <h2 class="intro__title">GrowLog 소개</h2>
-      <div class="intro__grid">
-        <BaseCard v-for="item in introSteps" :key="item.step" class="intro-card">
-          <span class="intro-card__step">STEP {{ item.step }}</span>
-          <p class="intro-card__title">{{ item.title }}</p>
-          <p class="intro-card__description">{{ item.description }}</p>
-        </BaseCard>
-      </div>
+      <h2 class="intro__title">성장은 눈에 잘 보이지 않습니다.</h2>
+      <BaseCard class="intro-card">
+        <ul class="intro-card__points">
+          <li v-for="point in whyGrowLogPoints" :key="point">{{ point }}</li>
+        </ul>
+        <p class="intro-card__conclusion">
+          GrowLog는 흘려보내기 쉬운 작은 변화들을 기록으로 남기고, 그 안에서
+          나의 성장을 발견할 수 있도록 돕습니다.
+        </p>
+      </BaseCard>
     </section>
 
     <div id="features">
@@ -66,8 +78,12 @@ const introSteps = [
     <GrowthJourney />
 
     <section class="final-cta">
-      <p class="final-cta__text">오늘의 작은 기록부터 시작해보세요.</p>
-      <BaseButton variant="primary" @click="goToCtaTarget">{{ ctaLabel }}</BaseButton>
+      <h2 class="final-cta__title">당신의 성장은 이미 시작되고 있습니다.</h2>
+      <p class="final-cta__text">
+        오늘의 목표와 작은 변화를 GrowLog에 기록해보세요. 쌓인 기록은 시간이
+        지나 당신의 성장 과정을 보여줍니다.
+      </p>
+      <BaseButton variant="primary" @click="goToCtaTarget">{{ finalCtaLabel }}</BaseButton>
     </section>
   </div>
 </template>
@@ -120,53 +136,50 @@ const introSteps = [
   text-align: center;
 }
 
-.intro__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4);
-}
-
 .intro-card {
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.intro-card__points {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  text-align: center;
-}
-
-.intro-card__step {
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 
-.intro-card__title {
+.intro-card__conclusion {
   margin: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
   font-weight: var(--font-weight-medium);
-}
-
-.intro-card__description {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
 }
 
 .final-cta {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   padding: var(--space-12) var(--space-4);
   text-align: center;
 }
 
-.final-cta__text {
+.final-cta__title {
   margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
 }
 
-@media (max-width: 720px) {
-  .intro__grid {
-    grid-template-columns: 1fr;
-  }
+.final-cta__text {
+  margin: 0 0 var(--space-2);
+  max-width: 480px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
 }
 </style>

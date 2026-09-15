@@ -4,12 +4,15 @@ import BaseCard from '../common/BaseCard.vue'
 /*
  * 이모지는 최종 디자인 요소가 아니라, 와이어프레임 단계에서 기능 카드
  * 위치를 구분하기 위한 임시 placeholder다.
+ *
+ * 타이틀은 한글 중심으로만 노출한다 — 영문 명칭(Goal Management 등)은
+ * 화면에 표시하지 않는다.
  */
 const features = [
-  { icon: '🎯', title: 'Goal Management', description: '이루고 싶은 목표를 세우고 진행 상태를 관리합니다.' },
-  { icon: '📝', title: 'Growth Record', description: '하루의 과정과 생각을 짧게 기록합니다.' },
-  { icon: '🗓️', title: 'Timeline', description: '목표와 기록을 시간 순서대로 모아 봅니다.' },
-  { icon: '📈', title: 'Growth Dashboard', description: '기록이 쌓인 결과를 한눈에 확인합니다.' },
+  { icon: '🎯', title: '목표 관리', description: '이루고 싶은 목표를 정하고 진행 상황을 확인합니다.' },
+  { icon: '📝', title: '성장 기록', description: '하루의 과정, 생각, 변화를 짧게 남깁니다.' },
+  { icon: '🗓️', title: '성장 타임라인', description: '목표와 기록이 시간에 따라 어떻게 이어졌는지 확인합니다.' },
+  { icon: '📈', title: '성장 대시보드', description: '쌓인 기록과 목표 진행 상황을 한눈에 돌아봅니다.' },
 ]
 </script>
 

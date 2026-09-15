@@ -19,8 +19,8 @@ const emit = defineEmits<{
     <div class="hero__copy">
       <h1 class="hero__headline">오늘의 기록이 내일의 성장이 됩니다.</h1>
       <p class="hero__subcopy">
-        GrowLog는 목표를 세우고, 매일의 과정을 기록하고, 시간이 지나 쌓인
-        기록으로 나의 성장을 확인하는 서비스입니다.
+        GrowLog는 목표를 세우고, 매일의 과정과 변화를 기록하며, 쌓인 기록
+        속에서 나의 성장을 발견하는 개인 성장 아카이브입니다.
       </p>
       <BaseButton variant="primary" @click="emit('cta')">{{ ctaLabel }}</BaseButton>
     </div>

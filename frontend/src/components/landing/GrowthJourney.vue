@@ -1,20 +1,22 @@
 <script setup lang="ts">
 /*
- * GrowLog 핵심 흐름 Goal → Record → Timeline → Growth를 순서가 가장
- * 분명하게 보이는 가로 스텝 UI로만 표현한다. 이모지는 와이어프레임
- * placeholder이며 최종 디자인 요소가 아니다.
+ * "주요 기능"이 기능 목록을 나열하는 섹션이라면, 여기는 GrowLog를
+ * 사용했을 때 사용자가 실제로 경험하는 변화의 과정을 보여주는
+ * 섹션이다 — 기능명(Goal/Record/Timeline/Growth) 나열을 반복하지
+ * 않는다. 이모지는 와이어프레임 placeholder이며 최종 디자인 요소가
+ * 아니다.
  */
 const steps = [
-  { icon: '🎯', label: 'Goal', description: '목표를 세운다' },
-  { icon: '📝', label: 'Record', description: '기록을 남긴다' },
-  { icon: '🗓️', label: 'Timeline', description: '흐름을 모아본다' },
-  { icon: '📈', label: 'Growth', description: '성장을 확인한다' },
+  { icon: '🎯', label: '방향을 정합니다', description: '지금 이루고 싶은 목표를 정합니다.' },
+  { icon: '📝', label: '오늘을 남깁니다', description: '작은 행동과 생각도 기록으로 남깁니다.' },
+  { icon: '🗓️', label: '시간이 쌓입니다', description: '기록들이 하루, 일주일, 한 달의 흐름으로 이어집니다.' },
+  { icon: '📈', label: '변화를 발견합니다', description: '쌓인 기록 속에서 내가 얼마나 달라졌는지 확인합니다.' },
 ]
 </script>
 
 <template>
   <section class="journey">
-    <h2 class="journey__title">Growth Journey</h2>
+    <h2 class="journey__title">작은 기록이 성장으로 이어지는 과정</h2>
 
     <ol class="journey__steps">
       <li v-for="(step, index) in steps" :key="step.label" class="journey__step">
@@ -63,7 +65,7 @@ const steps = [
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
-  width: 140px;
+  width: 180px;
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
