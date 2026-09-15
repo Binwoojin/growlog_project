@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store'
 import { fetchDashboard } from '../api/dashboard.api'
 import type { DashboardSummary } from '../types/dashboard'
+import AppNav from '../components/common/AppNav.vue'
 import BaseBadge from '../components/common/BaseBadge.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
@@ -44,7 +45,7 @@ async function onLogout() {
         <p class="dashboard__subtitle">이번 달에도 꾸준히 성장하고 있어요.</p>
       </div>
       <div class="dashboard__actions">
-        <RouterLink to="/timeline" class="dashboard__nav-link">타임라인</RouterLink>
+        <AppNav />
         <BaseButton variant="ghost" @click="onLogout">로그아웃</BaseButton>
       </div>
     </header>
@@ -141,17 +142,6 @@ async function onLogout() {
   align-items: center;
   flex-shrink: 0;
   gap: var(--space-4);
-}
-
-.dashboard__nav-link {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.dashboard__nav-link:hover {
-  color: var(--color-primary);
 }
 
 .dashboard__status {

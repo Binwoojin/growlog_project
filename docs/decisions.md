@@ -410,3 +410,47 @@ Login/Dashboard/Timeline 3개 화면을 1280/768/390px 세 폭에서 Playwright�
 
 이 로드맵엔 Day 7에 "밀린 작업 버퍼" 항목이 있었는데, 지금까지 밀린
 작업이 없어서 버퍼 시간을 따로 쓰지 않았다.
+
+---
+
+## Day 8 (2026-09-15) — Goal List
+
+### Goal CRUD API를 Day 8에 한 번에 설계한 이유
+
+Day 8은 목록(조회)만 필요하지만, Day 9(작성)·Day 10(수정/삭제)이 결국
+같은 도메인(Goal)을 다루고 같은 `GoalService`를 재사용하게 될 걸 알고
+있어서, `GoalApiController`에 CRUD 전체(GET 목록, GET 카테고리, POST,
+PUT, DELETE)를 한 번에 만들었다. 기존 JSP `GoalController`가 이미
+`saveGoal`/`updateGoal`/`deleteGoal`/`findGoalsByMember`/`findAllCategories`를
+전부 갖추고 있어서, 새로 만든 건 그 메서드들을 JSON으로 노출하는 얇은
+Controller 계층뿐이다 — Service/Repository/검증 로직은 전혀 손대지 않았다.
+
+검증 실패(날짜 역순, 진행률 범위 초과, 잘못된 상태값, 권한 없는 목표
+접근 등)는 기존 코드에서 전부 `IllegalArgumentException`으로 던지고
+있었다. JSP는 이걸 잡아서 flash message로 보여주지만, API는
+`@ExceptionHandler(IllegalArgumentException.class)`로 잡아 400 +
+`{"message": "..."}`로 응답하도록 했다 — Day 9에서 폼 에러 메시지를
+그대로 이 값을 꺼내 보여줄 수 있게 프론트에 `extractErrorMessage()`
+유틸도 미리 만들어뒀다.
+
+### GoalResponse를 따로 만든 이유
+
+`Goal` Entity를 그대로 JSON으로 직렬화하지 않고 `GoalResponse` DTO로
+한 번 감쌌다. `Goal`은 `Member`/`Category`를 지연 로딩(LAZY) 연관관계로
+갖고 있어서, Entity를 그대로 반환하면 Jackson이 프록시 객체를 직렬화하려
+하다 예외가 나거나 불필요한 회원 정보까지 노출될 위험이 있다. `Category`만
+필요한 필드로 골라 `CategoryResponse`로 중첩시켰다.
+
+### 공용 네비게이션(AppNav) 신설
+
+Dashboard/Timeline/Goal 3개 화면이 생기면서 각 화면 헤더에 링크를
+따로따로 심으면 나중에 화면이 늘어날 때마다 3곳을 동시에 고쳐야 하는
+문제가 보여서, `components/common/AppNav.vue`로 뺐다. Day 7에서 고친
+"버튼 텍스트가 좁은 화면에서 줄바꿈되는" 문제의 재발을 막기 위해
+`white-space: nowrap`도 그대로 적용했다.
+
+### Day 9~10으로 미룬 것
+
+- Goal 작성 폼, 입력 오류/저장 중/성공/실패 상태 (Day 9)
+- Goal 수정 모달, 삭제 확인 다이얼로그(`BaseModal`/`ConfirmDialog`) (Day 10)
+- `GoalCard`에는 아직 수정/삭제 버튼이 없다 — Day 10에서 모달과 함께 추가한다.

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { fetchTimeline } from '../api/timeline.api'
 import type { TimelineFilter, TimelineResponse } from '../types/timeline'
+import AppNav from '../components/common/AppNav.vue'
 import BaseBadge from '../components/common/BaseBadge.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
@@ -39,10 +40,13 @@ onMounted(async () => {
 <template>
   <main class="timeline">
     <header class="timeline__header">
-      <h1>타임라인</h1>
-      <p v-if="timeline" class="timeline__subtitle">
-        {{ timeline.selectedMonth }} · 목표 {{ timeline.monthlyGoalCount }}개 · 기록 {{ timeline.monthlyRecordCount }}개
-      </p>
+      <div class="timeline__heading">
+        <h1>타임라인</h1>
+        <p v-if="timeline" class="timeline__subtitle">
+          {{ timeline.selectedMonth }} · 목표 {{ timeline.monthlyGoalCount }}개 · 기록 {{ timeline.monthlyRecordCount }}개
+        </p>
+      </div>
+      <AppNav />
     </header>
 
     <nav v-if="status === 'success'" class="timeline__filter" aria-label="타임라인 필터">
@@ -106,6 +110,14 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+}
+
+.timeline__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
 }
 
 .timeline__header h1 {

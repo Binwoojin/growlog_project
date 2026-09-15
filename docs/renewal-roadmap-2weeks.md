@@ -99,8 +99,15 @@
 
 ## Week 2 — Goal 집중 + Record Read + 마무리
 
-### Day 8 — Goal List
-- [ ] `GoalCard` / `GoalProgress` / `GoalStatusBadge` 컴포넌트
+### Day 8 — Goal List ✅ (2026-09-15)
+- [x] `GoalCard` / `GoalProgress` / `GoalStatusBadge` 컴포넌트 —
+      `frontend/src/components/goal/`. 백엔드는 새 `GoalApiController`
+      (`GET /api/goals`, `GET /api/categories`)로 기존 `GoalService.
+      findGoalsByMember()`/`findAllCategories()`를 그대로 노출.
+      Day9~10에서 쓸 생성/수정/삭제 API(`POST/PUT/DELETE /api/goals`)도
+      한 번에 같이 만들어둠(백엔드 재작업 최소화). MockMvc 테스트 9개 추가.
+      라우트 `/goals` 추가, 3개 화면(대시보드/타임라인/목표) 공용
+      `AppNav.vue` 신설해서 헤더 네비게이션 통일.
 
 ### Day 9 — Goal 작성
 - [ ] 입력 오류 처리
