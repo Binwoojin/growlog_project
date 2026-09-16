@@ -1768,3 +1768,38 @@ Origin을 주입받는 구조라 운영 도메인을 그 값에 넣기만 하면
 (정상 종료 확인), Vite preview 서버에 대한 6개 경로 curl 200 확인,
 Playwright로 `/timeline` 하드 리프레시 스크린샷 1장을
 `docs/screenshots/day14/`에 저장했다.
+
+---
+
+## Day 15 (2026-09-16) — Portfolio Case Study & Documentation
+
+로드맵 15-1~15-7을 그대로 채웠다. 새 기능/디자인 작업은 없었고,
+지금까지 실제로 한 일만 문서로 옮기는 게 목적이라 여기서 새로운
+결정을 만들지 않았다(그래서 이 항목 자체는 짧다).
+
+- **README.md**: 기존에 있던 Notion 기획서 링크는 그대로 보존하고,
+  그 위에 한 줄 소개/프로젝트 배경/Renewal 목표/Tech Stack/
+  Before-After/주요 화면 스크린샷/Architecture Decisions 요약/
+  Troubleshooting 4건/UX·Design Decisions/Future Improvements를
+  추가했다. 스크린샷은 Day 11/13/14에서 이미 찍어둔 것(Dashboard/
+  Timeline/Goal List/Record Detail/로그인 화면)을 그대로 재사용하고,
+  Landing만 이번에 새로 한 장 찍었다(`docs/screenshots/readme/landing.png`)
+  — Landing은 Day 11~14 어디에서도 캡처 대상이 아니었어서 README를
+  쓰는 지금 처음 필요해졌다.
+- **docs/interview-prep.md**: 로드맵이 지정한 15개 질문 전부에 답을
+  적었다. 실제로 하지 않은 것(예: 자동화 테스트, 처음부터 profile
+  분리)은 "했다"고 쓰지 않고 15번(다시 만든다면 무엇을 바꿀지)
+  질문에서 정직하게 남겼다.
+- **Troubleshooting**: 로드맵이 예시로 준 4건(Login 403/로그인 후
+  /api/me 401/Public Landing 오탐 리다이렉트/JSP→SPA 리뉴얼 포지션)
+  중 앞의 3건은 실제 `docs/trouble_shooting/` 과거 기록에 있는
+  내용을 README용으로 요약해 옮겼고, 4번째는 로드맵 예시("JSP → SPA
+  Renewal") 대신 오늘 Day 14에서 실제로 발견하고 고친 운영 프로필
+  누락 건으로 바꿔 넣었다 — 오늘 실제로 겪은 일이라 더 정직한
+  4번째 사례라고 판단했다.
+
+### 최종 범위 Freeze
+
+로드맵 8번 항목대로, Badge/통계/AI 요약/Community/Record Create·Edit
+Vue 전환/새 Dashboard Widget은 전부 README의 Future Improvements로만
+남기고 이번 Portfolio Scope에서 구현하지 않는다.
