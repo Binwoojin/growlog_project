@@ -8,7 +8,7 @@ import type { LoginCredentials, Me } from '../types/auth'
  *
  * SPA 입장에서 이 리다이렉트 응답 자체는 의미가 없으므로 validateStatus로
  * 에러 취급하지 않고 항상 통과시킨 뒤, 실제 로그인 여부는 이어서 호출하는
- * fetchMe()로 판단한다 (로드맵 Day 1의 검증 흐름과 동일).
+ * fetchMe()로 판단한다.
  */
 export async function login(credentials: LoginCredentials): Promise<void> {
   const body = new URLSearchParams()

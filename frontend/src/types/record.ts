@@ -1,7 +1,7 @@
 /*
- * Day 13 — Record Detail(GET /api/records/{id})이 사용하는 응답 타입.
+ * Record Detail(GET /api/records/{id})이 사용하는 응답 타입.
  * 백엔드 GrowthRecordResponse와 1:1로 대응한다. Record Create/Edit은
- * 이번 Day 범위가 아니므로 요청(Request) 타입은 만들지 않는다.
+ * 이 화면의 범위가 아니므로 요청(Request) 타입은 만들지 않는다.
  */
 export interface RecordGoalSummary {
   goalNum: number

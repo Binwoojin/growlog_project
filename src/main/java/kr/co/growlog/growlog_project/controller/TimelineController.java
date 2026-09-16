@@ -18,7 +18,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 /*
- * Vue SPA의 Timeline 화면(리뉴얼 로드맵 Day 5)이 사용하는 API
+ * Vue SPA의 Timeline 화면이 사용하는 API
  *
  * 새 비즈니스 로직을 추가하지 않는다 — 기존 JSP용 PageController.timeline()과
  * 동일한 월 선택/보정 로직과 Service 호출을 그대로 재사용해서 JSON으로만

@@ -11,13 +11,10 @@ import BaseCard from '../components/common/BaseCard.vue'
 import LoadingSkeleton from '../components/common/LoadingSkeleton.vue'
 
 /*
- * Day 5 — TimelineItem Discriminated Union 타입으로 목표/기록을 안전하게
- * 분기해서 보여준다. 백엔드 TimelineService.getTimeline()이 이미 두 도메인을
- * 하나로 합쳐 최신순 정렬까지 해서 내려주므로, 프론트에서 별도로
+ * TimelineItem Discriminated Union 타입으로 목표/기록을 안전하게 분기해서
+ * 보여준다. 백엔드 TimelineService.getTimeline()이 이미 두 도메인을 하나로
+ * 합쳐 최신순 정렬까지 해서 내려주므로, 프론트에서 별도로
  * normalizeTimeline() 병합 로직을 만들 필요가 없다 — 그대로 렌더링만 한다.
- *
- * Day 6 — Loading(Skeleton)/Error/Empty/Success 상태와 전체/목표/기록 필터를
- * 추가해서 UX를 완성한다.
  */
 const timeline = ref<TimelineResponse | null>(null)
 const status = ref<'loading' | 'success' | 'error'>('loading')

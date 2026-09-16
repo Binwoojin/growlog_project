@@ -178,11 +178,6 @@
                 </div>
 
 
-                <!--
-                    닉네임 수정 기능을 구현할 때 사용할 form이다.
-                    POST 기능을 아직 연결하지 않았다면 action은 그대로 두고
-                    제출 버튼을 임시로 비활성화해도 된다.
-                -->
                 <!-- ========================================
      닉네임 변경 폼
 ======================================== -->
@@ -450,53 +445,6 @@
 
             </section>
 
-
-            <!-- ========================================
-                 계정 관리
-            ========================================= -->
-            <section class="settings_section danger_section">
-
-                <div class="settings_section_header">
-
-                    <div class="settings_section_icon danger_icon">
-                        ⚠️
-                    </div>
-
-                    <div>
-                        <span class="section_eyebrow danger_eyebrow">
-                            ACCOUNT MANAGEMENT
-                        </span>
-
-                        <h2>계정 관리</h2>
-
-                        <p>
-                            계정과 관련된 중요한 기능을 관리할 수 있어요.
-                        </p>
-                    </div>
-
-                </div>
-
-
-                <div class="settings_menu_row">
-
-                    <div class="settings_menu_information">
-                        <h3>회원 탈퇴</h3>
-
-                        <p>
-                            탈퇴하면 작성한 목표와 성장 기록을 복구할 수 없어요.
-                        </p>
-                    </div>
-
-                    <!-- 추후 회원 탈퇴 기능 연결 예정 -->
-                    <button type="button"
-                            class="settings_danger_button"
-                            disabled>
-                        준비 중
-                    </button>
-
-                </div>
-
-            </section>
 
         </div>
 

@@ -31,8 +31,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /*
- * 리뉴얼 로드맵 Day 5 — Timeline API가 기존 JSP(PageController.timeline())와
- * 동일한 월 선택 로직/Service를 재사용해서 JSON으로 조립하는지 확인
+ * Timeline API가 기존 JSP(PageController.timeline())와 동일한 월 선택
+ * 로직/Service를 재사용해서 JSON으로 조립하는지 확인
  */
 @SpringBootTest
 @AutoConfigureMockMvc

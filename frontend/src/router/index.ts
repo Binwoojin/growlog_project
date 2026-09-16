@@ -40,6 +40,12 @@ const routes = [
     component: () => import('../views/RecordDetailView.vue'),
     props: true,
   },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFoundView.vue'),
+    meta: { public: true },
+  },
 ]
 
 const router = createRouter({

@@ -1,4 +1,4 @@
-# Day 14 — 운영 프로필. SPRING_PROFILES_ACTIVE=prod로 활성화한다.
+# 운영 프로필. SPRING_PROFILES_ACTIVE=prod로 활성화한다.
 #
 # application.yaml(공통 설정)이 로컬 개발 편의를 기준으로 되어 있어서
 # (ddl-auto: update, show-sql: true, CORS 기본값이 localhost:5173) 그대로

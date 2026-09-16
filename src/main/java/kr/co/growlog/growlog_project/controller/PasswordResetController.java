@@ -68,7 +68,6 @@ public class PasswordResetController {
     }
 
     // 가입 이메일로 인증번호를 발송
-    // 실제 이메일 발송 로직은 다음 단계에서 기존 이메일 인증 Service와 연결 예정
     @PostMapping("/find-password/send-code")
     public String sendVerificationCode(@RequestParam("email") String email,
                                       HttpSession session,
@@ -85,7 +84,6 @@ public class PasswordResetController {
         }
 
         // 해당 이메일로 가입된 회원이 존재하는지 확인
-        // 다음 단계에서 MemberService에 existsByEmail 또는 findByEmail 기능을 연결
         boolean exists = memberService.existsByEmail(trimmedEmail);
 
         if (!exists) {

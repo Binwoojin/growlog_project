@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /*
- * Vue SPA 인증 연동 검증(리뉴얼 로드맵 Day 1)을 위한 API 컨트롤러
+ * Vue SPA 인증 연동을 위한 API 컨트롤러
  *
  * SecurityConfig에서 "/api/me"는 authenticated()로 보호되어 있으므로
  * 이 메서드는 세션 쿠키로 로그인 상태가 확인된 요청에서만 호출된다.

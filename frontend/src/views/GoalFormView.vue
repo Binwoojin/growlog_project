@@ -10,7 +10,6 @@ import BaseCard from '../components/common/BaseCard.vue'
 import BaseInput from '../components/common/BaseInput.vue'
 
 /*
- * Day 9 — Goal 작성.
  * 생성 요청은 GoalService.saveGoal()을 그대로 타므로 진행률/상태는
  * 보내지 않는다 (항상 0%/"진행중"으로 시작한다).
  */
@@ -40,7 +39,7 @@ onMounted(async () => {
 })
 
 /*
- * Day 11 — 백엔드 GoalService가 이미 제목 공백/기간 역전을 검증해서 400으로
+ * 백엔드 GoalService가 이미 제목 공백/기간 역전을 검증해서 400으로
  * 알려주지만(아래 catch에서 그 메시지를 그대로 보여준다), 왕복 없이 바로
  * 알 수 있는 흔한 실수(빈 제목/너무 긴 제목/기간 역전)는 제출 전에 먼저
  * 잡아서 즉시 피드백한다. GOAL_TITLE 컬럼이 VARCHAR(200)이라 200자 기준을

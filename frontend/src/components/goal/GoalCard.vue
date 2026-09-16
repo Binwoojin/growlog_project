@@ -56,16 +56,6 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-/* 터치 기기에서 hover가 눌어붙지 않도록 포인터가 실제로 있는 환경에서만 */
-@media (hover: hover) and (pointer: fine) {
-  .goal-card:hover {
-    transform: translateY(-1px);
-    border-color: var(--color-primary-bg);
-    box-shadow: var(--shadow-elevated);
-  }
 }
 
 .goal-card__header {

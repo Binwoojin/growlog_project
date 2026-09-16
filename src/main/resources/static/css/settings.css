@@ -382,10 +382,6 @@
     background-color: #edf1f7;
 }
 
-.danger_icon {
-    background-color: #faece9;
-}
-
 
 /* ========================================
    프로필 설정 폼
@@ -517,75 +513,6 @@
     background-color: #60895d;
 }
 
-
-/* ========================================
-   보안·계정 관리 메뉴
-======================================== */
-
-.settings_menu_row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 25px;
-
-    padding-top: 24px;
-}
-
-.settings_menu_information h3 {
-    margin: 0 0 8px;
-
-    color: #3b4e3f;
-    font-size: 15px;
-}
-
-.settings_menu_information p {
-    margin: 0;
-
-    color: #899189;
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.settings_secondary_button,
-.settings_danger_button {
-    flex: 0 0 auto;
-
-    min-width: 90px;
-    height: 40px;
-    padding: 0 14px;
-
-    border-radius: 10px;
-
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 800;
-
-    cursor: not-allowed;
-}
-
-.settings_secondary_button {
-    border: 1px solid #d9e0d8;
-
-    background-color: #f2f4f1;
-
-    color: #9ba19b;
-}
-
-.danger_section {
-    border-color: #eedfdc;
-}
-
-.danger_eyebrow {
-    color: #bb7c73;
-}
-
-.settings_danger_button {
-    border: 1px solid #ead8d4;
-
-    background-color: #faefec;
-
-    color: #bd8b83;
-}
 
 /* ========================================
    닉네임 입력 및 중복 확인
@@ -921,11 +848,6 @@
     .settings_cancel_button,
     .settings_save_button {
         width: 100%;
-    }
-
-    .settings_menu_row {
-        align-items: flex-start;
-        flex-direction: column;
     }
 
 }

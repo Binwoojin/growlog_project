@@ -21,8 +21,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /*
- * 리뉴얼 로드맵 Day 1 "인증/CORS 기술 검증"에 대응하는 테스트
- *
  * Vue SPA(다른 Origin)가 세션 쿠키 기반으로 로그인 상태를 유지할 수 있는지
  * 아래 3가지 관점에서 확인한다.
  *

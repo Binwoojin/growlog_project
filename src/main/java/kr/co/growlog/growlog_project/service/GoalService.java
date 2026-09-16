@@ -107,7 +107,7 @@ public class GoalService {
         // 종료일이 시작일보다 빠른지 검사
         validateDate(request.getStartDate(), request.getEndDate());
         
-        // 진행률이 0~100 범위를 벗어나는지 검사 (나중에 validateProgress 추가 예정)
+        // 진행률이 0~100 범위를 벗어나는지 검사
         validateProgress(request.getGoalProgress());
         validateStatus(request.getGoalStatus());
         

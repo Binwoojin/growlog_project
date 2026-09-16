@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /*
- * Vue SPA의 Goal 화면(리뉴얼 로드맵 Day 8~10)이 사용하는 API
+ * Vue SPA의 Goal 화면이 사용하는 API
  *
  * 새 비즈니스 로직을 추가하지 않는다 — 기존 JSP용 GoalController와 동일한
  * GoalService 메서드(saveGoal/updateGoal/deleteGoal/findGoalsByMember 등)를

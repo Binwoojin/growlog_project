@@ -12,15 +12,19 @@ import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
 import LoadingSkeleton from '../components/common/LoadingSkeleton.vue'
 
-/*
- * Day 4 — GET /api/dashboard로 실제 로그인 사용자 데이터를 가져와 표시한다.
- * Day 6 — Loading 상태를 Timeline과 같은 LoadingSkeleton으로 통일했다.
- */
 const authStore = useAuthStore()
 const router = useRouter()
 
 const summary = ref<DashboardSummary | null>(null)
 const status = ref<'loading' | 'success' | 'error'>('loading')
+
+/*
+ * 성장 기록 작성은 아직 Vue로 옮기지 않았다 — 기존 JSP 화면
+ * (GrowthRecordController의 /record/write)이 이미지/YouTube 업로드까지
+ * 포함해 정상 동작하고 있어서, Vue에 새로 만드는 대신 그 화면으로
+ * 안내한다.
+ */
+const recordWriteUrl = `${import.meta.env.VITE_API_BASE_URL}/record/write`
 
 onMounted(async () => {
   try {
@@ -91,7 +95,7 @@ async function onLogout() {
           <Target :size="16" :stroke-width="1.75" />
           목표 추가
         </BaseButton>
-        <BaseButton variant="secondary" class="quick-action" disabled title="Day 13 이후 연결 예정">
+        <BaseButton variant="secondary" class="quick-action" :href="recordWriteUrl">
           <NotebookPen :size="16" :stroke-width="1.75" />
           기록 남기기
         </BaseButton>
@@ -106,11 +110,24 @@ async function onLogout() {
 
         <ul v-if="summary.recentTimeline.length > 0" class="dashboard__timeline-rail">
           <li v-for="item in summary.recentTimeline" :key="`${item.type}-${item.itemNum}`" class="dashboard__timeline-node">
-            <BaseCard class="timeline-item">
+            <RouterLink v-if="item.type === 'RECORD'" :to="item.detailUrl" class="timeline-item-link">
+              <BaseCard class="timeline-item timeline-item--clickable">
+                <div class="timeline-item__head">
+                  <BaseBadge variant="success">
+                    <NotebookText :size="12" :stroke-width="1.75" />
+                    성장 기록
+                  </BaseBadge>
+                  <span class="timeline-item__date">{{ formatTimelineDate(item.createdAt) }}</span>
+                </div>
+                <p class="timeline-item__title">{{ item.title }}</p>
+                <p class="timeline-item__meta">{{ item.content }}</p>
+              </BaseCard>
+            </RouterLink>
+            <BaseCard v-else class="timeline-item">
               <div class="timeline-item__head">
-                <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
-                  <component :is="item.type === 'GOAL' ? Target : NotebookText" :size="12" :stroke-width="1.75" />
-                  {{ item.type === 'GOAL' ? '목표' : '성장 기록' }}
+                <BaseBadge variant="primary">
+                  <Target :size="12" :stroke-width="1.75" />
+                  목표
                 </BaseBadge>
                 <span class="timeline-item__date">{{ formatTimelineDate(item.createdAt) }}</span>
               </div>
@@ -273,13 +290,19 @@ async function onLogout() {
   background: var(--color-accent);
 }
 
+.timeline-item-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .timeline-item {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* 터치 기기에서 hover가 눌어붙지 않도록 포인터가 실제로 있는 환경에서만 */
+/* 터치 기기에서 hover가 눌어붙지 않도록 포인터가 실제로 있는 환경에서만, 클릭 가능한(기록) 카드에만 적용 */
 @media (hover: hover) and (pointer: fine) {
-  .timeline-item:hover {
+  .timeline-item--clickable:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-elevated);
   }

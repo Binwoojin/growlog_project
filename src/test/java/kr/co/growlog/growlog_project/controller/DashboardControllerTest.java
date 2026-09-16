@@ -31,8 +31,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /*
- * 리뉴얼 로드맵 Day 4 — Dashboard가 기존 Service를 올바르게 재사용해서
- * JSON으로 조립하는지 확인하는 테스트
+ * Dashboard가 기존 Service를 올바르게 재사용해서 JSON으로 조립하는지
+ * 확인하는 테스트
  */
 @SpringBootTest
 @AutoConfigureMockMvc

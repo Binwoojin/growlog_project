@@ -591,8 +591,7 @@ button {
     .profile_card_header,
     .section_heading,
     .calendar_header,
-    .settings_title_card,
-    .settings_menu_row {
+    .settings_title_card {
         align-items: flex-start;
         flex-direction: column;
     }

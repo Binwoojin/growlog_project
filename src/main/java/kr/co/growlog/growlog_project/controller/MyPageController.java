@@ -1,13 +1,6 @@
 package kr.co.growlog.growlog_project.controller;
 
-// 마이페이지와 마이페이지 하위 메뉴의 요청을 처리하는 Controller
-
-// 현재 구현하는 메뉴
-// 1. 프로필 페이지
-// 2. 출석 현황 페이지
-
-// 이후 개인 정보 수정, 비밀번호 변경, 계정 관리 기능도
-// 해당 Controller에 순서대로 추가 예정
+// 마이페이지와 마이페이지 하위 메뉴(프로필/출석 현황/뱃지/계정 설정)의 요청을 처리하는 Controller
 
 import jakarta.servlet.http.HttpSession;
 import java.time.Duration;

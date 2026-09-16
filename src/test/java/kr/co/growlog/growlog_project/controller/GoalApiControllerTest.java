@@ -30,8 +30,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /*
- * 리뉴얼 로드맵 Day 8~10 — Goal API가 기존 GoalService를 그대로 재사용해서
- * JSON으로 노출하는지, 검증 실패 시 400으로 응답하는지 확인
+ * Goal API가 기존 GoalService를 그대로 재사용해서 JSON으로 노출하는지,
+ * 검증 실패 시 400으로 응답하는지 확인
  */
 @SpringBootTest
 @AutoConfigureMockMvc

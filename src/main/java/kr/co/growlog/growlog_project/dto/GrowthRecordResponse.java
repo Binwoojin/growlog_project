@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /*
- * Day 13 — Vue Record Detail 화면이 사용하는 응답.
+ * Vue Record Detail 화면이 사용하는 응답.
  * JPA Entity(GrowthRecord)를 그대로 직렬화하지 않고 필요한 필드만 담는다 —
  * Member 지연 로딩 필드를 실수로 직렬화하는 문제를 피하기 위함이다(GoalResponse와 동일한 이유).
  */

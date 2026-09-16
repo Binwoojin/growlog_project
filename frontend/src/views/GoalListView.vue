@@ -12,13 +12,9 @@ import GoalEditModal from '../components/goal/GoalEditModal.vue'
 import LoadingSkeleton from '../components/common/LoadingSkeleton.vue'
 
 /*
- * Day 8 — Goal List. GoalCard/GoalProgress/GoalStatusBadge 컴포넌트로
- * 기존 GoalService.findGoalsByMember()를 그대로 노출한 GET /api/goals 결과를
- * 렌더링한다.
- * Day 9 — Goal 작성(/goals/new)은 별도 페이지로 연결.
- * Day 10 — Goal 수정은 이 목록 페이지 위의 모달(GoalEditModal)로, 삭제는
- * ConfirmDialog로 확인 후 처리한다. 기존 JSP의 "목록 위에서 모달로 수정"
- * 패턴을 그대로 따랐다.
+ * 수정은 이 목록 페이지 위의 모달(GoalEditModal)로, 삭제는 ConfirmDialog로
+ * 확인 후 처리한다 — 기존 JSP의 "목록 위에서 모달로 수정" 패턴을 그대로
+ * 따랐다.
  */
 const router = useRouter()
 const goals = ref<Goal[]>([])

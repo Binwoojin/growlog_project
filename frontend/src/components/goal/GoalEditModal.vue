@@ -8,8 +8,8 @@ import BaseInput from '../common/BaseInput.vue'
 import BaseModal from '../common/BaseModal.vue'
 
 /*
- * Day 10 — Goal 수정. 기존 JSP가 goal/list 페이지 위에서 모달로 수정하는
- * 방식(goal/list?openGoal=)을 그대로 따라, Vue에서도 목록 페이지에서
+ * 기존 JSP가 goal/list 페이지 위에서 모달로 수정하는 방식
+ * (goal/list?openGoal=)을 그대로 따라, Vue에서도 목록 페이지에서
  * BaseModal로 수정한다.
  *
  * 생성 폼(GoalFormView)과 달리 진행률/상태 입력이 있다 — GoalService.
@@ -58,7 +58,7 @@ watch(
   { immediate: true },
 )
 
-/* Day 11 — GoalFormView와 동일한 기준(빈 제목/200자 초과/기간 역전)으로 제출 전 검증한다 */
+/* GoalFormView와 동일한 기준(빈 제목/200자 초과/기간 역전)으로 제출 전 검증한다 */
 function validate(): boolean {
   titleError.value = ''
   dateError.value = ''

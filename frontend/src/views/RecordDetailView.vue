@@ -11,7 +11,6 @@ import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
 
 /*
- * Day 13 — Record Detail Read.
  * Timeline의 성장 기록 카드를 클릭하면 이 화면으로 온다(detailUrl이 이미
  * "/record/{recordNum}" 형태라 라우트 경로를 그대로 맞췄다).
  *

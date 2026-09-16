@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /*
- * Day 13 — Vue Record Detail 화면(Timeline → Record 카드 클릭 → /record/:id)이
+ * Vue Record Detail 화면(Timeline → Record 카드 클릭 → /record/:id)이
  * 사용하는 API.
  *
  * 새 비즈니스 로직을 추가하지 않는다 — 기존 JSP용 GrowthRecordController.

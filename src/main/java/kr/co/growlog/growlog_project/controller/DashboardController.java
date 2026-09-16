@@ -16,7 +16,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 /*
- * Vue SPA의 Dashboard 화면(리뉴얼 로드맵 Day 4)이 사용하는 API
+ * Vue SPA의 Dashboard 화면이 사용하는 API
  *
  * 새 비즈니스 로직을 추가하지 않는다 — HomeController.homePage()가 기존
  * JSP 홈 화면에 넘기던 것과 동일한 Service 메서드를 그대로 호출해서

@@ -53,6 +53,12 @@ const model = defineModel<string>({ required: true })
 .base-input__field:focus {
   outline: none;
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.base-input__field:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
 .base-input__field.has-error {
