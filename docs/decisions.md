@@ -1636,3 +1636,135 @@ URI로 별도 확인해 정상 표시됨을 확인했다(아래 트러블슈팅 
 YouTube iframe은 이 샌드박스 환경의 외부 네트워크 제한 때문에
 스크린샷에서는 비어 보이지만, 레이아웃 높이는 정상적으로 예약되고
 실제 배포 환경에서는 일반적인 iframe 임베드와 동일하게 로드된다).
+
+---
+
+## Day 14 (2026-09-16) — Deployment & Production QA
+
+### 먼저 밝혀야 할 것 — 이 세션에서 실제로 할 수 있는 것과 없는 것
+
+이 세션은 격리된 샌드박스 컨테이너에서 실행되고 있고, 실제 운영
+도메인·운영 RDS·프론트엔드 정적 호스팅(S3/CloudFront/Vercel 등) 같은
+배포 인프라가 이 저장소/환경에 존재하지 않는다(Dockerfile, nginx
+설정, CI/CD 설정, 호스팅 설정 파일 모두 없음을 확인했다). 그래서
+"실제로 배포된 환경에서" 세션 쿠키/CORS/CSRF/SPA 라우팅을 눈으로
+확인하는 것은 이 세션에서는 불가능하다 — 이 사실을 숨기지 않고
+그대로 밝힌다.
+
+대신 실제로 할 수 있었던 것, 즉 **코드/설정 자체가 운영 환경 기준을
+만족하는지**를 점검하고, 로컬에서 재현 가능한 범위(프로덕션
+빌드 산출물 + Vite preview 정적 서버)에서 검증 가능한 부분은
+실제로 검증했다.
+
+### 1. (발견 및 수정) 운영 프로필이 아예 없었다 — `ddl-auto: update`가
+   그대로 운영에 나갈 뻔한 상태
+
+`application.yaml`을 다시 읽어보니 `spring.profiles.active`를 설정하는
+곳이 코드 어디에도 없고, `application-prod.yaml` 같은 운영 전용 파일도
+없었다 — 즉 로컬 개발용으로 튜닝된 단일 `application.yaml`
+(`ddl-auto: update`, `show-sql: true`, `app.cors.allowed-origins`
+기본값이 `http://localhost:5173`)이 프로필 구분 없이 그대로 운영에도
+나가는 구조였다.
+
+`docs/trouble_shooting/260730.md` 13번 항목에 "로컬과 운영 프로필을
+분리했다"고 이미 적혀 있었지만, 실제 코드에는 그 분리가 존재하지
+않았다 — 과거에 의도했던 것이 실제로 반영되지 못했거나 이후 커밋에서
+사라진 것으로 보인다. Day 14가 "운영 설정 확인"이 목적이므로 새
+디자인/기능이 아니라 **설정 결함 수정**으로 판단해 그 자리에서
+고쳤다:
+
+- `src/main/resources/application-prod.yaml` 추가.
+  `ddl-auto: validate`(운영 DB 스키마를 애플리케이션이 자동으로
+  바꾸지 않고, Entity와 실제 스키마가 다르면 조용히 넘어가는 대신
+  즉시 기동 실패하게 함), `show-sql: false`(운영 로그에 SQL 원문이
+  남지 않게 함), `app.cors.allowed-origins: ${CORS_ALLOWED_ORIGINS}`
+  (fallback 기본값을 없애서, 운영에 이 값을 안 넣으면 `localhost`로
+  조용히 열리는 대신 기동 자체가 실패하게 함)만 오버라이드했다.
+  나머지(세션 쿠키 `SameSite=None`/`Secure`, CSRF 쿠키 설정 등)는
+  Day 1에서 이미 HTTPS 운영 환경을 기준으로 설계되어 있어 프로필
+  분리가 필요 없었다.
+  `python3 -c "import yaml; yaml.safe_load(...)"`로 YAML 문법만
+  로컬에서 확인했다 — 실제 운영 DB/도메인이 없어 이 프로필로 애플리
+  케이션을 완전히 기동해보는 것까지는 이 세션에서 할 수 없었다.
+- 배포 시 `SPRING_PROFILES_ACTIVE=prod` 환경변수로 이 프로필을
+  활성화해야 한다는 것을 여기 문서와 README에 남긴다(Day 15).
+
+### 2. 프론트엔드 — `.env.production` 템플릿 부재
+
+`frontend/`에는 `.env.development`(`VITE_API_BASE_URL=http://localhost:8080`)만
+있고 `.env.production`이 없었다. Vite는 `vite build`(=`npm run
+build`) 실행 시 자동으로 `.env.production`을 읽어 빌드 시점에 값을
+정적 자산에 박아 넣으므로, 이 파일이 없으면 운영 빌드를 만들 때마다
+실제 배포 도메인을 직접 기억해서 다른 방법(쉘 환경변수 등)으로
+주입해야 하는 번거로움과 실수 가능성이 있었다. 템플릿
+`frontend/.env.production`을 추가했다(`VITE_API_BASE_URL=https://api.growlog.example.com`
+placeholder) — 실제 배포 도메인이 정해지면 이 값만 바꾸고 다시
+빌드하면 된다는 것을 주석으로 남겼다.
+
+### 3. SPA 새로고침 시 404 여부 — 로컬에서 검증 가능한 범위까지 확인
+
+`vue-router`가 `createWebHistory()`(해시가 아닌 진짜 경로)를 쓰고
+있어서, 정적 파일을 서빙하는 쪽(향후 선택할 호스팅)이 "존재하지
+않는 경로 요청은 index.html로 fallback"하도록 설정되어 있지 않으면
+`/dashboard`를 새로고침했을 때 404가 난다. 이건 앱 코드가 아니라
+호스팅 설정의 책임이라 이 저장소만으로는 완전히 검증할 수 없지만,
+`npm run build` 산출물을 `vite preview`(정적 파일 서버 + SPA
+fallback 내장)로 띄운 뒤 `/`, `/login`, `/dashboard`, `/timeline`,
+`/goals`, `/record/123` 전부에 직접 GET을 보내서 전부 200을 받는 것을
+확인했다.
+
+```text
+/            -> 200
+/login       -> 200
+/dashboard   -> 200
+/timeline    -> 200
+/goals       -> 200
+/record/123  -> 200
+```
+
+`/timeline`에서 Playwright로 실제 브라우저 하드 리프레시까지
+재현했을 때도 404 없이 `index.html`이 다시 로드되고, Router
+Guard가 정상적으로 `/login?redirect=/timeline`으로 리다이렉트하는 것도
+확인했다(`docs/screenshots/day14/01-spa-refresh-no-404.png`) — 즉
+애플리케이션 자체(라우터 설정)는 운영 배포 기준을 만족한다.
+
+**다만** 이건 Vite 자체 정적 서버의 fallback 동작이다. 실제 운영에서
+쓸 호스팅(S3+CloudFront, Nginx, Vercel/Netlify 등)이 아직 정해지지
+않았으므로, 그 호스팅에도 동일한 "unknown path → index.html" 규칙을
+반드시 설정해야 한다는 걸 후속 작업으로 명시한다 — 예를 들어 Nginx라면
+`try_files $uri /index.html;`, S3+CloudFront라면 403/404 커스텀
+오류 응답을 `/index.html`로 매핑, Netlify라면 `_redirects`에
+`/* /index.html 200`.
+
+### 4. CORS / CSRF / 세션 쿠키 — 이미 Day 1에서 운영(HTTPS) 기준으로
+   설계됨, 이번엔 설정값만 재확인
+
+`SecurityConfig`의 CORS는 `app.cors.allowed-origins` 환경변수로
+Origin을 주입받는 구조라 운영 도메인을 그 값에 넣기만 하면 된다(2번
+항목에서 fallback을 없애 실수로 localhost로 열리는 걸 막음). CSRF는
+`CookieCsrfTokenRepository` + 강제 resolve 필터로 이미 SPA에 맞게
+구성되어 있다(Day 1). 세션 쿠키는 `SameSite=None`/`Secure=true`로
+이미 HTTPS 운영 환경을 전제로 설정되어 있다(로컬 개발은 `localhost`가
+"안전한 컨텍스트"로 취급되는 브라우저 동작 덕분에 우회 동작).
+셋 다 이번 Day에서 코드를 바꿀 이유가 없었다 — 다만 실제 운영
+도메인에 대해 로그인 → `/api/me` → Goal 생성/수정/삭제까지 전체
+플로우가 실제로 통과하는지는 진짜 배포 환경에서만 확인할 수 있는
+부분이라 이 세션에서는 검증하지 못했다는 걸 명시한다.
+
+### 5. 이 세션에서 검증하지 못한 것 (있는 그대로)
+
+- 실제 운영 도메인/HTTPS에서의 로그인 → 세션 유지 → 로그아웃 전체
+  플로우
+- 실제 운영 RDS에 대해 `ddl-auto: validate`가 기동 시점에 통과하는지
+  (Entity와 실제 운영 스키마가 정말 일치하는지)
+- 선택할 정적 호스팅의 실제 SPA fallback 설정
+- 실제 기기(모바일 등)에서의 반응형 확인 — 이번 Day는 새 화면을
+  만들지 않았고, 반응형은 이미 Day 11 이전 라운드들에서 확인이
+  끝난 화면들을 재사용하므로 다시 캡처하지 않았다.
+
+### 검증
+
+`mvn compile`(prod 프로필 YAML 문법 확인 포함), `npm run build`
+(정상 종료 확인), Vite preview 서버에 대한 6개 경로 curl 200 확인,
+Playwright로 `/timeline` 하드 리프레시 스크린샷 1장을
+`docs/screenshots/day14/`에 저장했다.

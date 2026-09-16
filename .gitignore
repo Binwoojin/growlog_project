@@ -36,6 +36,7 @@ build/
 .env
 .env.*
 !frontend/.env.development
+!frontend/.env.production
 env.sh
 env.bat
 env.ps1
