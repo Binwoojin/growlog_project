@@ -34,6 +34,12 @@ const routes = [
     name: 'goal-new',
     component: () => import('../views/GoalFormView.vue'),
   },
+  {
+    path: '/record/:recordNum',
+    name: 'record-detail',
+    component: () => import('../views/RecordDetailView.vue'),
+    props: true,
+  },
 ]
 
 const router = createRouter({

@@ -85,11 +85,24 @@ onMounted(async () => {
 
       <ul v-else class="timeline__list">
         <li v-for="item in filteredItems" :key="`${item.type}-${item.itemNum}`" class="timeline__node">
-          <BaseCard class="timeline-item">
+          <RouterLink v-if="item.type === 'RECORD'" :to="item.detailUrl" class="timeline-item-link">
+            <BaseCard class="timeline-item timeline-item--clickable">
+              <div class="timeline-item__head">
+                <BaseBadge variant="success">
+                  <NotebookText :size="12" :stroke-width="1.75" />
+                  성장 기록
+                </BaseBadge>
+                <span class="timeline-item__date">{{ formatTimelineDate(item.createdAt) }}</span>
+              </div>
+              <p class="timeline-item__title">{{ item.title }}</p>
+              <p class="timeline-item__meta">{{ item.content }}</p>
+            </BaseCard>
+          </RouterLink>
+          <BaseCard v-else class="timeline-item">
             <div class="timeline-item__head">
-              <BaseBadge :variant="item.type === 'GOAL' ? 'primary' : 'success'">
-                <component :is="item.type === 'GOAL' ? Target : NotebookText" :size="12" :stroke-width="1.75" />
-                {{ item.type === 'GOAL' ? '목표' : '성장 기록' }}
+              <BaseBadge variant="primary">
+                <Target :size="12" :stroke-width="1.75" />
+                목표
               </BaseBadge>
               <span class="timeline-item__date">{{ formatTimelineDate(item.createdAt) }}</span>
             </div>
@@ -189,13 +202,19 @@ onMounted(async () => {
   border: 2px solid var(--color-bg);
 }
 
+.timeline-item-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .timeline-item {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* 터치 기기에서 hover가 눌어붙지 않도록 포인터가 실제로 있는 환경에서만 */
+/* 터치 기기에서 hover가 눌어붙지 않도록 포인터가 실제로 있는 환경에서만, 클릭 가능한(기록) 카드에만 적용 */
 @media (hover: hover) and (pointer: fine) {
-  .timeline-item:hover {
+  .timeline-item--clickable:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-elevated);
   }

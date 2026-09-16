@@ -1572,3 +1572,67 @@ Guard의 `fetchCurrentUser()` 실패 처리와 겹치지 않는다. 두 메커�
 
 이번 점검에서 발견된 구조적 문제는 없었다. 리팩토링 없이 위 6개
 항목을 문서화하는 것으로 Day 12를 마친다.
+
+---
+
+## Day 13 (2026-09-16) — Record Detail Read
+
+로드맵 범위를 그대로 지켰다: `Timeline → 기록 카드 클릭 → /record/:id
+→ Record Detail` 최소 읽기 흐름만 구현하고, Record 생성/수정 Vue
+전환이나 새 미디어/댓글/배지 기능은 손대지 않았다.
+
+### 백엔드 — 새 비즈니스 로직 없이 기존 Service/Entity 재사용
+
+`GrowthRecordController`(JSP)의 `recordDetail()`이 이미
+`GrowthRecordService.findRecordById(recordNum, memberNo)`(다른 회원의
+기록이면 `IllegalArgumentException`)와
+`MediaService.findMediaByGrowthRecord(recordNum)`(이미지는 S3
+Presigned URL, YouTube는 `https://www.youtube.com/embed/{videoId}`로
+변환까지 끝낸 `MediaResponse` 목록)를 쓰고 있었다. 이 두 메서드를
+그대로 다시 호출하는 얇은 `GrowthRecordApiController`
+(`GET /api/records/{recordNum}`)와 `GrowthRecordResponse` DTO만
+추가했다 — `GoalApiController`와 동일하게
+`@ExceptionHandler(IllegalArgumentException.class)` → 400 + message
+패턴을 그대로 따랐다. `GrowthRecordResponse`는 `GoalResponse`와 같은
+이유(Member 지연 로딩 필드를 실수로 직렬화하지 않기 위해)로 Entity를
+직접 반환하지 않고 필요한 필드만 옮겨 담는다. `mvn compile`로 컴파일
+확인했다.
+
+### 프론트엔드 — 새 라우트 1개 + View 1개
+
+- `types/record.ts` / `api/record.api.ts`: 기존 goal/dashboard/
+  timeline과 동일한 패턴(도메인 타입 1개 + 얇은 fetch 함수 1개).
+- `router/index.ts`에 `/record/:recordNum` → `RecordDetailView.vue`
+  추가.
+- `RecordDetailView.vue`: Loading/Not Found/Error/Success 4개 상태.
+  기존 View들과 같은 `status` ref 패턴을 그대로 따랐고, 백엔드가
+  "없음"과 "다른 회원 소유"를 구분하지 않고 동일하게 400을 주므로
+  Axios 에러의 `response.status === 400`이면 `'not-found'`, 그 외(네트워크
+  단절/500 등)는 `'error'`로 나눠서 문구를 다르게 보여준다 — 재시도가
+  의미 있는 경우와 없는 경우를 사용자가 구분할 수 있게 하기 위함이다.
+  화면 구성은 로드맵이 명시한 항목(제목/작성일/연결된 목표/본문/
+  Image·YouTube/뒤로가기)만 그대로 넣었고, `GrowthRecord`에 있는
+  `todayLearning`/`difficulty`/`solution`/`retrospective`는 이번 Day
+  범위 밖이라 타입에는 있지만 화면에는 렌더링하지 않았다. 스타일은
+  Landing의 표현적 톤을 쓰지 않고 Dashboard/Timeline과 같은 Calm
+  Application Design(BaseCard/BaseBadge/BaseButton 재사용, 새 색
+  토큰 없음)을 그대로 따랐다.
+- `TimelineView.vue`: 이전부터 있었지만 실제 링크로 쓰이지 않던
+  `TimelineItem.detailUrl`을 RECORD 타입 카드에서만
+  `<RouterLink :to="item.detailUrl">`로 연결했다. 백엔드가 내려주는
+  `detailUrl`이 이미 `/record/{recordNum}` 형식이라 프론트에서 URL을
+  직접 조립하지 않고 그대로 썼다. GOAL 카드는 Vue에 목표 상세 화면이
+  없으므로(이번 Day 범위 아님) 그대로 비클릭 상태로 뒀고, hover
+  강조도 클릭 가능한 RECORD 카드에만 남도록 CSS를 나눴다.
+
+### 검증
+
+`npm run build` 통과. Playwright로 Loading(지연 응답)/Not
+Found(400)/Error(500)/Success(목표 연결+이미지+YouTube 미디어 포함,
+그리고 목표 없는 자유 기록) 4~5개 상태와, Timeline에서 기록 카드
+클릭 시 실제로 `/record/101`로 이동하는 것까지 총 7장을
+`docs/screenshots/day13/`에 저장했다. 이미지 렌더링은 실제 데이터
+URI로 별도 확인해 정상 표시됨을 확인했다(아래 트러블슈팅 참고 —
+YouTube iframe은 이 샌드박스 환경의 외부 네트워크 제한 때문에
+스크린샷에서는 비어 보이지만, 레이아웃 높이는 정상적으로 예약되고
+실제 배포 환경에서는 일반적인 iframe 임베드와 동일하게 로드된다).
