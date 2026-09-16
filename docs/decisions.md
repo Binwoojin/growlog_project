@@ -1469,3 +1469,106 @@ window.innerWidth` 확인)을 모두 확인했다.
 로드맵 지시대로 새 디자인/새 기능은 추가하지 않았다. Record 관련
 "기록 남기기" 버튼이 Dashboard에 여전히 disabled로 남아 있는 것도
 그대로 뒀다(Day 13에서 연결 예정).
+
+---
+
+## Day 12 (2026-09-16) — Frontend Architecture & State Review
+
+큰 리팩토링 없이 현재 구조를 점검하고 "왜 이렇게 되어 있는가"를
+문서로 남기는 게 목적이다. `stores/`, `api/`, `composables/`,
+`types/`, `router/`, 그리고 모든 View/컴포넌트를 다시 훑었다.
+
+### 1. Global vs Local State — Pinia는 auth.store 하나만
+
+`useAuthStore` 하나만 존재하고, 나머지(모달 열림/닫힘, 폼
+saveStatus/errorMessage, Timeline 필터 선택, 삭제 확인 대상 등)는
+전부 컴포넌트 로컬 `ref`다. 이게 의도된 것인지 "아직 안 만든" 것인지
+확인이 필요했는데, 각 상태가 실제로 여러 컴포넌트에 걸쳐 공유되는지를
+기준으로 보면 정당하다:
+
+- `auth.store`의 `user`는 AppNav/Header, Dashboard 인사말, Router
+  Guard(`isAuthenticated`) 세 곳이 동시에 참조한다 — 전역이 맞다.
+- 반대로 GoalEditModal의 `saveStatus`, GoalListView의
+  `deleteStatus`, TimelineView의 필터 선택은 그 화면을 벗어나는 순간
+  의미가 없다 — props/emit으로 부모-자식 간에만 오가면 충분하고,
+  실제로 그렇게 되어 있다.
+
+즉 "전역 상태로 승격된 로컬 상태"가 없다. 새 Pinia store를
+추가하지 않았다.
+
+### 2. API 레이어 — 도메인별 4개 파일 + 공유 axios 인스턴스 1개
+
+`api/axios.ts`가 `baseURL`/`withCredentials`/CSRF 쿠키↔헤더 매핑을
+한 곳에서만 설정하고, `auth.api.ts`/`dashboard.api.ts`/
+`goal.api.ts`/`timeline.api.ts`는 전부 이 인스턴스를 가져다 쓰는
+얇은 함수들이다. 각 함수는 요청 하나당 한 함수, 응답 타입을
+제네릭으로 명시(`api.get<Goal[]>(...)`)해서 호출부에서 타입 추론이
+되게 했다. 이 4개 파일 사이에 설정 중복이나 별도 axios 인스턴스
+생성이 없는지 grep으로 확인했다 — 없음.
+
+### 3. TypeScript — `any` 미사용, 타입 중복 없음
+
+`src/` 전체에서 `any` 사용을 grep했고 0건이었다. 타입은 API 파일과
+1:1로 대응하는 `types/*.ts`(auth/dashboard/goal/timeline)로 나뉘어
+있고, `DashboardSummary.recentTimeline`이 `TimelineItem[]`을 그대로
+재사용하는 등 같은 개념을 다른 이름으로 중복 정의한 곳이 없었다.
+`GoalRequest`는 생성(POST)과 수정(PUT)이 같은 엔드포인트 모양이
+아니라는 걸 옵셔널 필드(`goalProgress?`/`goalStatus?`)로 표현해서
+백엔드 `GoalService.saveGoal()`이 이 두 값을 무시한다는 사실을
+타입에 그대로 반영하고 있었다 — 실제 API 계약과 타입이 일치.
+
+### 4. 컴포넌트 구조 — `common/`(재사용 Base*) vs `goal/`(도메인)
+   vs `landing/`(Landing 전용)
+
+`common/`에는 Base* 원시 컴포넌트(Input/Button/Card/Modal/Badge)와
+AppNav/ConfirmDialog/LoadingSkeleton처럼 도메인에 묶이지 않는
+공용 UI만 있고, Goal 관련 컴포넌트(Card/Progress/StatusBadge/
+EditModal)는 `goal/`에, Landing 전용 섹션은 `landing/`에 분리되어
+있다. DashboardView.vue가 319줄로 파일 중 가장 크지만 `<script
+setup>` 자체는 40줄이 안 되고 나머지는 템플릿 3개 섹션(요약 카드/
+빠른 실행/최근 타임라인)과 scoped style이다 — 로직이 얽혀서 커진
+게 아니라 화면에 실제로 보여줄 섹션이 많아서 길다. 인위적으로
+쪼개면 오히려 props 전달만 늘어나므로 분리하지 않았다.
+
+### 5. Composables — `useInViewOnce` 하나, 범위 확장 없음
+
+`composables/`에는 Landing 전용 `useInViewOnce` 하나뿐이다.
+Dashboard/Timeline/Goal 쪽 데이터 로딩은 각 View의 `onMounted` +
+try/catch로 충분히 짧아서(6~10줄) 아직 composable로 뽑을 만큼
+반복되지 않았다 — 억지로 `useFetch` 같은 범용 composable을 만들지
+않았다.
+
+### 6. 에러 처리 책임 분리 확인
+
+- **API 공통(세션 만료)** → `api/interceptors.ts`. `/api/me` 요청은
+  명시적으로 제외하고(주석에 이유가 이미 적혀 있음: 비로그인 사용자가
+  공개 페이지에 들어올 때마다 튕기는 걸 막기 위해), 그 외 401만
+  전역으로 `/login`에 리다이렉트한다.
+- **화면 단위(데이터 조회 실패)** → 각 View의 `status`
+  ref(`loading`/`success`/`error`) + `onMounted` try/catch. 화면
+  전체를 못 그릴 정도의 실패를 담당한다.
+- **폼 단위(제출 실패/검증)** → Form/Modal의 `saveStatus`/
+  `errorMessage` + `extractErrorMessage(error, fallback)`. 서버가
+  `IllegalArgumentException` → 400 + `{message}`로 내려주는 걸 그대로
+  보여주고, Day 11에서 추가한 클라이언트 사전 검증은 그 앞단에서
+  왕복 없이 막는다.
+
+세 계층이 실제 코드에서 겹치지 않고 정확히 이 경계대로 나뉘어 있는
+것을 파일별로 확인했다.
+
+### 7. Router Guard vs Axios 401 Interceptor — 역할 분리 확인
+
+Router Guard(`router/index.ts`)는 "네비게이션 시작 시점에 인증
+여부를 한 번 확정"하는 역할만 한다 — `initialized`가 false일 때만
+`fetchCurrentUser()`를 호출하고, 그 결과로 보호 라우트 진입을
+막거나 로그인 상태에서 `/login` 접근을 막는다. Axios
+interceptor(`interceptors.ts`)는 "이미 인증된 화면에서 세션이
+도중에 끊겼을 때"만 반응한다 — `/api/me` 요청은 걸러내므로 Router
+Guard의 `fetchCurrentUser()` 실패 처리와 겹치지 않는다. 두 메커니즘이
+서로의 역할을 침범하지 않는 것을 인터셉터 주석과 실제 조건문으로
+재확인했다.
+
+### 결론
+
+이번 점검에서 발견된 구조적 문제는 없었다. 리팩토링 없이 위 6개
+항목을 문서화하는 것으로 Day 12를 마친다.
