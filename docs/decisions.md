@@ -1395,3 +1395,77 @@ bounding box가 색상 작업 전후로 픽셀 단위까지 동일함을 확인�
 강조(체크마크, streak highlight, accent rule, gradient rail, deep
 green CTA)가 스크롤/애니메이션 없이 로드 즉시 최종 상태로 보이는 것도
 확인했다.
+
+---
+
+## Day 11 (2026-09-16) — UI/UX State Completion
+
+### 기존 상태 확인부터 시작
+
+`renewal-roadmap-final.md`가 요구하는 Loading/Empty/Error/Success 상태를
+Dashboard/Timeline/Goal List/Goal Card/Goal Progress/Status Badge/
+LoadingSkeleton 순서로 하나씩 다시 읽어서 확인했다. 대부분 이미 이전
+Day들에서 구현되어 있었다:
+
+- DashboardView: skeleton loading, 에러 문구, 빈 상태(목표 없음/기록
+  없음 각각), streak 등 3개 요약 카드 — 이미 완결.
+- TimelineView: 필터(ALL/GOAL/RECORD)별로 다른 empty 문구, 에러, 로딩
+  — 이미 완결.
+- GoalListView: 목록 로딩/에러/빈 상태 + ConfirmDialog를 통한 삭제
+  확인→삭제 중→삭제 실패 흐름 — 이미 완결.
+- GoalCard/GoalProgress/GoalStatusBadge: 진행률 0-100 clamp, 상태별
+  variant/아이콘 매핑, ARIA progressbar — 이미 완결.
+- LoadingSkeleton: `prefers-reduced-motion`에서 shimmer 애니메이션
+  비활성화 — 이미 완결.
+
+그래서 Day 11에서 실제로 손댄 부분은 **목표 생성/수정 폼의 제출 전
+검증** 하나뿐이었다. 새 기능을 추가하는 대신, 원래 이 Day의 취지(있는
+화면의 상태 처리를 완성한다)에 맞춰 빠진 상태만 채웠다.
+
+### 목표 생성/수정 폼 클라이언트 검증 추가
+
+`GoalFormView.vue`(생성)와 `GoalEditModal.vue`(수정) 둘 다 카테고리
+미선택 검사만 있고, 제목 공백/길이나 기간 역전은 서버 왕복 후에야
+`extractErrorMessage`로 에러 문구를 보여주는 방식이었다. 서버
+(`GoalService`)가 이미 이 규칙들을 검증하고 있으므로 새 규칙을
+발명하지 않고 그대로 클라이언트에 미러링했다:
+
+- 빈 제목("목표 제목을 입력해주세요.")
+- 200자 초과 — 임의 숫자가 아니라 `Goal` 엔티티의
+  `GOAL_TITLE` 컬럼이 `length=200`(VARCHAR(200))인 데서 그대로 가져온
+  기준이다.
+- 종료일 < 시작일("종료일은 시작일보다 빠를 수 없어요.")
+
+`BaseInput`의 루트 엘리먼트가 `<label>`이라 네이티브 `maxlength`
+속성을 넘겨도 내부 `<input>`까지 전달되지 않는다는 걸 컴포넌트를 읽고
+확인했다 — 그래서 HTML 속성이 아니라 JS `validate()` 함수로 제출 시점
+검증을 구현했다. 두 파일 모두 동일한 `validate()`를 갖게 됐는데,
+공유 composable로 뽑기엔 로직이 너무 짧고(각 6줄) 두 파일의 상태
+변수 이름/구조가 이미 다르므로 추상화를 만들지 않고 중복을 그대로
+뒀다.
+
+### 검증 — Playwright 스크린샷 18장
+
+`/api/me`를 목으로 채워 라우터 가드를 통과시킨 뒤, Dashboard/
+Timeline/Goal List/Goal Form 각각의 Loading(지연 응답)/Error(500)/
+Empty(빈 배열)/Success 상태와, Goal List의 삭제 확인→삭제 중→삭제
+실패 흐름, Goal Form의 빈 제목/200자 초과+기간 역전 동시 에러/제출
+중 중복 클릭 방지(버튼 disabled)/모바일 뷰포트 오버플로우 여부까지
+총 18장을 `docs/screenshots/day11/`에 저장하고 육안으로 확인했다.
+결과: 검증 에러 문구가 필드 아래 올바르게 렌더링되고, 삭제
+확인 모달이 정상 동작하며, 모바일(375px) Goal Form에서 가로
+스크롤이 발생하지 않음(`document.documentElement.scrollWidth <=
+window.innerWidth` 확인)을 모두 확인했다.
+
+캡처에 사용한 스크립트가 스크린샷을 전부 저장하고 "DONE"을 출력한
+직후, teardown 과정에서 이미 닫힌 context에 걸려 있던 라우트 핸들러
+하나가 뒤늦게 실행되며 `route.fulfill` 호출 시 TypeError를 던졌다.
+18개 스크린샷 파일은 모두 정상 생성된 것을 확인했고, 앱 코드가 아니라
+검증 스크립트 자체의 정리(teardown) 순서 문제였으므로 트러블슈팅
+목록에는 올리지 않았다(실제 애플리케이션 동작에 영향 없음).
+
+### 이번 Day에서 하지 않은 것
+
+로드맵 지시대로 새 디자인/새 기능은 추가하지 않았다. Record 관련
+"기록 남기기" 버튼이 Dashboard에 여전히 disabled로 남아 있는 것도
+그대로 뒀다(Day 13에서 연결 예정).

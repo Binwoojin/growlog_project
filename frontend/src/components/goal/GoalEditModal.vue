@@ -36,6 +36,8 @@ const goalStatus = ref<GoalStatus>('진행중')
 
 const saveStatus = ref<'idle' | 'saving' | 'error'>('idle')
 const errorMessage = ref('')
+const titleError = ref('')
+const dateError = ref('')
 
 watch(
   () => props.goal,
@@ -50,12 +52,38 @@ watch(
     goalStatus.value = goal.goalStatus
     saveStatus.value = 'idle'
     errorMessage.value = ''
+    titleError.value = ''
+    dateError.value = ''
   },
   { immediate: true },
 )
 
+/* Day 11 — GoalFormView와 동일한 기준(빈 제목/200자 초과/기간 역전)으로 제출 전 검증한다 */
+function validate(): boolean {
+  titleError.value = ''
+  dateError.value = ''
+  let valid = true
+
+  const trimmedTitle = goalTitle.value.trim()
+  if (!trimmedTitle) {
+    titleError.value = '목표 제목을 입력해주세요.'
+    valid = false
+  } else if (trimmedTitle.length > 200) {
+    titleError.value = '제목은 200자 이내로 입력해주세요.'
+    valid = false
+  }
+
+  if (startDate.value && endDate.value && endDate.value < startDate.value) {
+    dateError.value = '종료일은 시작일보다 빠를 수 없어요.'
+    valid = false
+  }
+
+  return valid
+}
+
 async function onSubmit() {
   if (!props.goal) return
+  if (!validate()) return
 
   if (!categoryNum.value) {
     saveStatus.value = 'error'
@@ -87,7 +115,7 @@ async function onSubmit() {
 <template>
   <BaseModal :open="open" title="목표 수정" @close="emit('close')">
     <form class="goal-edit" @submit.prevent="onSubmit">
-      <BaseInput v-model="goalTitle" label="목표 제목" required />
+      <BaseInput v-model="goalTitle" label="목표 제목" required :error-message="titleError" />
       <BaseInput v-model="goalContent" label="목표 설명" />
 
       <label class="goal-edit__field">
@@ -117,6 +145,7 @@ async function onSubmit() {
         <BaseInput v-model="startDate" label="시작일" type="date" />
         <BaseInput v-model="endDate" label="종료일" type="date" />
       </div>
+      <p v-if="dateError" class="goal-edit__hint goal-edit__hint--error">{{ dateError }}</p>
 
       <p v-if="saveStatus === 'error'" class="goal-edit__hint goal-edit__hint--error">
         {{ errorMessage }}
