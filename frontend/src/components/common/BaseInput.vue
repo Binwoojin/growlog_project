@@ -5,11 +5,13 @@ withDefaults(
     type?: string
     required?: boolean
     errorMessage?: string
+    autocomplete?: string
   }>(),
   {
     type: 'text',
     required: false,
     errorMessage: '',
+    autocomplete: undefined,
   },
 )
 
@@ -23,6 +25,7 @@ const model = defineModel<string>({ required: true })
       v-model="model"
       :type="type"
       :required="required"
+      :autocomplete="autocomplete"
       class="base-input__field"
       :class="{ 'has-error': !!errorMessage }"
     />

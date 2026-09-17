@@ -15,6 +15,12 @@ const routes = [
     meta: { public: true },
   },
   {
+    path: '/signup',
+    name: 'signup',
+    component: () => import('../views/SignupView.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('../views/DashboardView.vue'),
@@ -79,7 +85,7 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  if (to.name === 'login' && authStore.isAuthenticated) {
+  if ((to.name === 'login' || to.name === 'signup') && authStore.isAuthenticated) {
     return { name: 'dashboard' }
   }
 

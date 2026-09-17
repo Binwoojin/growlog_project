@@ -13,6 +13,9 @@ const route = useRoute()
 const email = ref('')
 const password = ref('')
 
+/* Signup 완료 후 이 쿼리와 함께 돌아온다 — 로그인 다시 유도 (join.jsp의 joinSuccessMessage와 같은 역할) */
+const justJoined = route.query.joined === '1'
+
 async function onSubmit() {
   try {
     await authStore.login({ email: email.value, password: password.value })
@@ -36,8 +39,10 @@ async function onSubmit() {
 
     <BaseCard>
       <form class="login__form" @submit.prevent="onSubmit">
-        <BaseInput v-model="email" label="이메일" type="email" required />
-        <BaseInput v-model="password" label="비밀번호" type="password" required />
+        <p v-if="justJoined" class="login__success">회원가입이 완료되었습니다. 로그인해주세요.</p>
+
+        <BaseInput v-model="email" label="이메일" type="email" autocomplete="email" required />
+        <BaseInput v-model="password" label="비밀번호" type="password" autocomplete="current-password" required />
 
         <BaseButton type="submit" :disabled="authStore.status === 'loading'">
           {{ authStore.status === 'loading' ? '로그인 중...' : '로그인' }}
@@ -46,6 +51,11 @@ async function onSubmit() {
         <p v-if="authStore.error" class="login__error">{{ authStore.error }}</p>
       </form>
     </BaseCard>
+
+    <p class="login__signup-link">
+      아직 계정이 없으신가요?
+      <RouterLink to="/signup">회원가입</RouterLink>
+    </p>
   </main>
 </template>
 
@@ -81,5 +91,29 @@ async function onSubmit() {
   margin: 0;
   color: var(--color-error);
   font-size: var(--font-size-sm);
+}
+
+.login__success {
+  margin: 0;
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+}
+
+/* Login primary CTA보다 시각적으로 약하게 — 텍스트 링크로만 표현 */
+.login__signup-link {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.login__signup-link a {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.login__signup-link a:hover {
+  text-decoration: underline;
 }
 </style>
