@@ -62,7 +62,7 @@ public class SecurityConfig {
                          * 요청이 preflight 단계에서 401로 막혀버린다.
                          */
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/goal/**", "/record/**", "/home", "/timeline", "/mypage/**", "/api/members/check-nickname-update", "/api/me", "/api/dashboard", "/api/timeline", "/api/goals/**", "/api/categories").authenticated()
+                        .requestMatchers("/goal/**", "/record/**", "/home", "/timeline", "/mypage/**", "/api/members/check-nickname-update", "/api/me", "/api/dashboard", "/api/timeline", "/api/goals/**", "/api/categories", "/api/records/**").authenticated()
                         .anyRequest().permitAll())
                 .formLogin(form -> form
                         /*

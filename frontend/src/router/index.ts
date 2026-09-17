@@ -35,9 +35,20 @@ const routes = [
     component: () => import('../views/GoalFormView.vue'),
   },
   {
+    path: '/records/new',
+    name: 'record-new',
+    component: () => import('../views/RecordCreateView.vue'),
+  },
+  {
     path: '/record/:recordNum',
     name: 'record-detail',
     component: () => import('../views/RecordDetailView.vue'),
+    props: true,
+  },
+  {
+    path: '/records/:recordNum/edit',
+    name: 'record-edit',
+    component: () => import('../views/RecordEditView.vue'),
     props: true,
   },
   {

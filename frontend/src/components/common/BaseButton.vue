@@ -1,16 +1,9 @@
 <script setup lang="ts">
-/*
- * href가 주어지면 <a>로 렌더링한다 — 레거시 JSP 화면처럼 Vue Router가
- * 모르는 주소(예: /record/write)로 안내하는 버튼이 필요할 때, 일반
- * <button disabled>로 죽은 UI를 남기는 대신 실제 이동 가능한 링크로
- * 쓸 수 있게 하기 위함이다.
- */
 withDefaults(
   defineProps<{
     variant?: 'primary' | 'secondary' | 'ghost'
     type?: 'button' | 'submit'
     disabled?: boolean
-    href?: string
   }>(),
   {
     variant: 'primary',
@@ -21,10 +14,7 @@ withDefaults(
 </script>
 
 <template>
-  <a v-if="href" :href="href" class="base-button" :class="`variant-${variant}`">
-    <slot />
-  </a>
-  <button v-else :type="type" :disabled="disabled" class="base-button" :class="`variant-${variant}`">
+  <button :type="type" :disabled="disabled" class="base-button" :class="`variant-${variant}`">
     <slot />
   </button>
 </template>

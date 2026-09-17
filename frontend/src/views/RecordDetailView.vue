@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft } from '@lucide/vue'
-import { fetchRecordDetail } from '../api/record.api'
+import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue'
+import { deleteRecord, fetchRecordDetail } from '../api/record.api'
 import type { RecordDetail } from '../types/record'
+import { extractErrorMessage } from '../utils/errors'
 import { formatTimelineDate } from '../utils/date'
 import AppNav from '../components/common/AppNav.vue'
 import BaseBadge from '../components/common/BaseBadge.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseCard from '../components/common/BaseCard.vue'
+import ConfirmDialog from '../components/common/ConfirmDialog.vue'
 
 /*
  * Timeline의 성장 기록 카드를 클릭하면 이 화면으로 온다(detailUrl이 이미
@@ -27,6 +29,10 @@ const router = useRouter()
 const record = ref<RecordDetail | null>(null)
 const status = ref<'loading' | 'success' | 'not-found' | 'error'>('loading')
 
+const deleteDialogOpen = ref(false)
+const deleteStatus = ref<'idle' | 'deleting' | 'error'>('idle')
+const deleteErrorMessage = ref('')
+
 onMounted(async () => {
   try {
     record.value = await fetchRecordDetail(props.recordNum)
@@ -43,6 +49,25 @@ onMounted(async () => {
 
 function goBack() {
   router.back()
+}
+
+function goEdit() {
+  if (!record.value) return
+  router.push({ name: 'record-edit', params: { recordNum: record.value.recordNum } })
+}
+
+async function onConfirmDelete() {
+  if (!record.value) return
+
+  deleteStatus.value = 'deleting'
+  deleteErrorMessage.value = ''
+  try {
+    await deleteRecord(record.value.recordNum)
+    router.push({ name: 'timeline' })
+  } catch (error) {
+    deleteStatus.value = 'error'
+    deleteErrorMessage.value = extractErrorMessage(error, '기록을 삭제하지 못했어요. 다시 시도해주세요.')
+  }
 }
 </script>
 
@@ -102,12 +127,35 @@ function goBack() {
           </template>
         </div>
 
-        <BaseButton variant="secondary" class="record-detail__back" @click="goBack">
-          <ArrowLeft :size="14" :stroke-width="1.75" />
-          뒤로가기
-        </BaseButton>
+        <div class="record-detail__actions">
+          <BaseButton variant="secondary" @click="goBack">
+            <ArrowLeft :size="14" :stroke-width="1.75" />
+            뒤로가기
+          </BaseButton>
+          <div class="record-detail__actions-right">
+            <BaseButton variant="secondary" @click="goEdit">
+              <Pencil :size="14" :stroke-width="1.75" />
+              수정
+            </BaseButton>
+            <BaseButton variant="secondary" class="record-detail__delete" @click="deleteDialogOpen = true">
+              <Trash2 :size="14" :stroke-width="1.75" />
+              삭제
+            </BaseButton>
+          </div>
+        </div>
+
+        <p v-if="deleteStatus === 'error'" class="record-detail__delete-error">{{ deleteErrorMessage }}</p>
       </BaseCard>
     </template>
+
+    <ConfirmDialog
+      :open="deleteDialogOpen"
+      title="기록 삭제"
+      :message="`'${record?.title}' 기록을 삭제할까요? 이 작업은 되돌릴 수 없어요.`"
+      :busy="deleteStatus === 'deleting'"
+      @confirm="onConfirmDelete"
+      @cancel="deleteDialogOpen = false"
+    />
   </main>
 </template>
 
@@ -189,7 +237,47 @@ function goBack() {
   border-radius: var(--radius-sm);
 }
 
-.record-detail__back {
-  align-self: flex-start;
+.record-detail__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.record-detail__actions-right {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* destructive action임을 색으로 구분한다 — variant 체계를 새로 만들지 않고 error 색만 덧입힌다 */
+.record-detail__delete {
+  color: var(--color-error);
+  border-color: var(--color-error-bg);
+}
+
+.record-detail__delete:hover {
+  border-color: var(--color-error);
+}
+
+.record-detail__delete-error {
+  margin: 0;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 480px) {
+  .record-detail__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .record-detail__actions-right {
+    justify-content: stretch;
+  }
+
+  .record-detail__actions-right :deep(.base-button) {
+    flex: 1;
+  }
 }
 </style>

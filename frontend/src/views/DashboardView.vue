@@ -18,14 +18,6 @@ const router = useRouter()
 const summary = ref<DashboardSummary | null>(null)
 const status = ref<'loading' | 'success' | 'error'>('loading')
 
-/*
- * 성장 기록 작성은 아직 Vue로 옮기지 않았다 — 기존 JSP 화면
- * (GrowthRecordController의 /record/write)이 이미지/YouTube 업로드까지
- * 포함해 정상 동작하고 있어서, Vue에 새로 만드는 대신 그 화면으로
- * 안내한다.
- */
-const recordWriteUrl = `${import.meta.env.VITE_API_BASE_URL}/record/write`
-
 onMounted(async () => {
   try {
     summary.value = await fetchDashboard()
@@ -95,7 +87,7 @@ async function onLogout() {
           <Target :size="16" :stroke-width="1.75" />
           목표 추가
         </BaseButton>
-        <BaseButton variant="secondary" class="quick-action" :href="recordWriteUrl">
+        <BaseButton variant="secondary" class="quick-action" @click="router.push({ name: 'record-new' })">
           <NotebookPen :size="16" :stroke-width="1.75" />
           기록 남기기
         </BaseButton>
