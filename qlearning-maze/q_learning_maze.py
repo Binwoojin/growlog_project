@@ -9,23 +9,25 @@ Q-Learning 미로 탐색 학습 프로그램 (25 x 25)
 스스로 학습하는 과정을 화면으로 보여준다.
 
 프로그램을 실행할 때마다 함정(❌)은 시작점/목표점을 제외한 칸 중에서
-무작위로 7곳에 새로 배치된다.
+무작위로 7곳에 새로 배치된다. 함정은 "벽"과 같은 장애물이라서 에이전트는
+절대로 함정 칸을 밟거나 통과할 수 없다 — 함정 방향으로 이동하려 하면
+제자리에 머무르고 페널티만 받으며, 반드시 함정을 피해서 돌아가야 한다.
 
 [강화학습 핵심 용어 미리 정리]
 - 상태(state)      : 에이전트가 현재 있는 위치. 여기서는 (행, 열) 좌표.
 - 행동(action)     : 에이전트가 할 수 있는 선택. 여기서는 상/하/좌/우 이동 4가지.
-- 보상(reward)     : 행동을 했을 때 환경이 주는 점수. 목표 도달=+100, 함정=-100, 한 걸음=-1.
+- 보상(reward)     : 행동을 했을 때 환경이 주는 점수. 목표 도달=+100, 함정에 부딪힘=-100, 한 걸음=-1.
 - Q-table         : 모든 (상태, 행동) 조합에 대해 "그 행동이 얼마나 좋은가"를
                     숫자로 저장해 둔 표. 학습이 진행될수록 이 표의 값들이 점점
                     실제로 좋은 행동일수록 커지도록 갱신된다.
-- 시도(attempt)    : 시작점에서 출발해서 목표에 도착하거나, 함정을 밟거나,
-                    최대 스텝 수를 넘길 때까지의 한 번의 움직임 묶음.
-                    함정을 밟거나 스텝이 초과되면 시작점으로 돌아가 같은
-                    에피소드 안에서 "다시 시도"한다.
+- 시도(attempt)    : 시작점에서 출발해서 목표에 도착하거나 최대 스텝 수를
+                    넘길 때까지의 한 번의 움직임 묶음. 함정은 벽처럼 통과할 수
+                    없는 장애물일 뿐이므로 함정에 부딪혀도 시도가 끝나지는
+                    않고, 그 자리에서 다른 방향을 다시 시도하게 된다.
 - 에피소드(episode) : 실제로 "목표 지점에 도달"해야만 끝나는 한 번의 학습 단위.
                     화면에 표시되는 에피소드 번호는 목표에 도착했을 때만 올라간다.
-                    (에피소드 하나를 완료하기까지 함정에 걸려 여러 번 "시도"를
-                    반복할 수 있다.)
+                    (최대 스텝을 넘겨 실패하면 같은 에피소드 안에서 처음부터
+                    다시 "시도"한다.)
 - 엡실론-그리디(epsilon-greedy) : 학습 중 "탐험(exploration)"과 "활용(exploitation)"을
                     섞어서 행동을 고르는 전략. epsilon 확률로는 무작위로 움직여보고,
                     나머지 확률로는 지금까지 배운 것 중 가장 좋은 행동을 선택한다.
@@ -84,7 +86,7 @@ MAX_STEPS_PER_ATTEMPT = 600  # 한 번의 "시도"가 끝없이 이어지는 것
 
 # 보상(reward) 설계: 강화학습에서 "어떤 행동을 좋게/나쁘게 볼지"를 정하는 부분
 REWARD_GOAL = 100   # 목표 도달 시 큰 보상
-REWARD_TRAP = -100  # 함정을 밟았을 때 큰 벌점
+REWARD_TRAP = -100  # 함정 쪽으로 이동하려 했을 때(=벽처럼 막혀서 제자리 유지) 받는 큰 벌점
 REWARD_STEP = -1    # 한 칸 이동할 때마다 -1 -> "최대한 짧은 경로"를 찾도록 유도
 REWARD_WALL = -5    # 격자 바깥으로 나가려고 하면(제자리 유지) 약한 벌점
 
@@ -125,9 +127,8 @@ class MazeEnv:
 
         주의: 여기서 반환하는 종료 여부(done)는 Q-Learning 갱신식(벨만 방정식)에서
         "더 이상 미래 가치가 없다"고 볼지를 결정하는 값일 뿐, 화면에 보이는
-        "에피소드"가 끝났는지 여부와는 다르다. 목표 도달과 함정 모두 이 시도를
-        끝내지만, 실제 에피소드(목표 도달)가 끝났는지는 next_state가 GOAL인지로
-        호출하는 쪽(GUI)에서 별도로 판단한다.
+        "에피소드"가 끝났는지 여부와는 다르다. 목표에 도달했을 때만 이 값이
+        True가 되며, 실제 에피소드가 끝났는지도 이 값으로 판단하면 된다.
         """
         row, col = state
         d_row, d_col = ACTION_DELTA[action]
@@ -140,10 +141,15 @@ class MazeEnv:
         next_state = (new_row, new_col)
 
         if next_state == GOAL:
-            return next_state, REWARD_GOAL, True        # 목표 도달 -> 이번 시도 종료(성공)
+            return next_state, REWARD_GOAL, True   # 목표 도달 -> 이번 시도 종료(성공)
+
         if next_state in self.traps:
-            return next_state, REWARD_TRAP, True         # 함정 -> 이번 시도 종료(실패, 처음부터 재시도)
-        return next_state, REWARD_STEP, False            # 일반 이동
+            # 함정은 "벽"과 같은 통과 불가능한 장애물이다.
+            # 실제로 그 칸에 들어가지(밟지) 못하고 제자리에 머무르며,
+            # 대신 큰 벌점을 받아 다음에는 그 방향을 피하도록 학습된다.
+            return (row, col), REWARD_TRAP, False
+
+        return next_state, REWARD_STEP, False       # 일반 이동
 
 
 class QLearningAgent:
@@ -431,9 +437,12 @@ class QLearningGUI(tk.Tk):
 
         # 탐험 없이 순수하게 Q값이 가장 큰 행동만 선택 (활용, Exploitation)
         action = self.agent.best_action(self.path_state)
+        # 함정은 벽처럼 통과할 수 없으므로, 함정 쪽으로 이동을 시도하면
+        # next_state가 제자리(현재 위치)로 그대로 돌아온다.
         next_state, _reward, _done = self.env.step(self.path_state, action)
 
-        # 같은 칸을 이미 지나쳤다면(제자리를 맴도는 루프) -> 학습이 아직 부족한 것이므로 중단
+        # 같은 칸에 이미 있었다면(제자리 맴돌기, 혹은 벽/함정에 막혀 못 나아감)
+        # -> 아직 학습이 부족해 최적 경로를 찾지 못한 것이므로 중단
         if next_state in self.path_visited and next_state != GOAL:
             self.showing_path = False
             self._update_info_label()
@@ -442,12 +451,6 @@ class QLearningGUI(tk.Tk):
         self.path_visited.add(next_state)
         self.path_state = next_state
         self._redraw()
-
-        if next_state in self.env.traps:
-            # 최적 경로라 판단했지만 함정에 도달한 경우 -> 아직 학습이 부족함을 보여줌
-            self.showing_path = False
-            self._update_info_label()
-            return
 
         # 사람이 눈으로 따라갈 수 있는 속도로 한 걸음씩 애니메이션
         self.after_id = self.after(80, lambda: self._animate_path(step_count + 1))
