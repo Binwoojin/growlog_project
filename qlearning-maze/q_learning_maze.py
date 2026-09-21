@@ -18,8 +18,14 @@ Q-Learning 미로 탐색 학습 프로그램 (25 x 25)
 - Q-table         : 모든 (상태, 행동) 조합에 대해 "그 행동이 얼마나 좋은가"를
                     숫자로 저장해 둔 표. 학습이 진행될수록 이 표의 값들이 점점
                     실제로 좋은 행동일수록 커지도록 갱신된다.
-- 에피소드(episode) : 시작점에서 출발해서 목표에 도착하거나 함정을 밟거나
-                    최대 스텝 수를 넘길 때까지의 한 번의 "시도".
+- 시도(attempt)    : 시작점에서 출발해서 목표에 도착하거나, 함정을 밟거나,
+                    최대 스텝 수를 넘길 때까지의 한 번의 움직임 묶음.
+                    함정을 밟거나 스텝이 초과되면 시작점으로 돌아가 같은
+                    에피소드 안에서 "다시 시도"한다.
+- 에피소드(episode) : 실제로 "목표 지점에 도달"해야만 끝나는 한 번의 학습 단위.
+                    화면에 표시되는 에피소드 번호는 목표에 도착했을 때만 올라간다.
+                    (에피소드 하나를 완료하기까지 함정에 걸려 여러 번 "시도"를
+                    반복할 수 있다.)
 - 엡실론-그리디(epsilon-greedy) : 학습 중 "탐험(exploration)"과 "활용(exploitation)"을
                     섞어서 행동을 고르는 전략. epsilon 확률로는 무작위로 움직여보고,
                     나머지 확률로는 지금까지 배운 것 중 가장 좋은 행동을 선택한다.
@@ -73,8 +79,8 @@ ALPHA = 0.1              # 학습률(learning rate): 새로운 정보를 얼마�
 GAMMA = 0.9              # 할인율(discount factor): 미래 보상을 현재 가치로 얼마나 인정할지
 EPSILON_START = 1.0      # 학습 시작 시 탐험(무작위 행동) 확률 (100%)
 EPSILON_MIN = 0.05       # epsilon이 아무리 줄어도 이 값 밑으로는 내려가지 않음(최소한의 탐험 유지)
-EPSILON_DECAY = 0.9995   # 매 에피소드가 끝날 때마다 epsilon에 곱해서 조금씩 줄여나가는 비율
-MAX_STEPS_PER_EPISODE = 600  # 한 에피소드가 끝없이 이어지는 것을 막기 위한 최대 스텝 수
+EPSILON_DECAY = 0.9995   # 매 "시도"가 끝날 때마다 epsilon에 곱해서 조금씩 줄여나가는 비율
+MAX_STEPS_PER_ATTEMPT = 600  # 한 번의 "시도"가 끝없이 이어지는 것을 막기 위한 최대 스텝 수
 
 # 보상(reward) 설계: 강화학습에서 "어떤 행동을 좋게/나쁘게 볼지"를 정하는 부분
 REWARD_GOAL = 100   # 목표 도달 시 큰 보상
@@ -115,7 +121,13 @@ class MazeEnv:
         """
         환경과의 상호작용 한 번을 처리한다.
         현재 상태(state)에서 행동(action)을 수행했을 때
-        (다음 상태, 보상, 에피소드 종료 여부) 를 반환한다.
+        (다음 상태, 보상, 이번 "시도" 종료 여부) 를 반환한다.
+
+        주의: 여기서 반환하는 종료 여부(done)는 Q-Learning 갱신식(벨만 방정식)에서
+        "더 이상 미래 가치가 없다"고 볼지를 결정하는 값일 뿐, 화면에 보이는
+        "에피소드"가 끝났는지 여부와는 다르다. 목표 도달과 함정 모두 이 시도를
+        끝내지만, 실제 에피소드(목표 도달)가 끝났는지는 next_state가 GOAL인지로
+        호출하는 쪽(GUI)에서 별도로 판단한다.
         """
         row, col = state
         d_row, d_col = ACTION_DELTA[action]
@@ -128,9 +140,9 @@ class MazeEnv:
         next_state = (new_row, new_col)
 
         if next_state == GOAL:
-            return next_state, REWARD_GOAL, True        # 목표 도달 -> 에피소드 종료
+            return next_state, REWARD_GOAL, True        # 목표 도달 -> 이번 시도 종료(성공)
         if next_state in self.traps:
-            return next_state, REWARD_TRAP, True         # 함정 -> 에피소드 종료
+            return next_state, REWARD_TRAP, True         # 함정 -> 이번 시도 종료(실패, 처음부터 재시도)
         return next_state, REWARD_STEP, False            # 일반 이동
 
 
@@ -191,7 +203,7 @@ class QLearningAgent:
         self.q_table[row][col][action_index] = current_q + ALPHA * td_error
 
     def decay_epsilon(self):
-        """에피소드가 끝날 때마다 epsilon을 조금씩 줄여서 탐험 비중을 낮춘다."""
+        """매 "시도"가 끝날 때마다 epsilon을 조금씩 줄여서 탐험 비중을 낮춘다."""
         self.epsilon = max(EPSILON_MIN, self.epsilon * EPSILON_DECAY)
 
 
@@ -209,8 +221,9 @@ class QLearningGUI(tk.Tk):
         self.agent = QLearningAgent()
 
         self.state = self.env.reset_agent()
-        self.episode = 1
-        self.step_count = 0
+        self.episode = 1          # 목표 지점에 "실제로 도달한" 횟수 (화면에 표시되는 에피소드 번호)
+        self.attempt_steps = 0    # 이번 에피소드 안에서, 마지막으로 시작점에서 출발한 뒤 지금까지의 스텝 수
+        self.retry_count = 0      # 이번 에피소드 동안 함정/시간초과로 재시도한 횟수 (참고용 통계)
 
         self.is_training = False     # 지금 학습 루프가 돌고 있는지 여부
         self.after_id = None         # tkinter의 after() 예약 id (일시정지 시 취소하기 위해 보관)
@@ -264,7 +277,8 @@ class QLearningGUI(tk.Tk):
         else:
             status = "일시정지"
         self.info_var.set(
-            f"에피소드: {self.episode}   스텝: {self.step_count}   "
+            f"에피소드(목표 도달): {self.episode}   진행 스텝: {self.attempt_steps}   "
+            f"재시도(함정/시간초과): {self.retry_count}   "
             f"탐험률(epsilon): {self.agent.epsilon:.3f}   상태: {status}"
         )
 
@@ -326,21 +340,32 @@ class QLearningGUI(tk.Tk):
         for _ in range(self.STEPS_PER_TICK):
             # 1) 엡실론-그리디로 행동 선택
             action = self.agent.choose_action(self.state)
-            # 2) 환경에 행동을 적용해서 다음 상태/보상/종료여부를 받음
-            next_state, reward, done = self.env.step(self.state, action)
+            # 2) 환경에 행동을 적용해서 다음 상태/보상/시도 종료여부를 받음
+            next_state, reward, attempt_done = self.env.step(self.state, action)
             # 3) 벨만 방정식으로 Q-table 갱신 (실제 "학습"이 일어나는 부분)
-            self.agent.update(self.state, action, reward, next_state, done)
+            self.agent.update(self.state, action, reward, next_state, attempt_done)
 
             self.state = next_state
-            self.step_count += 1
+            self.attempt_steps += 1
+            reached_goal = next_state == GOAL
 
-            if done or self.step_count >= MAX_STEPS_PER_EPISODE:
-                # 한 에피소드가 끝났으므로: epsilon을 줄이고, 다음 에피소드를 위해 초기화
+            if attempt_done or self.attempt_steps >= MAX_STEPS_PER_ATTEMPT:
+                # 한 "시도"가 끝났다: 목표 도달 / 함정 / 최대 스텝 초과 중 하나.
+                # epsilon은 시도가 끝날 때마다 줄여야 학습이 효율적으로 진행되므로
+                # 목표 도달 여부와 상관없이 항상 감소시킨다.
                 self.agent.decay_epsilon()
-                self.episode += 1
-                self.step_count = 0
+                self.attempt_steps = 0
                 self.state = self.env.reset_agent()
-                break  # 이번 tick은 에피소드 종료 시점에서 마무리
+
+                if reached_goal:
+                    # ---- 핵심: 화면에 보이는 "에피소드" 번호는 실제로 목표에
+                    #      도달했을 때만 올라간다. 함정에 걸리거나 시간이
+                    #      초과되면 같은 에피소드 안에서 처음부터 다시 시도한다. ----
+                    self.episode += 1
+                    self.retry_count = 0
+                else:
+                    self.retry_count += 1
+                break  # 이번 tick은 시도가 끝난 시점에서 마무리
 
         self._redraw()
         self._update_info_label()
@@ -370,7 +395,8 @@ class QLearningGUI(tk.Tk):
         self.state = self.env.reset_agent()
         self.agent = QLearningAgent()        # Q-table과 epsilon을 완전히 새로 초기화
         self.episode = 1
-        self.step_count = 0
+        self.attempt_steps = 0
+        self.retry_count = 0
 
         self._redraw()
         self._update_info_label()
@@ -397,7 +423,7 @@ class QLearningGUI(tk.Tk):
             self._update_info_label()
             return
 
-        if step_count >= MAX_STEPS_PER_EPISODE:
+        if step_count >= MAX_STEPS_PER_ATTEMPT:
             # 아직 학습이 부족해 목표에 도달하지 못하고 최대 스텝을 넘긴 경우
             self.showing_path = False
             self._update_info_label()
