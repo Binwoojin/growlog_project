@@ -25,7 +25,11 @@
 
 | Goal List | Record Detail |
 |---|---|
-| ![Goal List](docs/screenshots/day11/11-goals-success-statuses.png) | ![Record Detail](docs/screenshots/day13/04-record-success-with-media.png) |
+| ![Goal List](docs/screenshots/day11/11-goals-success-statuses.png) | ![Record Detail](docs/screenshots/record-flow/04-record-detail-with-actions.png) |
+
+| Signup |
+|---|
+| ![Signup](docs/screenshots/signup-flow/01-signup-form.png) |
 
 Loading / Empty / Error / Validation 등 화면별 다른 상태는 [`docs/screenshots/`](docs/screenshots/)에 더 있습니다.
 
@@ -63,7 +67,7 @@ JSP (서버 렌더링)        REST API (JSON)
                           JPA / MySQL
 ```
 
-> Backend를 새로 작성하지 않고 기존 Service Layer를 재사용하며 Frontend Layer만 현대화했습니다. `GoalApiController`, `GrowthRecordApiController`처럼 새로 추가한 Controller는 전부 기존 Service 메서드를 그대로 호출하는 얇은(thin) REST 레이어입니다.
+> Backend를 새로 작성하지 않고 기존 Service Layer를 재사용하며 Frontend Layer만 현대화했습니다. `GoalApiController`, `GrowthRecordApiController`, `MemberApiController`처럼 새로 추가한 Controller는 전부 기존 Service 메서드를 그대로 호출하는 얇은(thin) REST 레이어입니다.
 
 ---
 
@@ -123,6 +127,8 @@ Cross-Origin SPA(Vite :5173 → Spring Boot :8080)에서 세션 쿠키가 정상
 
 > 기존 Spring Security Session 인증을 재사용하는 것이 리뉴얼 목적에 더 적합하다고 판단해 JWT로 전환하지 않았습니다.
 
+**Signup도 같은 원칙으로 붙였습니다.** `/signup`(Vue)은 기존 이메일 인증 API(`/api/email/send-code`, `/verify-code`)와 닉네임 중복확인 API(`/api/members/check-nickname`)를 그대로 재사용하고, `MemberApiController`는 `MemberService.join()`을 그대로 호출하는 thin REST 레이어입니다. 새 검증 정책을 추가하지 않고 레거시 `join.js`의 검증 규칙을 그대로 이식했습니다.
+
 ---
 
 ## Key Features
@@ -133,8 +139,8 @@ Cross-Origin SPA(Vite :5173 → Spring Boot :8080)에서 세션 쿠키가 정상
 | Dashboard | 실제 사용자 데이터 기반 Summary, 최근 Timeline, Loading / Error / Empty |
 | Timeline | Goal / Record 통합 흐름, Record Detail 연결 |
 | Goal | List / Create / Update / Delete, Validation, Progress |
-| Record | Timeline → Record Detail Read, Image / YouTube Media 표시 |
-| Auth | Login / Logout / Current User, Protected Route, Session Restore |
+| Record | List / Create / Update / Delete, Image / YouTube Media 업로드·표시 |
+| Auth | Signup / Login / Logout / Current User, Protected Route, Session Restore |
 
 ---
 
@@ -148,7 +154,7 @@ Cross-Origin SPA(Vite :5173 → Spring Boot :8080)에서 세션 쿠키가 정상
 
 ## Troubleshooting
 
-전체 기록은 [`docs/trouble_shooting/`](docs/trouble_shooting/)에 날짜별로 있습니다. 그중 리뉴얼 과정을 대표하는 3건만 남깁니다.
+전체 기록은 [`docs/trouble_shooting/`](docs/trouble_shooting/)에 날짜별로 있습니다. 그중 리뉴얼 과정을 대표하는 4건만 남깁니다.
 
 **1. Login POST 403 — CSRF / Axios XSRF**
 Cross-Origin으로 보내는 로그인 요청에 CSRF 토큰이 실리지 않아 403이 발생했습니다. `CookieCsrfTokenRepository`로 토큰을 쿠키로 내려주고 Axios의 `xsrfCookieName` / `xsrfHeaderName` / `withXSRFToken`을 맞춰 자동으로 헤더에 실리게 했습니다. CSRF 토큰이 서버에 "존재하는 것"과 요청에 "전달되는 것"은 다른 문제라는 걸 확인한 사례입니다.
@@ -158,6 +164,9 @@ Cross-Origin으로 보내는 로그인 요청에 CSRF 토큰이 실리지 않아
 
 **3. Public Landing 401 Redirect — Router Guard / Interceptor 책임 분리**
 Axios 401 Interceptor가 모든 401을 동일하게 처리해서, 비로그인 상태 확인용 `GET /api/me`의 401까지 "세션 끊김"으로 오판해 공개 페이지에서도 로그인 화면으로 튕겨 나갔습니다. Interceptor에서 `/api/me` 요청만 제외해 역할을 분리했습니다. 같은 401이라도 어떤 요청에서 왔는지에 따라 의미가 다를 수 있다는 걸 배운 사례입니다.
+
+**4. Signup 테스트 추가 후 다른 테스트가 깨지는 문제 — MockMvc `.with(csrf())`가 싱글턴 Filter를 오염**
+`MemberApiControllerTest`를 추가한 뒤 `./mvnw test`를 전체로 돌리면 기존에 통과하던 `AuthControllerTest`의 CSRF 쿠키 검증이 실패했지만, 단독 실행하면 다시 통과했습니다. 원인을 추적해보니 Spring Security Test의 `.with(csrf())`가 리플렉션으로 실제 `CsrfFilter`(싱글턴 Bean)의 `CsrfTokenRepository`를 세션 기반 테스트용 Repository로 바꿔치고 되돌리지 않았고, 두 테스트 클래스가 동일한 `@MockitoBean` 구성이라 Spring이 같은 ApplicationContext(=같은 `CsrfFilter` 인스턴스)를 캐시로 재사용하면서 오염이 이어졌습니다. `@DirtiesContext(classMode = AFTER_CLASS)`로 오염된 Context가 재사용되지 않도록 해결했습니다. 테스트가 격리되지 않으면 실행 순서에 따라 "통과했다 실패했다" 하는 유령 버그가 생긴다는 걸 직접 겪은 사례입니다.
 
 ---
 
@@ -179,9 +188,10 @@ Axios 401 Interceptor가 모든 401을 동일하게 처리해서, 비로그인 �
 ## Quality / Validation
 
 - Frontend: `npm run build` 통과 (TypeScript `noUnusedLocals`/`noUnusedParameters` 포함)
-- Backend: `mvn test` **40/40 통과**
-- Responsive: 6개 화면 × 6개 뷰포트(1440 / 1200 / 1024 / 768 / 390 / 360) 전부 horizontal overflow 없음
+- Backend: `mvn test` **55/55 통과**
+- Responsive: Record Create/Edit, Signup을 포함한 전 화면에서 1440~360px 구간(6개 뷰포트) horizontal overflow 없음 확인
 - Route: Protected Route 인증 가드, 새로고침 시 세션 복원, 세션 만료 시 리다이렉트, 잘못된 URL 접근 시 404 처리 확인
+- Signup: 정상 가입 / 중복 이메일 / 잘못된 이메일 형식 / 비밀번호 불일치 / 필수값 공백 / 가입 후 로그인 / 로그인 상태에서 `/signup` 접근 시 리다이렉트까지 Playwright로 확인
 
 ---
 
@@ -240,4 +250,6 @@ npm run dev
 
 ### Future Improvements
 
-Badge/통계/AI 요약/Community/Record Create·Edit Vue 전환/새 Dashboard Widget은 이번 Portfolio Scope에 포함하지 않았습니다. 현재 범위를 기능 개수가 아니라 Legacy Modernization / Frontend Architecture / Security Integration / Production 완성도로 고정했기 때문입니다.
+Badge / 통계 / AI 요약 / Community / 새 Dashboard Widget은 이번 Portfolio Scope에 포함하지 않았습니다. 현재 범위를 기능 개수가 아니라 Legacy Modernization / Frontend Architecture / Security Integration / Production 완성도로 고정했기 때문입니다.
+
+Record Create·Edit·Delete와 Signup은 리뉴얼 마무리 단계에서 Vue SPA로 전환을 완료해, 회원가입부터 기록 작성까지 JSP를 거치지 않는 흐름이 끝까지 이어집니다. 남아있는 레거시 JSP 화면(`join.jsp`, `record/write.jsp`, `record/edit.jsp` 등)은 더 이상 어떤 흐름에서도 참조되지 않지만, 롤백 대비를 위해 코드베이스에는 그대로 남겨뒀습니다.
